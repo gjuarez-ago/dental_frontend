@@ -1,0 +1,127 @@
+<div class="appointments-page premium-view animate-fade-in">
+  
+  <!-- HEADER ESTILO APP -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="month-selector">
+          <button class="nav-month-btn" (click)="changeMonth(-1)"><i class="ph ph-caret-left"></i></button>
+          <h1>{{ currentMonth() }}</h1>
+          <button class="nav-month-btn" (click)="changeMonth(1)"><i class="ph ph-caret-right"></i></button>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn-today-minimal" (click)="setToday()">Hoy</button>
+      <button class="btn-compact-primary" (click)="layout.toggleAppointmentDrawer()">
+        Agendar Cita
+      </button>
+    </div>
+  </header>
+
+  <!-- SELECTOR DE SEMANA HORIZONTAL -->
+  <div class="week-strip-container">
+    <div class="week-strip">
+        @for (day of weekDays(); track day.date) {
+            <div class="day-slot" 
+                 [class.active]="day.isSelected" 
+                 [class.is-today]="day.isToday"
+                 (click)="selectDay(day.date)">
+                <span class="day-name">{{ day.dayName }}</span>
+                <span class="day-num">{{ day.dayNum }}</span>
+                
+                @if (day.isSelected) {
+                    <div class="active-dot"></div>
+                } @else if (day.hasAppointments) {
+                    <div class="appointment-indicator"></div>
+                }
+            </div>
+        }
+    </div>
+  </div>
+
+  <main class="daily-main">
+    <!-- RESUMEN DEL DÍA -->
+    <div class="day-summary">
+        <h2>{{ selectedDateSummary() }}</h2>
+        <p>Tienes {{ appointments().length }} citas programadas para hoy</p>
+    </div>
+
+    <!-- LISTADO DE TARJETAS REDISEÑADO -->
+    <div class="appointments-feed">
+        @for (appointment of appointments(); track appointment.id) {
+          <div class="appointment-card" [attr.data-status]="appointment.estado.toLowerCase()">
+            
+            <div class="card-time" [class.is-pm]="appointment.fechaHora.includes('T12:') || appointment.fechaHora.includes('T13:') || appointment.fechaHora.includes('T14:') || appointment.fechaHora.includes('T15:') || appointment.fechaHora.includes('T16:') || appointment.fechaHora.includes('T17:') || appointment.fechaHora.includes('T18:') || appointment.fechaHora.includes('T19:') || appointment.fechaHora.includes('T20:') || appointment.fechaHora.includes('T21:') || appointment.fechaHora.includes('T22:') || appointment.fechaHora.includes('T23:')">
+                <span class="hour">{{ appointment.fechaHora | date:'h:mm' }}</span>
+                <span class="period">{{ appointment.fechaHora | date:'a' | lowercase }}</span>
+            </div>
+
+            <div class="vertical-divider"></div>
+
+            <div class="card-info">
+                <div class="info-main">
+                    <span class="patient-name">{{ appointment.pacienteNombre || 'Paciente sin nombre' }}</span>
+                    <span class="service-name">{{ appointment.servicioNombre || 'Consulta General' }}</span>
+                </div>
+                
+                <div class="info-footer">
+                    <span class="status-badge-minimal" [class]="appointment.estado.toLowerCase()">
+                        {{ appointment.estado }}
+                    </span>
+
+                    @if (appointment.ticketStatus && appointment.estado === 'COMPLETADA') {
+                        <span class="finance-badge" [class]="appointment.ticketStatus.toLowerCase()">
+                            <i class="ph-fill ph-check-circle"></i> {{ appointment.ticketStatus }}
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <div class="card-actions">
+                @if (appointment.estado === 'PENDIENTE' || appointment.estado === 'CONFIRMADA') {
+                    <button class="action-btn" (click)="updateStatus(appointment.id!, AppointmentStatus.LLEGADA)" title="Marcar Llegada">
+                        <i class="ph ph-door-open"></i>
+                    </button>
+                }
+                @if (appointment.estado === 'LLEGADA') {
+                    <button class="action-btn primary" (click)="updateStatus(appointment.id!, AppointmentStatus.EN_PROCESO)" title="Atender">
+                        <i class="ph ph-stethoscope"></i>
+                    </button>
+                }
+                @if (appointment.estado === 'EN_PROCESO') {
+                    <button class="action-btn success" (click)="updateStatus(appointment.id!, AppointmentStatus.COMPLETADA)" title="Terminar">
+                        <i class="ph ph-check-circle"></i>
+                    </button>
+                }
+                @if (appointment.estado === 'COMPLETADA') {
+                    <button class="action-btn highlight" (click)="openPaymentDrawer(appointment)" title="Cobro">
+                        <i class="ph ph-receipt"></i>
+                    </button>
+                }
+                <button class="more-btn"><i class="ph ph-dots-three-outline-vertical"></i></button>
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-feed">
+             <i class="ph ph-calendar-blank"></i>
+             <p>No hay citas registradas para este día.</p>
+             <button class="btn-text" (click)="layout.toggleAppointmentDrawer()">Agendar la primera cita</button>
+          </div>
+        }
+    </div>
+  </main>
+
+</div>
+
+<app-payment-drawer 
+  [isOpen]="isPaymentDrawerOpen()" 
+  [cita]="selectedAppointmentForPayment()"
+  (closed)="isPaymentDrawerOpen.set(false)"
+  (paymentRecorded)="onPaymentReceived()">
+</app-payment-drawer>
+
+<app-appointment-drawer
+  [isOpen]="layout.isAppointmentDrawerOpen()"
+  [initialDate]="selectedDate()"
+  (close)="layout.closeAppointmentDrawer()"
+  (saved)="onAppointmentSaved($event)">
+</app-appointment-drawer>

@@ -1,0 +1,300 @@
+<div class="booking-container" [class.confirm-view]="state().step === 4">
+    <!-- HEADER -->
+    <header class="booking-header" *ngIf="state().step < 4">
+        <button class="back-btn" (click)="goBack()">
+            <i class="ph ph-arrow-left"></i>
+        </button>
+        <div class="header-title">
+            <span>{{ state().step === 3 ? 'Confirmar Reserva' : 'Dental Sonrisana' }}</span>
+        </div>
+        <div class="header-actions">
+            <!-- Espacio para mantener el centro del título -->
+        </div>
+    </header>
+
+    <main class="booking-content animate-fade-in">
+        <!-- STEP 1: SELECTION -->
+        @if (state().step === 1) {
+        <div class="step-layout">
+            <div class="step-indicator">PASO 01 — SELECCIÓN</div>
+            <h1 class="page-title">Agenda tu próxima<br>consulta clínica.</h1>
+            <p class="page-desc">Selecciona una fecha y hora para la revisión con tu especialista. La disponibilidad se confirma al completar el depósito.</p>
+
+            <!-- CALENDAR CARD -->
+            <div class="card calendar-card">
+                <div class="calendar-header">
+                    <span class="month-label">{{ currentMonth }}</span>
+                    <div class="nav-arrows">
+                        <i class="ph ph-caret-left"></i>
+                        <i class="ph ph-caret-right"></i>
+                    </div>
+                </div>
+                <div class="calendar-grid">
+                    <div class="day-label">LUN</div>
+                    <div class="day-label">MAR</div>
+                    <div class="day-label">MIÉ</div>
+                    <div class="day-label">JUE</div>
+                    <div class="day-label">VIE</div>
+                    <div class="day-label">SÁB</div>
+                    <div class="day-label">DOM</div>
+
+                    <!-- Mock days - Abril 2026 empieza en Miércoles -->
+                    <div class="day dummy"></div><div class="day dummy"></div>
+                    @for (d of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]; track d) {
+                        <button class="day" 
+                                [class.selected]="state().selectedDate?.getDate() === d"
+                                [class.disabled]="d < 11"
+                                (click)="d >= 11 && onDateSelect(d)">
+                            {{ d }}
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- SLOT SELECTOR -->
+            <div class="slots-section">
+                <div class="section-title">
+                    <i class="ph ph-calendar-check"></i> Horarios Disponibles
+                </div>
+                <p class="section-subtitle">Disponibilidad para <strong>{{ state().selectedDate ? formatDate(state().selectedDate) : 'Selecciona un día' }}</strong></p>
+                
+                <div class="slots-grid">
+                    @for (slot of timeSlots; track slot) {
+                        <button class="slot-btn" 
+                                [class.selected]="state().selectedSlot === slot"
+                                (click)="onSlotSelect(slot)">
+                            {{ slot }}
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- CTA SECTION -->
+            <div class="cta-section card">
+                <div class="cta-content">
+                    <h3>Progreso: 33%</h3>
+                    <p>Horario: {{ state().selectedSlot || '--:--' }}</p>
+                </div>
+                <button class="btn-primary-pill" [disabled]="!state().selectedDate || !state().selectedSlot" (click)="nextStep()">
+                    Continuar <i class="ph ph-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- DOCTOR PROFILE (Compact) -->
+            <div class="doctor-card card">
+                <div class="doctor-profile">
+                    <img [src]="doctor.img" [alt]="doctor.name" class="doctor-img">
+                    <div class="doctor-info">
+                        <h3>{{ doctor.name }}</h3>
+                        <span class="doctor-tag">{{ doctor.title }}</span>
+                    </div>
+                </div>
+                <div class="doctor-stats">
+                    <div class="stat"><i class="ph-fill ph-star"></i> {{ doctor.rating }} ({{ doctor.reviews }}+ reseñas)</div>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- STEP 2: IDENTIFICATION (Lead Capture) -->
+        @if (state().step === 2) {
+        <div class="step-layout animate-slide-up">
+            <div class="step-indicator">PASO 02 — IDENTIFICACIÓN</div>
+            <h1 class="page-title">¿Quién realiza<br>la consulta?</h1>
+            <p class="page-desc">Necesitamos tus datos básicos para registrar la pre-reserva en nuestro sistema y contactarte si es necesario.</p>
+
+            <div class="card form-card">
+                <div class="form-group">
+                    <label for="pName">Nombre Completo</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-user"></i>
+                        <input type="text" id="pName" [(ngModel)]="bookingName" placeholder="Ej. Ana García" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="pPhone">WhatsApp de contacto</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-whatsapp-logo"></i>
+                        <input type="tel" id="pPhone" [(ngModel)]="bookingPhone" placeholder="10 dígitos" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box intent-box">
+                <i class="ph ph-shield-check"></i>
+                <p>Tus datos están protegidos y solo se usarán para la gestión de tu cita clínica.</p>
+            </div>
+
+            <button class="btn-primary-pill full-width" [disabled]="!bookingName || !bookingPhone" (click)="nextStep()">
+                Continuar a Detalles de Pago <i class="ph ph-arrow-right"></i>
+            </button>
+            
+            <button class="btn-ghost" (click)="prevStep()">
+                <i class="ph ph-caret-left"></i> Volver a Selección
+            </button>
+        </div>
+        }
+
+        <!-- STEP 3: CONFIRMATION & UPLOAD -->
+        @if (state().step === 3) {
+        <div class="step-layout animate-slide-up">
+            <div class="step-indicator">PASO 03 — PAGO</div>
+            <h1 class="page-title" style="margin-top: 1rem;">Casi listo, {{ bookingName.split(' ')[0] }}</h1>
+            <p class="page-desc">Para asegurar tu cita para <strong>{{ state().serviceName }}</strong>, se requiere un depósito del 30%.</p>
+
+            <!-- SUMMARY CARD -->
+            <div class="card summary-card">
+                <div class="summary-header">
+                    <div class="summary-title">
+                        <span class="label">RESUMEN DE CITA</span>
+                        <h3>{{ state().serviceName }}</h3>
+                    </div>
+                    <span class="status-badge"><i class="ph-fill ph-shield-check"></i> POR CONFIRMAR</span>
+                </div>
+
+                <div class="summary-details">
+                    <div class="detail-item">
+                        <div class="icon"><i class="ph ph-calendar"></i></div>
+                        <div class="text">
+                            <span class="label">Fecha y Hora</span>
+                            <p>{{ formatDate(state().selectedDate) }} - {{ state().selectedSlot }}</p>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="icon"><i class="ph ph-user"></i></div>
+                        <div class="text">
+                            <span class="label">Paciente</span>
+                            <p>{{ bookingName }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="price-breakdown">
+                    <div class="price-row">
+                        <span>Costo de Consulta</span>
+                        <span>{{ state().price }}</span>
+                    </div>
+                    <div class="price-row highlight">
+                        <span>Depósito Requerido (30%)</span>
+                        <span class="final-price">${{ getDepositAmount() | number:'1.2-2' }} MXN</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRANSFER DETAILS -->
+            <div class="card transfer-card">
+                <div class="card-header">
+                    <h3>Detalles de Transferencia BBVA</h3>
+                </div>
+                <div class="transfer-grid">
+                    <div class="transfer-item">
+                        <span class="label">BANCO</span>
+                        <p>{{ bankDetails.bank }}</p>
+                    </div>
+                    <div class="transfer-item">
+                        <span class="label">BENEFICIARIO</span>
+                        <p>{{ bankDetails.holder }}</p>
+                    </div>
+                    <div class="transfer-item full-width">
+                        <span class="label">CLABE INTERBANCARIA</span>
+                        <div class="clabe-copy">
+                            <p>{{ bankDetails.clabe }}</p>
+                            <i class="ph ph-copy"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UPLOAD INTERACTION -->
+            <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none" accept="image/*,application/pdf">
+            
+            <button class="upload-btn" [class.loading]="isUploading()" (click)="triggerFileInput(fileInput)">
+                <ng-container *ngIf="!isUploading()">
+                    <i class="ph ph-cloud-arrow-up"></i>
+                    <span>Subir Comprobante</span>
+                </ng-container>
+                <ng-container *ngIf="isUploading()">
+                    <i class="ph ph-circle-notch animate-spin"></i>
+                    <span>Validando comprobante...</span>
+                </ng-container>
+            </button>
+            <p class="upload-hint">Formatos: PDF, JPG, PNG. Máx: 5MB.</p>
+
+            <div class="card assistance-card" style="cursor: pointer;">
+                <div class="assistance-content">
+                    <div class="assistance-icon"><i class="ph-fill ph-headset"></i></div>
+                    <div class="assistance-text">
+                        <h4>¿Dudas con el pago?</h4>
+                        <p>Chatea con nuestro equipo soporte.</p>
+                    </div>
+                    <i class="ph ph-caret-right"></i>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- STEP 4: FINAL SUCCESS -->
+        @if (state().step === 4) {
+        <div class="success-screen animate-fade-in">
+            <div class="success-header">
+                <div class="check-circle animate-pop">
+                    <i class="ph ph-check"></i>
+                </div>
+                <h1 class="success-title">¡Cita Agendada!</h1>
+                <p class="success-subtitle">Hemos recibido tu comprobante. Tu espacio ha sido reservado con éxito.</p>
+            </div>
+
+            <div class="success-card card">
+                <div class="dr-profile">
+                    <img [src]="doctor.img" [alt]="doctor.name" class="dr-img">
+                    <div class="dr-text">
+                        <h3>{{ doctor.name }}</h3>
+                        <p>{{ doctor.title }}</p>
+                    </div>
+                </div>
+                
+                <div class="appointment-details">
+                    <div class="info-row">
+                        <span class="label">FECHA</span>
+                        <p>{{ state().selectedDate | date:'fullDate':'':'es-MX' }}</p>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">HORA</span>
+                        <p>{{ state().selectedSlot }}</p>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">SERVICIO</span>
+                        <p>{{ state().serviceName }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="next-steps">
+                <p>Te hemos enviado un recordatorio a tu WhatsApp.</p>
+                <p class="welcome-text">¡Te esperamos para transformar tu sonrisa!</p>
+            </div>
+
+            <button class="btn-success-finish" (click)="finish()">
+                Listo <i class="ph ph-check-circle"></i>
+            </button>
+        </div>
+        }
+    </main>
+
+    <!-- BOTTOM TAB BAR -->
+    <nav class="booking-nav" *ngIf="state().step < 4">
+        <a class="nav-item" [class.active]="state().step === 1" (click)="fb.setStep(1)">
+            <i class="ph ph-calendar"></i>
+            <span>CUÁNDO</span>
+        </a>
+        <a class="nav-item" [class.active]="state().step === 2" (click)="state().selectedSlot && fb.setStep(2)">
+            <i class="ph ph-user"></i>
+            <span>QUIÉN</span>
+        </a>
+        <a class="nav-item" [class.active]="state().step === 3" (click)="bookingName && bookingPhone && fb.setStep(3)">
+            <i class="ph ph-credit-card"></i>
+            <span>PAGO</span>
+        </a>
+    </nav>
+</div>

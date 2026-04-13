@@ -1,0 +1,53 @@
+<div class="login-container">
+  <div class="login-card">
+    <header class="login-header">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+        </svg>
+      </div>
+      <p>Dra. Sarai Rios</p>
+    </header>
+
+    <div *ngIf="errorMessage()" class="error-alert animate-fade-in">
+      <i class="ph ph-warning-circle"></i>
+      {{ errorMessage() }}
+    </div>
+
+    <form class="login-form" [formGroup]="loginForm" (ngSubmit)="onLogin()">
+      <div class="form-group">
+        <div class="input-wrapper" [class.error]="loginForm.get('user')?.invalid && loginForm.get('user')?.touched">
+          <i class="ph ph-user"></i>
+          <input type="text" id="user" formControlName="user" placeholder="Usuario" autocomplete="username">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="input-wrapper" [class.error]="loginForm.get('nip')?.invalid && loginForm.get('nip')?.touched">
+          <i class="ph ph-key"></i>
+          <input type="password" id="nip" formControlName="nip" placeholder="NIP" maxlength="4"
+            autocomplete="current-password">
+        </div>
+      </div>
+
+      <div class="form-options">
+        <label class="remember-me">
+          <input type="checkbox"> Recordarme
+        </label>
+        <a href="#" class="forgot-password">¿Olvidaste tu NIP?</a>
+      </div>
+
+      <button type="submit" class="login-btn" [disabled]="loginForm.invalid || isLoading()">
+        <span *ngIf="!isLoading()">Entrar al Sistema</span>
+        <span *ngIf="isLoading()">
+          <i class="ph ph-circle-notch animate-spin"></i> Accediendo...
+        </span>
+      </button>
+    </form>
+
+    <footer class="login-footer">
+      <p>© 2026 MEYISOFT DENTAL</p>
+    </footer>
+  </div>
+</div>
