@@ -7,14 +7,18 @@ C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyiso
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\enums\PagoStatus.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\models\request\LoginRequest.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\entity\Pago.java
+C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\entity\RegistroFolio.java
+C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\models\request\UsuarioRequest.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\service\NotificationService.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\enums\SubscriptionStatus.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\repository\EmpresaRepository.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\config\CorsConfig.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\repository\CitaRepository.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\models\dto\ClinicalConfigDTO.java
+C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\repository\RegistroFolioRepository.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\controller\PagoController.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\models\dto\CitaDTO.java
+C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\service\UsuarioService.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\entity\BaseEntity.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\entity\Empresa.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\service\EmailService.java
@@ -23,6 +27,7 @@ C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyiso
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\Application.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\models\request\RegisterTenantRequest.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\models\response\AuthResponse.java
+C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\controller\UsuarioController.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\enums\PaymentMethod.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\service\PacienteService.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\service\AuthCRMService.java
@@ -45,8 +50,11 @@ C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyiso
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\repository\SucursalRepository.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\service\WhatsAppService.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\exception\GlobalExceptionHandler.java
+C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\models\dto\SlotDisponibilidadDTO.java
+C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\models\response\UsuarioResponse.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\controller\auth\AuthController.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\enums\TicketStatus.java
+C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\models\dto\DisponibilidadDiaDTO.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\security\JwtUtil.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\utils\SchemaFixer.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\controller\CitaController.java
@@ -55,6 +63,7 @@ C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyiso
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\models\dto\ServicioDentalDTO.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\security\UserPrincipal.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\config\OpenApiConfig.java
+C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\controller\PublicController.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\entity\Cita.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\security\JwtFilter.java
 C:\Users\bicos\OneDrive\Documentos\dental\dental.system\src\main\java\com\meyisoft\dental\system\models\response\ErrorResponse.java

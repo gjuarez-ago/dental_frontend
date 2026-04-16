@@ -4,6 +4,7 @@ import com.meyisoft.dental.system.entity.Cita;
 import com.meyisoft.dental.system.entity.Paciente;
 import com.meyisoft.dental.system.entity.Pago;
 import com.meyisoft.dental.system.entity.ServicioDental;
+import com.meyisoft.dental.system.enums.AppointmentStatus;
 import com.meyisoft.dental.system.enums.PagoStatus;
 import com.meyisoft.dental.system.enums.PaymentMethod;
 import com.meyisoft.dental.system.enums.TicketStatus;
@@ -93,6 +94,9 @@ public class PagoService {
         }
         paciente.setSaldoPendiente(paciente.getSaldoPendiente().subtract(dto.getMonto()));
         pacienteRepository.save(paciente);
+        
+        // 4. FINALIZAR CITA SI SALDO ES 0 Y ESTÁ EN POR_LIQUIDAR
+        checkAndFinalizeCita(dto.getCitaId(), tenantId);
 
         return mapToDTO(saved);
     }
@@ -151,7 +155,7 @@ public class PagoService {
                 .saldoPendiente(saldoPendienteCita)
                 .costoDefinido(cita.getMontoTotal() != null)
                 .estadoTicket(estadoTicket)
-                .historialPagos(pagos.stream().map(this::mapToDTO).collect(Collectors.toList()))
+                .historialPagos(pagos.stream().map(p -> this.mapToDTO(p)).collect(Collectors.toList()))
                 .build();
     }
 
@@ -168,7 +172,27 @@ public class PagoService {
                 throw new BusinessException("NOT_FOUND", "El motivo de rechazo es obligatorio", HttpStatus.BAD_REQUEST);
             }
         }
-        return mapToDTO(repository.save(pago));
+        Pago saved = repository.save(pago);
+        
+        // Si el pago fue aprobado, verificar si se debe finalizar la cita
+        if (nuevoStatus == PagoStatus.APROBADO) {
+            checkAndFinalizeCita(pago.getCitaId(), tenantId);
+        }
+        
+        return mapToDTO(saved);
+    }
+
+    private void checkAndFinalizeCita(UUID citaId, UUID tenantId) {
+        CitaResumenFinancieroDTO resumen = obtenerResumenCita(citaId, tenantId);
+        if (resumen.getEstadoTicket() == TicketStatus.LIQUIDADO) {
+            citaRepository.findById(citaId).ifPresent(cita -> {
+                if (cita.getEstado() == AppointmentStatus.POR_LIQUIDAR) {
+                    cita.setEstado(AppointmentStatus.FINALIZADA);
+                    citaRepository.save(cita);
+                    log.info("Cita {} finalizada automáticamente tras liquidación", citaId);
+                }
+            });
+        }
     }
 
     private PagoDTO mapToDTO(Pago entity) {

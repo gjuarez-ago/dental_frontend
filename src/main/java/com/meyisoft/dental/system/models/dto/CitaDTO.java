@@ -18,6 +18,7 @@ public class CitaDTO {
     private UUID id;
     private UUID pacienteId;
     private String pacienteNombre; // Auxiliar para el frontend
+    private String pacienteTelefono; // Para perfiles incompletos desde App
     private UUID doctorId;
     private String doctorNombre;   // Auxiliar para el frontend
     private UUID sucursalId;
@@ -28,8 +29,11 @@ public class CitaDTO {
     private AppointmentStatus estado;
     private String motivoConsulta;
     private String notasRecepcion;
+    private String source; // APP, CRM
+    private String folio;
     
     // Información financiera básica
     private java.math.BigDecimal montoTotal;
     private java.math.BigDecimal montoPagado;
+    private String motivoRechazo;
 }

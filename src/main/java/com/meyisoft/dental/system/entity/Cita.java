@@ -43,7 +43,13 @@ public class Cita extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
     @Builder.Default
-    private AppointmentStatus estado = AppointmentStatus.PENDIENTE;
+    private AppointmentStatus estado = AppointmentStatus.POR_CONFIRMAR;
+
+    @Column(name = "source", length = 20)
+    private String source; // APP, CRM
+
+    @Column(name = "folio", length = 20, unique = true)
+    private String folio;
 
     @Column(name = "motivo_consulta", columnDefinition = "TEXT")
     private String motivoConsulta;
@@ -53,5 +59,8 @@ public class Cita extends BaseEntity {
 
     @Column(name = "monto_total", precision = 12, scale = 2)
     private java.math.BigDecimal montoTotal;
+
+    @Column(name = "motivo_rechazo", columnDefinition = "TEXT")
+    private String motivoRechazo;
 
 }

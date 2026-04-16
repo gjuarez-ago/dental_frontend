@@ -63,7 +63,7 @@ public class CitaController {
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestBody CitaDTO dto) {
         
-        CitaDTO result = service.agendar(dto, principal.getTenantId());
+        CitaDTO result = service.agendar(dto, principal.getTenantId(), null);
         
         return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
                 .ok(true)
@@ -81,6 +81,53 @@ public class CitaController {
             @RequestParam(required = false) java.math.BigDecimal montoTotal) {
         
         CitaDTO result = service.actualizarEstado(id, estado, montoTotal, principal.getTenantId());
+        
+        return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
+                .ok(true)
+                .result(result)
+                .timestamp(OffsetDateTime.now())
+                .build());
+    }
+
+    @GetMapping("/por-confirmar")
+    @Operation(summary = "Listar citas que requieren verificación (desde App/Web)")
+    public ResponseEntity<ApiResponse<List<CitaDTO>>> listarPorConfirmar(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) UUID sucursalId) {
+        
+        List<CitaDTO> result = service.listarPorConfirmar(principal.getTenantId(), sucursalId);
+        
+        return ResponseEntity.ok(ApiResponse.<List<CitaDTO>>builder()
+                .ok(true)
+                .result(result)
+                .timestamp(OffsetDateTime.now())
+                .build());
+    }
+
+    @Operation(summary = "Confirmar una cita pendiente asignando/validando el doctor")
+    @PatchMapping("/{id}/confirmar")
+    public ResponseEntity<ApiResponse<CitaDTO>> confirmarCita(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable UUID id,
+            @RequestParam UUID doctorId) {
+        
+        CitaDTO result = service.confirmarCita(id, doctorId, principal.getTenantId());
+        
+        return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
+                .ok(true)
+                .result(result)
+                .timestamp(OffsetDateTime.now())
+                .build());
+    }
+
+    @PatchMapping("/{id}/rechazar")
+    @Operation(summary = "Rechazar una cita pendiente con motivo")
+    public ResponseEntity<ApiResponse<CitaDTO>> rechazarCita(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable UUID id,
+            @RequestParam String motivo) {
+        
+        CitaDTO result = service.rechazarCita(id, motivo, principal.getTenantId());
         
         return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
                 .ok(true)

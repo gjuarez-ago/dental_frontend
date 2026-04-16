@@ -18,4 +18,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
     Iterable<Usuario> findAllByTenantId(@Param("tenantId") UUID tenantId);
 
     java.util.List<Usuario> findByTenantIdAndRolAndRegBorrado(UUID tenantId, com.meyisoft.dental.system.enums.UserRole rol, Integer regBorrado);
+
+    long countByTenantIdAndRolAndRegBorrado(UUID tenantId, com.meyisoft.dental.system.enums.UserRole rol, Integer regBorrado);
+
+    java.util.List<Usuario> findByTenantIdAndSucursalIdPrincipalAndRegBorrado(UUID tenantId, UUID sucursalId, Integer regBorrado);
 }

@@ -26,4 +26,9 @@ public class BusinessException extends RuntimeException {
         this.status = status;
         this.args = new Object[0];
     }
+
+    // Constructor de compatibilidad (default to 400 BAD_REQUEST)
+    public BusinessException(String code, String message) {
+        this(code, message, HttpStatus.BAD_REQUEST);
+    }
 }

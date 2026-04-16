@@ -1,6 +1,7 @@
 package com.meyisoft.dental.system.repository;
 
 import com.meyisoft.dental.system.entity.Cita;
+import com.meyisoft.dental.system.enums.AppointmentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,10 @@ public interface CitaRepository extends JpaRepository<Cita, UUID> {
     
     List<Cita> findByTenantIdAndSucursalIdAndFechaHoraBetweenAndRegBorrado(
             UUID tenantId, UUID sucursalId, OffsetDateTime start, OffsetDateTime end, Integer regBorrado);
+
+    List<Cita> findByTenantIdAndEstadoAndRegBorrado(UUID tenantId, AppointmentStatus estado, Integer regBorrado);
+
+    List<Cita> findByTenantIdAndSucursalIdAndEstadoAndRegBorrado(UUID tenantId, UUID sucursalId, AppointmentStatus estado, Integer regBorrado);
 
     // Búsqueda de traslapes para un doctor específico (Sintaxis Nativa PostgreSQL)
     @Query(nativeQuery = true, value =
