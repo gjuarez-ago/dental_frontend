@@ -33,5 +33,10 @@ export class AdminLayoutComponent {
 
   onAppointmentSaved(data: any) {
     this.layout.closeAppointmentDrawer();
+    // Notificar al servicio para que cualquier componente suscrito (ej. AppointmentsComponent)
+    // recargue su lista de citas automáticamente
+    if (data) {
+      this.appointmentService.notificarCitaGuardada(data);
+    }
   }
 }

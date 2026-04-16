@@ -86,10 +86,10 @@
             </div>
 
             <div class="input-group" [class.error]="isInvalid('time')">
-              <label for="time">Hora *</label>
+              <label for="hourSelect">Hora *</label>
               <div class="time-picker-group">
                 <div class="input-wrapper select-wrapper">
-                  <select [value]="tempHour()" (change)="onTimePartChange('h', $event)">
+                  <select id="hourSelect" [value]="tempHour()" (change)="onTimePartChange('h', $event)">
                     @for (h of hoursSelection(); track h) {
                       <option [value]="h">{{ h }}</option>
                     }
@@ -97,14 +97,14 @@
                 </div>
                 <div class="time-separator">:</div>
                 <div class="input-wrapper select-wrapper">
-                  <select [value]="tempMinute()" (change)="onTimePartChange('m', $event)">
+                  <select id="minuteSelect" [value]="tempMinute()" (change)="onTimePartChange('m', $event)">
                     @for (m of minutesSelection(); track m) {
                       <option [value]="m">{{ m }}</option>
                     }
                   </select>
                 </div>
                 <div class="input-wrapper select-wrapper period-select">
-                  <select [value]="tempPeriod()" (change)="onTimePartChange('p', $event)">
+                  <select id="periodSelect" [value]="tempPeriod()" (change)="onTimePartChange('p', $event)">
                     @for (p of periodsSelection(); track p) {
                       <option [value]="p">{{ p }}</option>
                     }

@@ -1,9 +1,10 @@
 export enum AppointmentStatus {
-  PENDIENTE = 'PENDIENTE',
+  POR_CONFIRMAR = 'POR_CONFIRMAR',
   CONFIRMADA = 'CONFIRMADA',
   LLEGADA = 'LLEGADA',
-  EN_PROCESO = 'EN_PROCESO',
-  COMPLETADA = 'COMPLETADA',
+  EN_CONSULTA = 'EN_CONSULTA',
+  POR_LIQUIDAR = 'POR_LIQUIDAR',
+  FINALIZADA = 'FINALIZADA',
   CANCELADA = 'CANCELADA',
   AUSENTE = 'AUSENTE'
 }
@@ -36,4 +37,16 @@ export interface Cita {
   montoTotal?: number;
   montoPagado?: number;
   ticketStatus?: TicketStatus;
+}
+
+export interface DisponibilidadDia {
+  fecha: string; // ISO Date
+  estaLlena: boolean;
+  esLaboral: boolean;
+}
+
+export interface SlotDisponibilidad {
+  horaInicio: string; // HH:mm
+  horaFin: string;
+  disponible: boolean;
 }

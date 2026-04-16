@@ -9,6 +9,7 @@ import { LandingComponent } from './features/landing/landing';
 import { ServicesComponent } from './features/services/services';
 import { authGuard } from './core/guards/auth.guard';
 import { publicGuard } from './core/guards/public.guard';
+import { UsuariosComponent } from './features/usuarios/usuarios';
 
 export const routes: Routes = [
   {
@@ -51,6 +52,11 @@ export const routes: Routes = [
         path: 'services',
         component: ServicesComponent,
         title: 'Servicios | Dra. Sarai Rios'
+      },
+      {
+        path: 'users',
+        component: UsuariosComponent,
+        title: 'Gestión de Usuarios | MEYISOFT POS'
       }
     ]
   },

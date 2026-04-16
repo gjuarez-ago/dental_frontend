@@ -137,17 +137,17 @@
           <h3 class="section-title"><i class="ph-fill ph-phone-call"></i> En Caso de Emergencia</h3>
           <div class="form-row">
             <div class="input-group">
-              <label>Nombre de contacto de emergencia</label>
+              <label for="emergenciaNombre">Nombre de contacto de emergencia</label>
               <div class="input-wrapper">
                 <i class="ph ph-user-focus"></i>
-                <input type="text" formControlName="emergenciaNombre" placeholder="Nombre completo">
+                <input id="emergenciaNombre" type="text" formControlName="emergenciaNombre" placeholder="Nombre completo">
               </div>
             </div>
             <div class="input-group">
-              <label>Teléfono emergencia</label>
+              <label for="emergenciaTelefono">Teléfono emergencia</label>
               <div class="input-wrapper">
                 <i class="ph ph-phone"></i>
-                <input type="tel" formControlName="emergenciaTelefono" placeholder="55 0000 0000">
+                <input id="emergenciaTelefono" type="tel" formControlName="emergenciaTelefono" placeholder="55 0000 0000">
               </div>
             </div>
           </div>
@@ -158,18 +158,18 @@
           <h3 class="section-title"><i class="ph-fill ph-gear-six"></i> Auditoría y Control Administrativo</h3>
           <div class="form-row">
             <div class="input-group">
-              <label>Saldo Pendiente (Deuda)</label>
+              <label for="saldoPendiente">Saldo Pendiente (Deuda)</label>
               <div class="input-wrapper currency-wrapper">
                 <i class="ph ph-money"></i>
-                <input type="number" formControlName="saldoPendiente" placeholder="0.00">
+                <input id="saldoPendiente" type="number" formControlName="saldoPendiente" placeholder="0.00">
               </div>
             </div>
             <div class="input-group">
-              <label>Estado del Expediente</label>
+              <label for="expedienteCompletoPrincipal">Estado del Expediente</label>
               <div class="toggle-container">
                 <div class="toggle-switch">
-                  <input type="checkbox" id="expedienteCompleto" formControlName="expedienteCompleto">
-                  <label for="expedienteCompleto" class="slider"></label>
+                  <input type="checkbox" id="expedienteCompletoPrincipal" formControlName="expedienteCompleto">
+                  <label for="expedienteCompletoPrincipal" class="slider"></label>
                 </div>
                 <span class="toggle-label">{{ patientForm.get('expedienteCompleto')?.value ? 'Expediente Finalizado' : 'Pendiente de Completar' }}</span>
               </div>

@@ -194,7 +194,7 @@ export class AppointmentDrawerComponent implements OnChanges, OnDestroy {
         servicioId: val.servicioId,
         fechaHora: fechaHora,
         duracionMinutos: val.duracionMinutos,
-        estado: AppointmentStatus.PENDIENTE,
+        estado: AppointmentStatus.CONFIRMADA,
         motivoConsulta: val.motivoConsulta,
         notasRecepcion: val.notasRecepcion
       };

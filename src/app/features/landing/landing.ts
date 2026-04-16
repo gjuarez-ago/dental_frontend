@@ -75,7 +75,7 @@ export class LandingComponent {
   ];
 
   openBooking(serviceName: string, price: string): void {
-    this.bookingService.setService(serviceName, price);
+    this.bookingService.setService({ nombre: serviceName, price });
     this.router.navigate(['/booking']);
   }
 }

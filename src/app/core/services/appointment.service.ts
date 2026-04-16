@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Observable, map } from 'rxjs';
+import { Observable, Subject, map } from 'rxjs';
 import { Cita, AppointmentStatus } from '../models/appointment.model';
 import { ApiResponse } from './patient.service';
 
@@ -11,6 +11,15 @@ import { ApiResponse } from './patient.service';
 export class AppointmentService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/citas`;
+
+  // Subject que notifica a cualquier componente suscrito cuando una cita fue guardada
+  private readonly _citaGuardada$ = new Subject<Cita>();
+  readonly citaGuardada$ = this._citaGuardada$.asObservable();
+
+  /** Emitir manualmente que una cita fue guardada (para recargar listas) */
+  notificarCitaGuardada(cita: Cita): void {
+    this._citaGuardada$.next(cita);
+  }
 
   getCitas(sucursalId: string, start: string, end: string): Observable<Cita[]> {
     let params = new HttpParams()

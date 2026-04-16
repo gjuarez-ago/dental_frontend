@@ -61,7 +61,7 @@
                 <div class="slots-grid">
                     @for (slot of timeSlots; track slot) {
                         <button class="slot-btn" 
-                                [class.selected]="state().selectedSlot === slot"
+                                [class.selected]="state().selectedSlot?.horaInicio === slot"
                                 (click)="onSlotSelect(slot)">
                             {{ slot }}
                         </button>

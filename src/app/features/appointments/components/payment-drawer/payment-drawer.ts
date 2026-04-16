@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PaymentService, CitaResumenFinanciero, PaymentMethod, Pago, PagoStatus, TicketStatus } from '../../../../core/services/payment.service';
@@ -33,6 +33,16 @@ export class PaymentDrawerComponent {
   loading = signal(false);
   submitting = signal(false);
 
+  // Cálculo dinámico del saldo pendiente basado en la edición del costo total
+  readonly saldoPendienteActual = computed(() => {
+    const res = this.resumen();
+    if (!res) return 0;
+    
+    // Si el costo es editable, usamos el valor del input, si no, el precio base oficial
+    const total = res.costoDefinido ? res.precioBase : this.montoTotalEditado();
+    return Math.max(0, total - (res.totalPagado || 0));
+  });
+
   // Exponer los enums al template
   readonly PagoStatus = PagoStatus;
   readonly TicketStatus = TicketStatus;
@@ -66,9 +76,10 @@ export class PaymentDrawerComponent {
   registrarPago() {
     if (!this._citaId() || !this._pacienteId()) return;
 
-    // Validación live: No saldo a favor basado en el saldo real
-    if (this.nuevoPago.monto! > this.resumen()?.saldoPendiente!) {
-        alert('No se permite saldo a favor. El abono no puede ser mayor al saldo pendiente.');
+    // Validación live: No saldo a favor basado en el saldo real calculado
+    const saldoMaximo = this.saldoPendienteActual();
+    if (this.nuevoPago.monto! > saldoMaximo) {
+        alert(`No se permite saldo a favor. El abono no puede ser mayor al saldo pendiente actual (${saldoMaximo}).`);
         return;
     }
 

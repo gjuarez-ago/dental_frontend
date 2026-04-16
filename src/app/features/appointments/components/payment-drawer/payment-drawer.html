@@ -64,32 +64,32 @@
               <!-- MONTO A PAGAR -->
               <div class="input-block">
                 <label>Monto que paga el paciente hoy</label>
-                <div class="input-container accent" [class.error]="nuevoPago.monto! > (resumen()?.saldoPendiente ?? 0)">
+                <div class="input-container accent" [class.error]="nuevoPago.monto! > saldoPendienteActual()">
                   <span class="prefix">$</span>
                   <input type="number" [(ngModel)]="nuevoPago.monto" placeholder="0.00">
                   <span class="suffix">MXN</span>
                 </div>
-                @if (nuevoPago.monto! > (resumen()?.saldoPendiente ?? 0)) {
+                @if (nuevoPago.monto! > saldoPendienteActual()) {
                   <span class="error-text">No se permite saldo a favor</span>
                 }
+            </div>
+          </div>
+
+          <!-- BALANCE DINÁMICO (Solo si hay deuda) -->
+          @if (saldoPendienteActual() > 0) {
+            <div class="balance-summary" [class.paid-off]="nuevoPago.monto === saldoPendienteActual()">
+              <div class="calculation">
+                <span>{{ saldoPendienteActual() | currency:'MXN':'symbol-narrow' }}</span>
+                <i class="ph ph-minus"></i>
+                <span>{{ nuevoPago.monto | currency:'MXN':'symbol-narrow' }}</span>
+              </div>
+              <div class="result">
+                <span class="label">Resta por Liquidar:</span>
+                <span class="amount">{{ (saldoPendienteActual() - (nuevoPago.monto || 0)) | currency:'MXN':'symbol-narrow' }}</span>
               </div>
             </div>
-
-            <!-- BALANCE DINÁMICO (Solo si hay deuda) -->
-            @if ((resumen()?.saldoPendiente ?? 0) > 0) {
-                <div class="balance-summary" [class.paid-off]="nuevoPago.monto === resumen()!.saldoPendiente">
-                <div class="calculation">
-                    <span>{{ resumen()!.saldoPendiente | currency:'MXN':'symbol-narrow' }}</span>
-                    <i class="ph ph-minus"></i>
-                    <span>{{ nuevoPago.monto | currency:'MXN':'symbol-narrow' }}</span>
-                </div>
-                <div class="result">
-                    <span class="label">Resta por Liquidar:</span>
-                    <span class="amount">{{ ((resumen()?.saldoPendiente ?? 0) - (nuevoPago.monto || 0)) | currency:'MXN':'symbol-narrow' }}</span>
-                </div>
-                </div>
-            }
-          } @else {
+          }
+        } @else {
             <!-- RESUMEN ESTÁTICO (Cuenta Liquidada) -->
             <div class="static-summary">
               <div class="summary-item">
@@ -184,7 +184,7 @@
       @if (resumen()?.estadoTicket !== TicketStatus.LIQUIDADO) {
         <button class="btn-confirm" 
                 (click)="registrarPago()" 
-                [disabled]="submitting() || (nuevoPago.monto || 0) <= 0 || nuevoPago.monto! > (resumen()?.saldoPendiente ?? 0)">
+                [disabled]="submitting() || (nuevoPago.monto || 0) <= 0 || nuevoPago.monto! > saldoPendienteActual()">
           @if (submitting()) {
             <i class="ph ph-circle-notch spinning"></i> Guardando...
           } @else {

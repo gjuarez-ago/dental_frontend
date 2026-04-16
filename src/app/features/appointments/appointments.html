@@ -39,10 +39,25 @@
   </div>
 
   <main class="daily-main">
-    <!-- RESUMEN DEL DÍA -->
-    <div class="day-summary">
-        <h2>{{ selectedDateSummary() }}</h2>
-        <p>Tienes {{ appointments().length }} citas programadas para hoy</p>
+    <!-- BARRA DE ESTADÍSTICAS DIARIAS -->
+    <div class="day-stats-bar">
+        <div class="stat-item">
+            <span class="stat-value">{{ stats().total }}</span>
+            <span class="stat-label">Citas</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item waiting">
+            <span class="stat-value">{{ stats().waiting }}</span>
+            <span class="stat-label">Esperando</span>
+        </div>
+        <div class="stat-item arrived">
+            <span class="stat-value">{{ stats().arrived }}</span>
+            <span class="stat-label">En Sala</span>
+        </div>
+        <div class="stat-item consultation">
+            <span class="stat-value">{{ stats().inConsultation }}</span>
+            <span class="stat-label">En Consulta</span>
+        </div>
     </div>
 
     <!-- LISTADO DE TARJETAS REDISEÑADO -->
@@ -55,46 +70,69 @@
                 <span class="period">{{ appointment.fechaHora | date:'a' | lowercase }}</span>
             </div>
 
-            <div class="vertical-divider"></div>
-
-            <div class="card-info">
-                <div class="info-main">
-                    <span class="patient-name">{{ appointment.pacienteNombre || 'Paciente sin nombre' }}</span>
-                    <span class="service-name">{{ appointment.servicioNombre || 'Consulta General' }}</span>
+            <div class="card-content-wrapper">
+                <div class="patient-avatar">
+                    {{ appointment.pacienteNombre ? appointment.pacienteNombre.substring(0,1) : 'P' }}{{ appointment.pacienteNombre?.split(' ')?.length! > 1 ? appointment.pacienteNombre?.split(' ')![1].substring(0,1) : '' }}
                 </div>
-                
-                <div class="info-footer">
-                    <span class="status-badge-minimal" [class]="appointment.estado.toLowerCase()">
-                        {{ appointment.estado }}
-                    </span>
 
-                    @if (appointment.ticketStatus && appointment.estado === 'COMPLETADA') {
-                        <span class="finance-badge" [class]="appointment.ticketStatus.toLowerCase()">
-                            <i class="ph-fill ph-check-circle"></i> {{ appointment.ticketStatus }}
+                <div class="card-info">
+                    <div class="info-main">
+                        <div class="name-row">
+                            <span class="patient-name">{{ appointment.pacienteNombre || 'Paciente sin nombre' }}</span>
+                            @if (appointment.notasRecepcion) {
+                                <i class="ph ph-note-blank note-icon" [title]="appointment.notasRecepcion"></i>
+                            }
+                        </div>
+                        <div class="detail-row">
+                            <span class="service-name">{{ appointment.servicioNombre || 'Consulta General' }}</span>
+                            <span class="separator">•</span>
+                            <span class="doctor-name">Dr. {{ appointment.doctorNombre || 'Por asignar' }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-footer">
+                        <span class="status-badge-minimal" [class]="appointment.estado.toLowerCase()">
+                            {{ appointment.estado.replace('_', ' ') }}
                         </span>
-                    }
+
+                        @if (appointment.ticketStatus && (appointment.estado === 'POR_LIQUIDAR' || appointment.estado === 'FINALIZADA')) {
+                            <span class="finance-badge" [class]="appointment.ticketStatus.toLowerCase()">
+                                <i class="ph-fill ph-check-circle"></i> {{ appointment.ticketStatus.replace('_', ' ') }}
+                            </span>
+                        }
+                    </div>
                 </div>
             </div>
 
             <div class="card-actions">
-                @if (appointment.estado === 'PENDIENTE' || appointment.estado === 'CONFIRMADA') {
-                    <button class="action-btn" (click)="updateStatus(appointment.id!, AppointmentStatus.LLEGADA)" title="Marcar Llegada">
+                @if (appointment.estado === 'POR_CONFIRMAR' || appointment.estado === 'CONFIRMADA') {
+                    <button class="action-btn next-step" (click)="updateStatus(appointment.id!, StatusEnum.LLEGADA)" title="Marcar Llegada">
                         <i class="ph ph-door-open"></i>
+                        <span class="btn-label">Marcar Llegada</span>
                     </button>
                 }
                 @if (appointment.estado === 'LLEGADA') {
-                    <button class="action-btn primary" (click)="updateStatus(appointment.id!, AppointmentStatus.EN_PROCESO)" title="Atender">
+                    <button class="action-btn next-step primary" (click)="updateStatus(appointment.id!, StatusEnum.EN_CONSULTA)" title="Atender">
                         <i class="ph ph-stethoscope"></i>
+                        <span class="btn-label">Atender</span>
                     </button>
                 }
-                @if (appointment.estado === 'EN_PROCESO') {
-                    <button class="action-btn success" (click)="updateStatus(appointment.id!, AppointmentStatus.COMPLETADA)" title="Terminar">
+                @if (appointment.estado === 'EN_CONSULTA') {
+                    <button class="action-btn next-step success" (click)="updateStatus(appointment.id!, StatusEnum.POR_LIQUIDAR)" title="Terminar Consulta">
                         <i class="ph ph-check-circle"></i>
+                        <span class="btn-label">Terminar</span>
                     </button>
                 }
-                @if (appointment.estado === 'COMPLETADA') {
-                    <button class="action-btn highlight" (click)="openPaymentDrawer(appointment)" title="Cobro">
+                @if (appointment.estado === 'POR_LIQUIDAR') {
+                    <button class="action-btn next-step highlight" (click)="openPaymentDrawer(appointment)" title="Cobro">
                         <i class="ph ph-receipt"></i>
+                        <span class="btn-label">Registrar Cobro</span>
+                    </button>
+                }
+                @if (appointment.estado === 'FINALIZADA') {
+                    <button class="action-btn success-alt" title="Finalizada" disabled>
+                        <i class="ph ph-check-double"></i>
+                        <span class="btn-label">Finalizada</span>
                     </button>
                 }
                 <button class="more-btn"><i class="ph ph-dots-three-outline-vertical"></i></button>
@@ -119,9 +157,4 @@
   (paymentRecorded)="onPaymentReceived()">
 </app-payment-drawer>
 
-<app-appointment-drawer
-  [isOpen]="layout.isAppointmentDrawerOpen()"
-  [initialDate]="selectedDate()"
-  (close)="layout.closeAppointmentDrawer()"
-  (saved)="onAppointmentSaved($event)">
-</app-appointment-drawer>
+
