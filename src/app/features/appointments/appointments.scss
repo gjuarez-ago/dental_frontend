@@ -519,6 +519,18 @@
         background: #FFEDD5;
       }
     }
+
+    &.history-btn {
+      background: #F8FAFC;
+      color: #475569;
+      border-color: #E2E8F0;
+
+      &:hover {
+        background: #F1F5F9;
+        border-color: #64748B;
+        color: #1E293B;
+      }
+    }
   }
 
   .more-btn {

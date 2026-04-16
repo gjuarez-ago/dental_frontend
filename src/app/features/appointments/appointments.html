@@ -1,160 +1,162 @@
 <div class="appointments-page premium-view animate-fade-in">
-  
-  <!-- HEADER ESTILO APP -->
-  <header class="app-header">
-    <div class="header-left">
-      <div class="month-selector">
-          <button class="nav-month-btn" (click)="changeMonth(-1)"><i class="ph ph-caret-left"></i></button>
-          <h1>{{ currentMonth() }}</h1>
-          <button class="nav-month-btn" (click)="changeMonth(1)"><i class="ph ph-caret-right"></i></button>
-      </div>
-    </div>
-    <div class="header-right">
-      <button class="btn-today-minimal" (click)="setToday()">Hoy</button>
-      <button class="btn-compact-primary" (click)="layout.toggleAppointmentDrawer()">
-        Agendar Cita
-      </button>
-    </div>
-  </header>
 
-  <!-- SELECTOR DE SEMANA HORIZONTAL -->
-  <div class="week-strip-container">
-    <div class="week-strip">
-        @for (day of weekDays(); track day.date) {
-            <div class="day-slot" 
-                 [class.active]="day.isSelected" 
-                 [class.is-today]="day.isToday"
-                 (click)="selectDay(day.date)">
+    <!-- HEADER ESTILO APP -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="month-selector">
+                <button class="nav-month-btn" (click)="changeMonth(-1)"><i class="ph ph-caret-left"></i></button>
+                <h1>{{ currentMonth() }}</h1>
+                <button class="nav-month-btn" (click)="changeMonth(1)"><i class="ph ph-caret-right"></i></button>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn-today-minimal" (click)="setToday()">Hoy</button>
+            <button class="btn-compact-primary" (click)="layout.toggleAppointmentDrawer()">
+                Agendar Cita
+            </button>
+        </div>
+    </header>
+
+    <!-- SELECTOR DE SEMANA HORIZONTAL -->
+    <div class="week-strip-container">
+        <div class="week-strip">
+            @for (day of weekDays(); track day.date) {
+            <div class="day-slot" [class.active]="day.isSelected" [class.is-today]="day.isToday"
+                (click)="selectDay(day.date)">
                 <span class="day-name">{{ day.dayName }}</span>
                 <span class="day-num">{{ day.dayNum }}</span>
-                
+
                 @if (day.isSelected) {
-                    <div class="active-dot"></div>
+                <div class="active-dot"></div>
                 } @else if (day.hasAppointments) {
-                    <div class="appointment-indicator"></div>
+                <div class="appointment-indicator"></div>
                 }
             </div>
-        }
-    </div>
-  </div>
-
-  <main class="daily-main">
-    <!-- BARRA DE ESTADÍSTICAS DIARIAS -->
-    <div class="day-stats-bar">
-        <div class="stat-item">
-            <span class="stat-value">{{ stats().total }}</span>
-            <span class="stat-label">Citas</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item waiting">
-            <span class="stat-value">{{ stats().waiting }}</span>
-            <span class="stat-label">Esperando</span>
-        </div>
-        <div class="stat-item arrived">
-            <span class="stat-value">{{ stats().arrived }}</span>
-            <span class="stat-label">En Sala</span>
-        </div>
-        <div class="stat-item consultation">
-            <span class="stat-value">{{ stats().inConsultation }}</span>
-            <span class="stat-label">En Consulta</span>
+            }
         </div>
     </div>
 
-    <!-- LISTADO DE TARJETAS REDISEÑADO -->
-    <div class="appointments-feed">
-        @for (appointment of appointments(); track appointment.id) {
-          <div class="appointment-card" [attr.data-status]="appointment.estado.toLowerCase()">
-            
-            <div class="card-time" [class.is-pm]="appointment.fechaHora.includes('T12:') || appointment.fechaHora.includes('T13:') || appointment.fechaHora.includes('T14:') || appointment.fechaHora.includes('T15:') || appointment.fechaHora.includes('T16:') || appointment.fechaHora.includes('T17:') || appointment.fechaHora.includes('T18:') || appointment.fechaHora.includes('T19:') || appointment.fechaHora.includes('T20:') || appointment.fechaHora.includes('T21:') || appointment.fechaHora.includes('T22:') || appointment.fechaHora.includes('T23:')">
-                <span class="hour">{{ appointment.fechaHora | date:'h:mm' }}</span>
-                <span class="period">{{ appointment.fechaHora | date:'a' | lowercase }}</span>
+    <main class="daily-main">
+        <!-- BARRA DE ESTADÍSTICAS DIARIAS -->
+        <div class="day-stats-bar">
+            <div class="stat-item">
+                <span class="stat-value">{{ stats().total }}</span>
+                <span class="stat-label">Citas</span>
             </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item waiting">
+                <span class="stat-value">{{ stats().waiting }}</span>
+                <span class="stat-label">Esperando</span>
+            </div>
+            <div class="stat-item arrived">
+                <span class="stat-value">{{ stats().arrived }}</span>
+                <span class="stat-label">En Sala</span>
+            </div>
+            <div class="stat-item consultation">
+                <span class="stat-value">{{ stats().inConsultation }}</span>
+                <span class="stat-label">En Consulta</span>
+            </div>
+        </div>
 
-            <div class="card-content-wrapper">
-                <div class="patient-avatar">
-                    {{ appointment.pacienteNombre ? appointment.pacienteNombre.substring(0,1) : 'P' }}{{ appointment.pacienteNombre?.split(' ')?.length! > 1 ? appointment.pacienteNombre?.split(' ')![1].substring(0,1) : '' }}
+        <!-- LISTADO DE TARJETAS REDISEÑADO -->
+        <div class="appointments-feed">
+            @for (appointment of appointments(); track appointment.id) {
+            <div class="appointment-card" [attr.data-status]="appointment.estado.toLowerCase()">
+
+                <div class="card-time"
+                    [class.is-pm]="appointment.fechaHora.includes('T12:') || appointment.fechaHora.includes('T13:') || appointment.fechaHora.includes('T14:') || appointment.fechaHora.includes('T15:') || appointment.fechaHora.includes('T16:') || appointment.fechaHora.includes('T17:') || appointment.fechaHora.includes('T18:') || appointment.fechaHora.includes('T19:') || appointment.fechaHora.includes('T20:') || appointment.fechaHora.includes('T21:') || appointment.fechaHora.includes('T22:') || appointment.fechaHora.includes('T23:')">
+                    <span class="hour">{{ appointment.fechaHora | date:'h:mm' }}</span>
+                    <span class="period">{{ appointment.fechaHora | date:'a' | lowercase }}</span>
                 </div>
 
-                <div class="card-info">
-                    <div class="info-main">
-                        <div class="name-row">
-                            <span class="patient-name">{{ appointment.pacienteNombre || 'Paciente sin nombre' }}</span>
-                            @if (appointment.notasRecepcion) {
-                                <i class="ph ph-note-blank note-icon" [title]="appointment.notasRecepcion"></i>
-                            }
-                        </div>
-                        <div class="detail-row">
-                            <span class="service-name">{{ appointment.servicioNombre || 'Consulta General' }}</span>
-                            <span class="separator">•</span>
-                            <span class="doctor-name">Dr. {{ appointment.doctorNombre || 'Por asignar' }}</span>
-                        </div>
+                <div class="card-content-wrapper">
+                    <div class="patient-avatar">
+                        {{ appointment.pacienteNombre ? appointment.pacienteNombre.substring(0,1) : 'P' }}{{
+                        appointment.pacienteNombre?.split(' ')?.length! > 1 ? appointment.pacienteNombre?.split('
+                        ')![1].substring(0,1) : '' }}
                     </div>
-                    
-                    <div class="info-footer">
-                        <span class="status-badge-minimal" [class]="appointment.estado.toLowerCase()">
-                            {{ appointment.estado.replace('_', ' ') }}
-                        </span>
 
-                        @if (appointment.ticketStatus && (appointment.estado === 'POR_LIQUIDAR' || appointment.estado === 'FINALIZADA')) {
+                    <div class="card-info">
+                        <div class="info-main">
+                            <div class="name-row">
+                                <span class="patient-name">{{ appointment.pacienteNombre || 'Paciente sin nombre'
+                                    }}</span>
+                                @if (appointment.notasRecepcion) {
+                                <i class="ph ph-note-blank note-icon" [title]="appointment.notasRecepcion"></i>
+                                }
+                            </div>
+                            <div class="detail-row">
+                                <span class="service-name">{{ appointment.servicioNombre || 'Consulta General' }}</span>
+                                <span class="separator">•</span>
+                                <span class="doctor-name">{{ appointment.doctorNombre || 'Por asignar' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="info-footer">
+                            <span class="status-badge-minimal" [class]="appointment.estado.toLowerCase()">
+                                {{ appointment.estado.replace('_', ' ') }}
+                            </span>
+
+                            @if (appointment.ticketStatus && (appointment.estado === 'POR_LIQUIDAR' ||
+                            appointment.estado === 'FINALIZADA')) {
                             <span class="finance-badge" [class]="appointment.ticketStatus.toLowerCase()">
                                 <i class="ph-fill ph-check-circle"></i> {{ appointment.ticketStatus.replace('_', ' ') }}
                             </span>
-                        }
+                            }
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card-actions">
-                @if (appointment.estado === 'POR_CONFIRMAR' || appointment.estado === 'CONFIRMADA') {
-                    <button class="action-btn next-step" (click)="updateStatus(appointment.id!, StatusEnum.LLEGADA)" title="Marcar Llegada">
+                <div class="card-actions">
+                    @if (appointment.estado === 'POR_CONFIRMAR' || appointment.estado === 'CONFIRMADA') {
+                    <button class="action-btn next-step" (click)="updateStatus(appointment.id!, StatusEnum.LLEGADA)"
+                        title="Marcar Llegada">
                         <i class="ph ph-door-open"></i>
                         <span class="btn-label">Marcar Llegada</span>
                     </button>
-                }
-                @if (appointment.estado === 'LLEGADA') {
-                    <button class="action-btn next-step primary" (click)="updateStatus(appointment.id!, StatusEnum.EN_CONSULTA)" title="Atender">
+                    }
+                    @if (appointment.estado === 'LLEGADA') {
+                    <button class="action-btn next-step primary"
+                        (click)="updateStatus(appointment.id!, StatusEnum.EN_CONSULTA)" title="Atender">
                         <i class="ph ph-stethoscope"></i>
                         <span class="btn-label">Atender</span>
                     </button>
-                }
-                @if (appointment.estado === 'EN_CONSULTA') {
-                    <button class="action-btn next-step success" (click)="updateStatus(appointment.id!, StatusEnum.POR_LIQUIDAR)" title="Terminar Consulta">
+                    }
+                    @if (appointment.estado === 'EN_CONSULTA') {
+                    <button class="action-btn next-step success"
+                        (click)="updateStatus(appointment.id!, StatusEnum.POR_LIQUIDAR)" title="Terminar Consulta">
                         <i class="ph ph-check-circle"></i>
                         <span class="btn-label">Terminar</span>
                     </button>
-                }
-                @if (appointment.estado === 'POR_LIQUIDAR') {
-                    <button class="action-btn next-step highlight" (click)="openPaymentDrawer(appointment)" title="Cobro">
+                    }
+                    @if (appointment.estado === 'POR_LIQUIDAR') {
+                    <button class="action-btn next-step highlight" (click)="openPaymentDrawer(appointment)"
+                        title="Cobro">
                         <i class="ph ph-receipt"></i>
                         <span class="btn-label">Registrar Cobro</span>
                     </button>
-                }
-                @if (appointment.estado === 'FINALIZADA') {
-                    <button class="action-btn success-alt" title="Finalizada" disabled>
-                        <i class="ph ph-check-double"></i>
-                        <span class="btn-label">Finalizada</span>
+                    }
+                    @if (appointment.estado === 'FINALIZADA') {
+                    <button class="action-btn history-btn" (click)="openPaymentDrawer(appointment)" title="Ver Historial de Pagos">
+                        <i class="ph ph-receipt"></i>
+                        <span class="btn-label">Ver Historial</span>
                     </button>
-                }
-                <button class="more-btn"><i class="ph ph-dots-three-outline-vertical"></i></button>
+                    }
+                    <button class="more-btn"><i class="ph ph-dots-three-outline-vertical"></i></button>
+                </div>
             </div>
-          </div>
-        } @empty {
-          <div class="empty-feed">
-             <i class="ph ph-calendar-blank"></i>
-             <p>No hay citas registradas para este día.</p>
-             <button class="btn-text" (click)="layout.toggleAppointmentDrawer()">Agendar la primera cita</button>
-          </div>
-        }
-    </div>
-  </main>
+            } @empty {
+            <div class="empty-feed">
+                <i class="ph ph-calendar-blank"></i>
+                <p>No hay citas registradas para este día.</p>
+                <button class="btn-text" (click)="layout.toggleAppointmentDrawer()">Agendar la primera cita</button>
+            </div>
+            }
+        </div>
+    </main>
 
 </div>
 
-<app-payment-drawer 
-  [isOpen]="isPaymentDrawerOpen()" 
-  [cita]="selectedAppointmentForPayment()"
-  (closed)="isPaymentDrawerOpen.set(false)"
-  (paymentRecorded)="onPaymentReceived()">
+<app-payment-drawer [isOpen]="isPaymentDrawerOpen()" [cita]="selectedAppointmentForPayment()"
+    (closed)="isPaymentDrawerOpen.set(false)" (paymentRecorded)="onPaymentReceived()">
 </app-payment-drawer>
-
-

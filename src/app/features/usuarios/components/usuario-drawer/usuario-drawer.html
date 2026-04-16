@@ -14,18 +14,19 @@
     <!-- Form Content -->
     <div class="drawer-body">
       <form [formGroup]="userForm" (ngSubmit)="save()" class="user-form">
-        
+
         <!-- Sección 1: Información Básica -->
         <div class="form-section">
           <h3 class="section-title"><i class="ph-fill ph-user-circle"></i> Información Personal</h3>
-          
+
           <div class="input-group">
             <label for="nombreCompleto">Nombre Completo *</label>
             <div class="input-wrapper">
               <i class="ph ph-user-focus"></i>
-              <input id="nombreCompleto" type="text" formControlName="nombreCompleto" placeholder="Ej. Dr. Juan Pérez">
+              <input id="nombreCompleto" type="text" formControlName="nombreCompleto" placeholder="Ej. Juan Pérez">
             </div>
-            <span class="error-msg" *ngIf="userForm.get('nombreCompleto')?.touched && userForm.get('nombreCompleto')?.invalid">
+            <span class="error-msg"
+              *ngIf="userForm.get('nombreCompleto')?.touched && userForm.get('nombreCompleto')?.invalid">
               El nombre es requerido.
             </span>
           </div>
@@ -52,7 +53,7 @@
         <!-- Sección 2: Configuración de Acceso -->
         <div class="form-section highlight">
           <h3 class="section-title"><i class="ph-fill ph-lock"></i> Credenciales y Rol</h3>
-          
+
           <div class="form-row">
             <div class="input-group">
               <label for="rol">Rol en la Sucursal *</label>
@@ -107,7 +108,7 @@
       <button class="btn-cancel" (click)="onClose()" [disabled]="isSaving">Cancelar</button>
       <button class="btn-save" (click)="save()" [disabled]="userForm.invalid || isSaving">
         <i class="ph ph-spinner animate-spin" *ngIf="isSaving"></i>
-        <i class="ph ph-check-circle" *ngIf="!isSaving"></i> 
+        <i class="ph ph-check-circle" *ngIf="!isSaving"></i>
         {{ isSaving ? 'Guardando...' : 'Guardar Colaborador' }}
       </button>
     </footer>

@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="drawer-header">
       <div class="header-text">
-        <h2>Cobro de Cita</h2>
+        <h2>{{ resumen()?.estadoTicket === TicketStatus.LIQUIDADO ? 'Historial de Pagos' : 'Cobro de Cita' }}</h2>
         <p>{{ resumen()?.pacienteNombre }}</p>
       </div>
       <button class="close-btn" (click)="close()">
