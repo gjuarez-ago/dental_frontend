@@ -137,6 +137,20 @@ export class PaymentDrawerComponent {
     }
   }
 
+  validarMontoTotal(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let val = parseFloat(input.value);
+    if (isNaN(val) || val < 0) val = 0;
+    this.montoTotalEditado.set(val);
+  }
+
+  validarAbono(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let val = parseFloat(input.value);
+    if (isNaN(val) || val < 0) val = 0;
+    this.nuevoPago.monto = val;
+  }
+
   close() {
     this.isOpen = false;
     this.closed.emit();

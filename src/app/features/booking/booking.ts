@@ -1,13 +1,15 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { BookingService } from '../../core/services/booking.service';
+import { SlotDisponibilidad, DisponibilidadDia } from '../../core/models/appointment.model';
+import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 
 @Component({
   selector: 'app-booking',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, NgxSpinnerModule],
   templateUrl: './booking.html',
   styleUrl: './booking.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -15,16 +17,35 @@ import { BookingService } from '../../core/services/booking.service';
 export class BookingComponent implements OnInit {
   protected readonly fb = inject(BookingService);
   private readonly router = inject(Router);
+  private readonly spinner = inject(NgxSpinnerService);
+
+  // Tenant y Sucursal Fijos
+  private readonly tenantId = '550e8400-e29b-41d4-a716-446655440000';
+  private readonly sucursalId = '550e8400-e29b-41d4-a716-446655440001';
 
   // Exponer el estado al template
   readonly state = this.fb.state;
   readonly bankDetails = this.fb.bankDetails;
 
-  // Datos para el calendario y horarios
-  readonly timeSlots = ['09:00 AM', '10:30 AM', '12:00 PM', '01:30 PM', '03:00 PM', '04:30 PM'];
-  readonly currentMonth = 'Abril 2026'; // Mock para el diseño
-  
-  // Doctor Profile (Datos reales de la Dra. Sarai Rios)
+  // Reactividad para disponibilidad
+  readonly monthlyDays = signal<DisponibilidadDia[]>([]);
+  readonly availableSlots = signal<SlotDisponibilidad[]>([]);
+  readonly currentMonthDate = signal<Date>(new Date());
+
+  readonly currentMonthName = computed(() => {
+    const name = this.currentMonthDate().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  });
+
+  // Cálculo de espacios vacíos al inicio del calendario (lunes a domingo)
+  readonly leadingEmptyDays = computed(() => {
+    const firstDay = new Date(this.currentMonthDate().getFullYear(), this.currentMonthDate().getMonth(), 1);
+    let dayOfWeek = firstDay.getDay(); // 0 = Dom, 1 = Lun...
+    // Ajustar a 0 = Lun, 6 = Dom
+    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  });
+
+  // Doctor Profile
   readonly doctor = {
     name: 'Dra. Sarai Rios',
     title: 'CIRUJANO DENTISTA',
@@ -37,27 +58,125 @@ export class BookingComponent implements OnInit {
   // Form fields para el Paso 2
   bookingName = '';
   bookingPhone = '';
+  bookingNotes = '';
 
-  // Interacción de carga
-  isUploading = signal(false);
+  // Estados de carga
+  isLoadingAvailability = signal(false);
+  isLoadingSlots = signal(false);
+  isSubmitting = signal(false);
 
   ngOnInit(): void {
-    // Si no hay un servicio seleccionado, podríamos volver a la landing
     if (!this.state().serviceName) {
       this.router.navigate(['/']);
+      return;
     }
-    // Sincronizar info si ya existe
+    
     this.bookingName = this.state().customerName;
     this.bookingPhone = this.state().customerPhone;
+    
+    this.loadMonthlyAvailability();
+    this.scrollToTop();
   }
 
-  onDateSelect(day: number): void {
-    const date = new Date(2026, 3, day); // Abril 2026
-    this.fb.setDate(date);
+  loadMonthlyAvailability(): void {
+    this.isLoadingAvailability.set(true);
+    this.spinner.show();
+    const date = this.currentMonthDate();
+    this.fb.getMonthlyAvailability(
+      this.tenantId, 
+      this.sucursalId, 
+      date.getMonth() + 1, 
+      date.getFullYear()
+    ).subscribe({
+      next: (days) => {
+        this.monthlyDays.set(days);
+        this.isLoadingAvailability.set(false);
+        this.spinner.hide();
+      },
+      error: () => {
+        this.isLoadingAvailability.set(false);
+        this.spinner.hide();
+      }
+    });
   }
 
-  onSlotSelect(slot: string): void {
+  changeMonth(delta: number): void {
+    const next = new Date(this.currentMonthDate());
+    next.setMonth(next.getMonth() + delta);
+    this.currentMonthDate.set(next);
+    this.fb.setDate(null as any); // Limpiar fecha seleccionada
+    this.availableSlots.set([]);
+    this.loadMonthlyAvailability();
+  }
+
+  onDateSelect(day: DisponibilidadDia): void {
+    if (!day.esLaboral || day.estaLlena) return;
+    
+    const dateStr = day.fecha; // El backend devuelve "YYYY-MM-DD"
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    
+    this.fb.setDate(dateObj);
+    this.loadSlots(dateStr);
+  }
+
+  loadSlots(dateStr: string): void {
+    this.isLoadingSlots.set(true);
+    this.spinner.show();
+    this.fb.getAvailableSlots(
+      this.tenantId,
+      this.sucursalId,
+      dateStr,
+      this.state().serviceId
+    ).subscribe({
+      next: (slots) => {
+        this.availableSlots.set(slots);
+        this.isLoadingSlots.set(false);
+        this.spinner.hide();
+      },
+      error: () => {
+        this.isLoadingSlots.set(false);
+        this.spinner.hide();
+      }
+    });
+  }
+
+  onSlotSelect(slot: SlotDisponibilidad): void {
     this.fb.setSlot(slot);
+    this.scrollToBottom();
+  }
+
+  private scrollToBottom(): void {
+    setTimeout(() => {
+      const scrollOptions: ScrollToOptions = { 
+        top: document.documentElement.scrollHeight, 
+        left: 0, 
+        behavior: 'smooth' 
+      };
+      window.scrollTo(scrollOptions);
+      
+      const container = document.querySelector('.booking-container');
+      if (container) {
+        container.scrollTo({ 
+          top: container.scrollHeight, 
+          behavior: 'smooth' 
+        });
+      }
+    }, 100);
+  }
+
+  private scrollToTop(): void {
+    setTimeout(() => {
+      const scrollOptions: ScrollToOptions = { top: 0, left: 0, behavior: 'smooth' };
+      window.scrollTo(scrollOptions);
+      document.body.scrollTo(scrollOptions);
+      document.documentElement.scrollTo(scrollOptions);
+      
+      const container = document.querySelector('.booking-container');
+      if (container) {
+        container.scrollTo(scrollOptions);
+      }
+    }, 10);
   }
 
   nextStep(): void {
@@ -73,29 +192,84 @@ export class BookingComponent implements OnInit {
         this.fb.setStep(3);
       }
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  // Lógica de archivos
-  triggerFileInput(input: HTMLInputElement): void {
-    if (!this.isUploading()) {
-      input.click();
-    }
+    this.scrollToTop();
   }
 
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (file) {
-      this.isUploading.set(true);
-      
-      // Simulación de carga premium (1.5s)
-      setTimeout(() => {
-        this.isUploading.set(false);
-        this.fb.setReceiptUploaded(true);
-        this.fb.setStep(4);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 1500);
+      this.confirmBooking(file);
     }
+  }
+
+  onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    // Solo permitir números
+    input.value = input.value.replace(/[^0-9]/g, '');
+    this.bookingPhone = input.value;
+    
+    // Auto-limitado a 10 dígitos (opcional si maxlength está en html)
+    if (this.bookingPhone.length > 10) {
+      this.bookingPhone = this.bookingPhone.substring(0, 10);
+    }
+  }
+
+  isPhoneValid(): boolean {
+    return /^[0-9]{10}$/.test(this.bookingPhone);
+  }
+
+  isNameValid(): boolean {
+    return this.bookingName.trim().length >= 3;
+  }
+
+  confirmBooking(file: File): void {
+    this.isSubmitting.set(true);
+    this.spinner.show();
+    
+    const slot = this.state().selectedSlot;
+    const date = this.state().selectedDate;
+    
+    if (!slot || !date) return;
+
+    // Construir DTO para el backend asegurando que no haya desfase de zona horaria (UTC)
+    const timeParts = slot.horaInicio.split(':');
+    const pad = (n: number) => n < 10 ? '0' + n : n;
+    
+    // Obtener desplazamiento local (ej. -06:00 para México)
+    const offset = -date.getTimezoneOffset();
+    const absOffset = Math.abs(offset);
+    const offsetStr = (offset >= 0 ? '+' : '-') + pad(Math.floor(absOffset / 60)) + ':' + pad(absOffset % 60);
+    
+    // Formato completo esperado por OffsetDateTime: YYYY-MM-DDTHH:mm:ss-06:00
+    const fechaLocalConOffset = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(parseInt(timeParts[0]))}:${pad(parseInt(timeParts[1]))}:00${offsetStr}`;
+
+    const citaDto = {
+      sucursalId: this.sucursalId,
+      servicioId: this.state().serviceId,
+      fechaHora: fechaLocalConOffset,
+      duracionMinutos: this.state().duracionMinutos,
+      pacienteNombre: this.bookingName,
+      pacienteTelefono: this.bookingPhone,
+      motivoConsulta: this.state().serviceName,
+      notasRecepcion: this.bookingNotes
+    };
+
+    this.fb.confirmBooking(citaDto, file).subscribe({
+      next: (res) => {
+        this.isSubmitting.set(false);
+        this.spinner.hide();
+        if (res.ok) {
+          this.fb.setReceiptUploaded(true);
+          this.fb.setStep(4);
+          this.scrollToTop();
+        }
+      },
+      error: () => {
+        this.isSubmitting.set(false);
+        this.spinner.hide();
+        alert('Hubo un error al procesar tu cita. Por favor intenta de nuevo.');
+      }
+    });
   }
 
   finish(): void {
@@ -108,7 +282,7 @@ export class BookingComponent implements OnInit {
     if (currentStep > 1 && currentStep < 4) {
       this.fb.setStep(currentStep - 1);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.scrollToTop();
   }
 
   getDepositAmount(): number {
@@ -117,8 +291,7 @@ export class BookingComponent implements OnInit {
 
   formatDate(date: Date | null): string {
     if (!date) return '';
-    const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-    return date.toLocaleDateString('es-ES', options);
+    return date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   goBack(): void {
@@ -128,6 +301,12 @@ export class BookingComponent implements OnInit {
       this.finish();
     } else {
       this.prevStep();
+    }
+  }
+
+  triggerFileInput(input: HTMLInputElement): void {
+    if (!this.isSubmitting()) {
+      input.click();
     }
   }
 }

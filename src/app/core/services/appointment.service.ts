@@ -53,4 +53,23 @@ export class AppointmentService {
       map(res => res.ok ? res.result : null)
     );
   }
+  
+  getPorConfirmar(sucursalId?: string): Observable<Cita[]> {
+    let params = new HttpParams();
+    if (sucursalId) params = params.set('sucursalId', sucursalId);
+    
+    return this.http.get<ApiResponse<Cita[]>>(`${this.apiUrl}/por-confirmar`, { params }).pipe(
+      map(res => res.ok ? res.result : [])
+    );
+  }
+
+  confirmarCita(id: string, doctorId: string): Observable<ApiResponse<Cita>> {
+    const params = new HttpParams().set('doctorId', doctorId);
+    return this.http.patch<ApiResponse<Cita>>(`${this.apiUrl}/${id}/confirmar`, {}, { params });
+  }
+
+  rechazarCita(id: string, motivo: string): Observable<ApiResponse<Cita>> {
+    const params = new HttpParams().set('motivo', motivo);
+    return this.http.patch<ApiResponse<Cita>>(`${this.apiUrl}/${id}/rechazar`, {}, { params });
+  }
 }

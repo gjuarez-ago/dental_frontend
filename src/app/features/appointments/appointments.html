@@ -93,8 +93,9 @@
                         </div>
 
                         <div class="info-footer">
-                            <span class="status-badge-minimal" [class]="appointment.estado.toLowerCase()">
-                                {{ appointment.estado.replace('_', ' ') }}
+                            <span class="status-badge-minimal" [class]="appointment.estado.toLowerCase()" [title]="getStatusData(appointment.estado).description">
+                                <i class="ph" [class]="getStatusData(appointment.estado).icon"></i>
+                                {{ getStatusData(appointment.estado).label }}
                             </span>
 
                             @if (appointment.ticketStatus && (appointment.estado === 'POR_LIQUIDAR' ||
@@ -110,30 +111,30 @@
                 <div class="card-actions">
                     @if (appointment.estado === 'POR_CONFIRMAR' || appointment.estado === 'CONFIRMADA') {
                     <button class="action-btn next-step" (click)="updateStatus(appointment.id!, StatusEnum.LLEGADA)"
-                        title="Marcar Llegada">
-                        <i class="ph ph-door-open"></i>
-                        <span class="btn-label">Marcar Llegada</span>
+                        [title]="getStatusData(StatusEnum.LLEGADA).actionLabel">
+                        <i class="ph" [class]="getStatusData(StatusEnum.LLEGADA).icon"></i>
+                        <span class="btn-label">{{ getStatusData(StatusEnum.LLEGADA).actionLabel }}</span>
                     </button>
                     }
                     @if (appointment.estado === 'LLEGADA') {
                     <button class="action-btn next-step primary"
-                        (click)="updateStatus(appointment.id!, StatusEnum.EN_CONSULTA)" title="Atender">
-                        <i class="ph ph-stethoscope"></i>
-                        <span class="btn-label">Atender</span>
+                        (click)="updateStatus(appointment.id!, StatusEnum.EN_CONSULTA)" [title]="getStatusData(StatusEnum.EN_CONSULTA).actionLabel">
+                        <i class="ph" [class]="getStatusData(StatusEnum.EN_CONSULTA).icon"></i>
+                        <span class="btn-label">{{ getStatusData(StatusEnum.EN_CONSULTA).actionLabel }}</span>
                     </button>
                     }
                     @if (appointment.estado === 'EN_CONSULTA') {
                     <button class="action-btn next-step success"
-                        (click)="updateStatus(appointment.id!, StatusEnum.POR_LIQUIDAR)" title="Terminar Consulta">
-                        <i class="ph ph-check-circle"></i>
-                        <span class="btn-label">Terminar</span>
+                        (click)="updateStatus(appointment.id!, StatusEnum.POR_LIQUIDAR)" [title]="getStatusData(StatusEnum.POR_LIQUIDAR).actionLabel">
+                        <i class="ph" [class]="getStatusData(StatusEnum.POR_LIQUIDAR).icon"></i>
+                        <span class="btn-label">{{ getStatusData(StatusEnum.POR_LIQUIDAR).actionLabel }}</span>
                     </button>
                     }
                     @if (appointment.estado === 'POR_LIQUIDAR') {
                     <button class="action-btn next-step highlight" (click)="openPaymentDrawer(appointment)"
-                        title="Cobro">
-                        <i class="ph ph-receipt"></i>
-                        <span class="btn-label">Registrar Cobro</span>
+                        [title]="getStatusData(StatusEnum.POR_LIQUIDAR).actionLabel">
+                        <i class="ph" [class]="getStatusData(StatusEnum.POR_LIQUIDAR).icon"></i>
+                        <span class="btn-label">{{ getStatusData(StatusEnum.POR_LIQUIDAR).actionLabel }}</span>
                     </button>
                     }
                     @if (appointment.estado === 'FINALIZADA') {

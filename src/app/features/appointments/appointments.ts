@@ -5,6 +5,7 @@ import { LayoutService } from '../../core/services/layout.service';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { signal, computed } from '@angular/core';
 import { Cita, AppointmentStatus } from '../../core/models/appointment.model';
+import { APPOINTMENT_STATUS_METADATA } from '../../core/constants/appointment-status.constants';
 import { finalize, Subject, takeUntil } from 'rxjs';
 
 export interface CalendarDay {
@@ -37,8 +38,9 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly toastr = inject(ToastrService);
 
-  // Exponer enum al template
+  // Exponer enum y metadatos al template
   public readonly StatusEnum = AppointmentStatus;
+  public readonly StatusMetadata = APPOINTMENT_STATUS_METADATA;
 
   // Estados del Calendario
   readonly viewDate = signal(new Date());   // Mes que se está viendo
@@ -323,6 +325,10 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     // Tomamos la inicial del primer apellido (segunda palabra)
     const initial = parts[1] ? ` ${parts[1][0]}.` : '';
     return `${firstName}${initial}`;
+  }
+
+  getStatusData(status: AppointmentStatus) {
+    return this.StatusMetadata[status];
   }
 
   getIconForType(type: string): string {

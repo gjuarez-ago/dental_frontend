@@ -1,5 +1,7 @@
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { AppointmentService } from '../../core/services/appointment.service';
+import { Cita, AppointmentStatus } from '../../core/models/appointment.model';
 
 interface ComprobantePendiente {
   id: string;
@@ -21,67 +23,75 @@ interface ComprobantePendiente {
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
+  private readonly citaService = inject(AppointmentService);
+
   readonly stats = [
     { label: 'Ingresos Hoy', value: '$8,450.00 MXN', trend: '+12%', up: true, color: '#6366f1' },
     { label: 'Citas Hoy', value: '12', trend: '+2', up: true, color: '#10b981' },
     { label: 'Pacientes Nuevos', value: '4', trend: '+5%', up: true, color: '#f59e0b' }
   ];
 
-  readonly comprobantesPendientes = signal<ComprobantePendiente[]>([
-    { 
-      id: '1', 
-      pacienteNombre: 'Elena Ruiz', 
-      pacienteId: 'D-8821', 
-      prioridad: 'URGENTE', 
-      fecha: '12 Oct, 2023', 
-      hora: '09:45 AM', 
-      tratamiento: 'Anticipo Endodoncia',
-      monto: '$500.00',
-      comprobanteUrl: 'https://images.unsplash.com/photo-1583522684074-90141cb3352f?w=400' 
-    },
-    { 
-      id: '2', 
-      pacienteNombre: 'Marco Torres', 
-      pacienteId: 'D-8822', 
-      prioridad: 'ESTÁNDAR', 
-      fecha: '12 Oct, 2023', 
-      hora: '10:12 AM', 
-      tratamiento: 'Pago Limpieza Profesional',
-      monto: '$350.00',
-      comprobanteUrl: '' 
-    },
-    { 
-      id: '3', 
-      pacienteNombre: 'Sofía Jiménez', 
-      pacienteId: 'D-8231', 
-      prioridad: 'NUEVO', 
-      fecha: '12 Oct, 2023', 
-      hora: '11:03 AM', 
-      tratamiento: 'Abono Ortodoncia',
-      monto: '$1,200.00',
-      comprobanteUrl: '' 
-    },
-    { 
-      id: '4', 
-      pacienteNombre: 'Julián Vélez', 
-      pacienteId: 'D-8235', 
-      prioridad: 'ESTÁNDAR', 
-      fecha: '12 Oct, 2023', 
-      hora: '01:15 PM', 
-      tratamiento: 'Depósito Valoración',
-      monto: '$200.00',
-      comprobanteUrl: '' 
-    },
-  ]);
+  readonly comprobantesPendientes = signal<ComprobantePendiente[]>([]);
+  private readonly rawCitas = signal<Cita[]>([]);
+
+  ngOnInit(): void {
+    this.cargarCitasPendientes();
+  }
+
+  cargarCitasPendientes(): void {
+    this.citaService.getPorConfirmar().subscribe({
+      next: (citas) => {
+        this.rawCitas.set(citas);
+        this.comprobantesPendientes.set(citas.map(c => this.mapCitaToComprobante(c)));
+      }
+    });
+  }
+
+  private mapCitaToComprobante(cita: Cita): ComprobantePendiente {
+    const date = new Date(cita.fechaHora);
+    return {
+      id: cita.id!,
+      pacienteNombre: cita.pacienteNombre || 'Paciente Nuevo',
+      pacienteId: cita.pacienteId.substring(0, 8).toUpperCase(),
+      prioridad: cita.source === 'PUBLIC' ? 'NUEVO' : 'ESTÁNDAR',
+      fecha: date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }),
+      hora: date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+      tratamiento: cita.servicioNombre || cita.motivoConsulta || 'Consulta Dental',
+      monto: `$${cita.montoTotal || 0}.00`,
+      comprobanteUrl: (cita as any).comprobanteUrl || ''
+    };
+  }
 
   aprobarComprobante(id: string) {
-    console.log('Aprobando comprobante:', id);
-    this.comprobantesPendientes.update(tasks => tasks.filter(t => t.id !== id));
+    // Para simplificar, obtenemos los doctores y asignamos el primero
+    this.citaService.getDoctores().subscribe(doctores => {
+      const doctorId = doctores.length > 0 ? doctores[0].id : null;
+      if (!doctorId) {
+        alert('No hay doctores disponibles para asignar.');
+        return;
+      }
+
+      this.citaService.confirmarCita(id, doctorId).subscribe({
+        next: (res) => {
+          if (res.ok) {
+            this.comprobantesPendientes.update(list => list.filter(c => c.id !== id));
+          }
+        }
+      });
+    });
   }
 
   rechazarComprobante(id: string) {
-    console.log('Rechazando comprobante:', id);
-    this.comprobantesPendientes.update(tasks => tasks.filter(t => t.id !== id));
+    const motivo = prompt('Motivo del rechazo:', 'Comprobante ilegible o pago no recibido');
+    if (!motivo) return;
+
+    this.citaService.rechazarCita(id, motivo).subscribe({
+      next: (res) => {
+        if (res.ok) {
+          this.comprobantesPendientes.update(list => list.filter(c => c.id !== id));
+        }
+      }
+    });
   }
 }

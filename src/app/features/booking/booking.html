@@ -18,15 +18,16 @@
         <div class="step-layout">
             <div class="step-indicator">PASO 01 — SELECCIÓN</div>
             <h1 class="page-title">Agenda tu próxima<br>consulta clínica.</h1>
-            <p class="page-desc">Selecciona una fecha y hora para la revisión con tu especialista. La disponibilidad se confirma al completar el depósito.</p>
+            <p class="page-desc">Selecciona una fecha y hora para la revisión con tu especialista. La disponibilidad se
+                confirma al completar el depósito.</p>
 
             <!-- CALENDAR CARD -->
-            <div class="card calendar-card">
+            <div class="card calendar-card" [class.loading-overlay]="isLoadingAvailability()">
                 <div class="calendar-header">
-                    <span class="month-label">{{ currentMonth }}</span>
+                    <span class="month-label">{{ currentMonthName() }}</span>
                     <div class="nav-arrows">
-                        <i class="ph ph-caret-left"></i>
-                        <i class="ph ph-caret-right"></i>
+                        <button (click)="changeMonth(-1)"><i class="ph ph-caret-left"></i></button>
+                        <button (click)="changeMonth(1)"><i class="ph ph-caret-right"></i></button>
                     </div>
                 </div>
                 <div class="calendar-grid">
@@ -38,33 +39,40 @@
                     <div class="day-label">SÁB</div>
                     <div class="day-label">DOM</div>
 
-                    <!-- Mock days - Abril 2026 empieza en Miércoles -->
-                    <div class="day dummy"></div><div class="day dummy"></div>
-                    @for (d of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]; track d) {
-                        <button class="day" 
-                                [class.selected]="state().selectedDate?.getDate() === d"
-                                [class.disabled]="d < 11"
-                                (click)="d >= 11 && onDateSelect(d)">
-                            {{ d }}
-                        </button>
+                    @for (empty of [].constructor(leadingEmptyDays()); track $index) {
+                    <div class="day dummy"></div>
+                    }
+
+                    @for (day of monthlyDays(); track day.fecha) {
+                    <button class="day" [class.selected]="state().selectedDate?.toISOString()?.startsWith(day.fecha)"
+                        [class.disabled]="!day.esLaboral || day.estaLlena" (click)="onDateSelect(day)">
+                        {{ day.fecha.split('-')[2] }}
+                        @if (day.estaLlena) { <span class="dot-full"></span> }
+                    </button>
                     }
                 </div>
             </div>
 
             <!-- SLOT SELECTOR -->
-            <div class="slots-section">
+            <div class="slots-section" [class.loading-overlay]="isLoadingSlots()">
                 <div class="section-title">
                     <i class="ph ph-calendar-check"></i> Horarios Disponibles
                 </div>
-                <p class="section-subtitle">Disponibilidad para <strong>{{ state().selectedDate ? formatDate(state().selectedDate) : 'Selecciona un día' }}</strong></p>
-                
+                <p class="section-subtitle">Disponibilidad para <strong>{{ state().selectedDate ?
+                        formatDate(state().selectedDate) : 'Selecciona un día' }}</strong></p>
+
+                @if (state().selectedDate && availableSlots().length === 0 && !isLoadingSlots()) {
+                <div class="no-slots-alert">
+                    No hay horarios disponibles para esta fecha.
+                </div>
+                }
+
                 <div class="slots-grid">
-                    @for (slot of timeSlots; track slot) {
-                        <button class="slot-btn" 
-                                [class.selected]="state().selectedSlot?.horaInicio === slot"
-                                (click)="onSlotSelect(slot)">
-                            {{ slot }}
-                        </button>
+                    @for (slot of availableSlots(); track slot.horaInicio) {
+                    <button class="slot-btn" [class.selected]="state().selectedSlot?.horaInicio === slot.horaInicio"
+                        [disabled]="!slot.disponible" (click)="onSlotSelect(slot)">
+                        {{ slot.horaInicio }}
+                    </button>
                     }
                 </div>
             </div>
@@ -73,9 +81,10 @@
             <div class="cta-section card">
                 <div class="cta-content">
                     <h3>Progreso: 33%</h3>
-                    <p>Horario: {{ state().selectedSlot || '--:--' }}</p>
+                    <p>Horario: {{ state().selectedSlot?.horaInicio || '--:--' }}</p>
                 </div>
-                <button class="btn-primary-pill" [disabled]="!state().selectedDate || !state().selectedSlot" (click)="nextStep()">
+                <button class="btn-primary-pill" [disabled]="!state().selectedDate || !state().selectedSlot"
+                    (click)="nextStep()">
                     Continuar <i class="ph ph-arrow-right"></i>
                 </button>
             </div>
@@ -90,7 +99,8 @@
                     </div>
                 </div>
                 <div class="doctor-stats">
-                    <div class="stat"><i class="ph-fill ph-star"></i> {{ doctor.rating }} ({{ doctor.reviews }}+ reseñas)</div>
+                    <div class="stat"><i class="ph-fill ph-star"></i> {{ doctor.rating }} ({{ doctor.reviews }}+
+                        reseñas)</div>
                 </div>
             </div>
         </div>
@@ -98,10 +108,11 @@
 
         <!-- STEP 2: IDENTIFICATION (Lead Capture) -->
         @if (state().step === 2) {
-        <div class="step-layout animate-slide-up">
+        <div class="step-layout">
             <div class="step-indicator">PASO 02 — IDENTIFICACIÓN</div>
             <h1 class="page-title">¿Quién realiza<br>la consulta?</h1>
-            <p class="page-desc">Necesitamos tus datos básicos para registrar la pre-reserva en nuestro sistema y contactarte si es necesario.</p>
+            <p class="page-desc">Necesitamos tus datos básicos para registrar la pre-reserva en nuestro sistema y
+                contactarte si es necesario.</p>
 
             <div class="card form-card">
                 <div class="form-group">
@@ -116,7 +127,22 @@
                     <label for="pPhone">WhatsApp de contacto</label>
                     <div class="input-wrapper">
                         <i class="ph ph-whatsapp-logo"></i>
-                        <input type="tel" id="pPhone" [(ngModel)]="bookingPhone" placeholder="10 dígitos" required>
+                        <input type="tel" id="pPhone" [ngModel]="bookingPhone" (input)="onPhoneInput($event)"
+                            placeholder="10 dígitos (solo números)" maxlength="10" required>
+                    </div>
+                    @if (bookingPhone && !isPhoneValid()) {
+                    <p class="error-msg" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem;">Deben ser
+                        exactamente 10 números.</p>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="pNotes">¿Deseas dejarnos alguna nota? (Opcional)</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-note"></i>
+                        <textarea id="pNotes" [(ngModel)]="bookingNotes" placeholder="Ej. Tengo dolor en una muela..."
+                            rows="2"
+                            style="width: 100%; border: none; background: transparent; padding: 0.5rem; outline: none;"></textarea>
                     </div>
                 </div>
             </div>
@@ -126,10 +152,11 @@
                 <p>Tus datos están protegidos y solo se usarán para la gestión de tu cita clínica.</p>
             </div>
 
-            <button class="btn-primary-pill full-width" [disabled]="!bookingName || !bookingPhone" (click)="nextStep()">
+            <button class="btn-primary-pill full-width" [disabled]="!isNameValid() || !isPhoneValid()"
+                (click)="nextStep()">
                 Continuar a Detalles de Pago <i class="ph ph-arrow-right"></i>
             </button>
-            
+
             <button class="btn-ghost" (click)="prevStep()">
                 <i class="ph ph-caret-left"></i> Volver a Selección
             </button>
@@ -138,10 +165,11 @@
 
         <!-- STEP 3: CONFIRMATION & UPLOAD -->
         @if (state().step === 3) {
-        <div class="step-layout animate-slide-up">
+        <div class="step-layout">
             <div class="step-indicator">PASO 03 — PAGO</div>
             <h1 class="page-title" style="margin-top: 1rem;">Casi listo, {{ bookingName.split(' ')[0] }}</h1>
-            <p class="page-desc">Para asegurar tu cita para <strong>{{ state().serviceName }}</strong>, se requiere un depósito del 30%.</p>
+            <p class="page-desc">Para asegurar tu cita para <strong>{{ state().serviceName }}</strong>, se requiere un
+                depósito del 30%.</p>
 
             <!-- SUMMARY CARD -->
             <div class="card summary-card">
@@ -158,7 +186,7 @@
                         <div class="icon"><i class="ph ph-calendar"></i></div>
                         <div class="text">
                             <span class="label">Fecha y Hora</span>
-                            <p>{{ formatDate(state().selectedDate) }} - {{ state().selectedSlot }}</p>
+                            <p>{{ formatDate(state().selectedDate) }} - {{ state().selectedSlot?.horaInicio }}</p>
                         </div>
                     </div>
                     <div class="detail-item">
@@ -207,16 +235,17 @@
             </div>
 
             <!-- UPLOAD INTERACTION -->
-            <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none" accept="image/*,application/pdf">
-            
-            <button class="upload-btn" [class.loading]="isUploading()" (click)="triggerFileInput(fileInput)">
-                <ng-container *ngIf="!isUploading()">
+            <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none"
+                accept="image/*,application/pdf">
+
+            <button class="upload-btn" [class.loading]="isSubmitting()" (click)="triggerFileInput(fileInput)">
+                <ng-container *ngIf="!isSubmitting()">
                     <i class="ph ph-cloud-arrow-up"></i>
-                    <span>Subir Comprobante</span>
+                    <span>Subir Comprobante y Agendar</span>
                 </ng-container>
-                <ng-container *ngIf="isUploading()">
+                <ng-container *ngIf="isSubmitting()">
                     <i class="ph ph-circle-notch animate-spin"></i>
-                    <span>Validando comprobante...</span>
+                    <span>Procesando cita...</span>
                 </ng-container>
             </button>
             <p class="upload-hint">Formatos: PDF, JPG, PNG. Máx: 5MB.</p>
@@ -236,7 +265,7 @@
 
         <!-- STEP 4: FINAL SUCCESS -->
         @if (state().step === 4) {
-        <div class="success-screen animate-fade-in">
+        <div class="success-screen step-layout">
             <div class="success-header">
                 <div class="check-circle animate-pop">
                     <i class="ph ph-check"></i>
@@ -253,15 +282,15 @@
                         <p>{{ doctor.title }}</p>
                     </div>
                 </div>
-                
+
                 <div class="appointment-details">
                     <div class="info-row">
                         <span class="label">FECHA</span>
-                        <p>{{ state().selectedDate | date:'fullDate':'':'es-MX' }}</p>
+                        <p>{{ formatDate(state().selectedDate) }}</p>
                     </div>
                     <div class="info-row">
                         <span class="label">HORA</span>
-                        <p>{{ state().selectedSlot }}</p>
+                        <p>{{ state().selectedSlot?.horaInicio }}</p>
                     </div>
                     <div class="info-row">
                         <span class="label">SERVICIO</span>
@@ -297,4 +326,9 @@
             <span>PAGO</span>
         </a>
     </nav>
+    <ngx-spinner bdColor="rgba(26, 43, 76, 0.85)" size="medium" color="#BEE7DF" type="ball-scale-multiple" [fullScreen]="true">
+        <p style="color: white; font-family: 'Manrope', sans-serif; font-weight: 600; margin-top: 1rem;">
+            Procesando...
+        </p>
+    </ngx-spinner>
 </div>

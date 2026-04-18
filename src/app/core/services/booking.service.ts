@@ -14,6 +14,7 @@ export interface BookingState {
   selectedSlot: SlotDisponibilidad | null;
   customerName: string;
   customerPhone: string;
+  duracionMinutos: number;
   receiptUploaded: boolean;
   step: number;
 }
@@ -34,6 +35,7 @@ export class BookingService {
     selectedSlot: null,
     customerName: '',
     customerPhone: '',
+    duracionMinutos: 30,
     receiptUploaded: false,
     step: 1
   });
@@ -103,6 +105,7 @@ export class BookingService {
       selectedSlot: null,
       customerName: '',
       customerPhone: '',
+      duracionMinutos: 30,
       receiptUploaded: false,
       step: 1
     });
@@ -121,6 +124,7 @@ export class BookingService {
       ...s,
       serviceId: service.id || '',
       serviceName: service.nombre,
+      duracionMinutos: service.duracionMinutos || 30,
       price: service.price || `$${service.precioBase || 0} MXN`,
       step: 1
     }));

@@ -45,9 +45,10 @@
                 <div class="input-container highlight">
                   <span class="prefix">$</span>
                   <input type="number" 
-                         [(ngModel)]="montoTotalEditado" 
+                         [ngModel]="montoTotalEditado()" 
+                         (input)="validarMontoTotal($event)"
                          placeholder="0.00" 
-                         [readonly]="resumen()?.costoDefinido">
+                         [readonly]="resumen()?.costoDefinido" min="0">
                   <span class="suffix">MXN</span>
                 </div>
                 @if (resumen()?.costoDefinido) {
@@ -66,7 +67,7 @@
                 <label>Monto que paga el paciente hoy</label>
                 <div class="input-container accent" [class.error]="nuevoPago.monto! > saldoPendienteActual()">
                   <span class="prefix">$</span>
-                  <input type="number" [(ngModel)]="nuevoPago.monto" placeholder="0.00">
+                  <input type="number" [ngModel]="nuevoPago.monto" (input)="validarAbono($event)" placeholder="0.00" min="0">
                   <span class="suffix">MXN</span>
                 </div>
                 @if (nuevoPago.monto! > saldoPendienteActual()) {
