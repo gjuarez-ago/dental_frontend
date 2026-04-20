@@ -35,13 +35,10 @@
             </p>
 
             <div class="flex flex-wrap items-center gap-4">
-                <button (click)="openBooking('General', 'Valoración')" class="btn-primary-pill"
-                    style="padding: 1rem 2.5rem;">
+                <a href="#servicios" class="btn-primary-pill" style="padding: 1rem 2.5rem;">
                     Agendar Cita <i class="ph-fill ph-calendar-plus"></i>
-                </button>
-                <a href="#servicios" class="btn-outline-pill">
-                    Ver Tratamientos
                 </a>
+
             </div>
 
             <!-- Trust Indicators -->
@@ -233,4 +230,11 @@
     <a href="https://wa.me/527581082962" target="_blank" class="wa-widget">
         <i class="ph-fill ph-whatsapp-logo"></i>
     </a>
+
+    <ngx-spinner bdColor="rgba(26, 43, 76, 0.4)" size="medium" color="#BEE7DF" type="ball-scale-multiple"
+        [fullScreen]="true">
+        <p style="color: white; font-family: 'Manrope', sans-serif; font-weight: 600; margin-top: 1rem;">
+            Preparando tu visita...
+        </p>
+    </ngx-spinner>
 </div>

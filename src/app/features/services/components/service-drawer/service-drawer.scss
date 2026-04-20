@@ -97,8 +97,17 @@
 
   .price-input {
     position: relative;
-    .currency { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #64748b; font-weight: 750; }
-    input { padding-left: 2.25rem; }
+    .currency { 
+      position: absolute; 
+      left: 1rem; 
+      top: 50%; 
+      transform: translateY(-50%); 
+      color: #64748b; 
+      font-weight: 750;
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+    input { padding-left: 4.75rem; }
   }
 
   .error-msg { font-size: 0.75rem; color: #ef4444; font-weight: 600; margin-top: 0.35rem; display: block; }

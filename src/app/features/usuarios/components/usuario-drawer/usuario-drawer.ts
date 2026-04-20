@@ -37,18 +37,24 @@ export class UsuarioDrawerComponent implements OnChanges {
       rol: [UserRole.RECEPTIONIST, [Validators.required]],
       cedulaProfesional: [''],
       nip: ['', [Validators.pattern(/^\d{6}$/)]], // Opcional en edición, pero debe ser 6 dígitos si se pone
-      fotografiaUrl: ['']
+      fotografiaUrl: [''],
+      esPersonalClinico: [false]
     });
 
-    // Validar NIP obligatorio solo al crear
+    // Validar NIP y Verificación Clínica obligatoria según el rol
     this.userForm.get('rol')?.valueChanges.subscribe(rol => {
       const cedula = this.userForm.get('cedulaProfesional');
+      const verification = this.userForm.get('esPersonalClinico');
+      
       if (rol === UserRole.DOCTOR) {
         cedula?.setValidators([Validators.required]);
+        verification?.setValidators([Validators.requiredTrue]);
       } else {
         cedula?.clearValidators();
+        verification?.clearValidators();
       }
       cedula?.updateValueAndValidity();
+      verification?.updateValueAndValidity();
     });
   }
 
@@ -61,6 +67,7 @@ export class UsuarioDrawerComponent implements OnChanges {
         rol: this.user.rol,
         cedulaProfesional: this.user.cedulaProfesional,
         fotografiaUrl: this.user.fotografiaUrl,
+        esPersonalClinico: this.user.esPersonalClinico || false,
         nip: '' // No cargar el NIP anterior
       });
       // En edición el NIP es opcional
@@ -69,7 +76,8 @@ export class UsuarioDrawerComponent implements OnChanges {
     } else if (changes['isOpen']?.currentValue && !this.user) {
       this.userForm.reset({
         rol: UserRole.RECEPTIONIST,
-        nip: ''
+        nip: '',
+        esPersonalClinico: false
       });
       // Al crear, el NIP es obligatorio y debe ser 6 dígitos
       this.userForm.get('nip')?.setValidators([Validators.required, Validators.pattern(/^\d{6}$/)]);

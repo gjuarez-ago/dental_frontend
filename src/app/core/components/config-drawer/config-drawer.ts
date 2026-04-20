@@ -27,6 +27,9 @@ export class ConfigDrawerComponent implements OnInit, OnChanges {
       professionalName: ['', [Validators.required]],
       professionalCedula: ['', [Validators.required]],
       cancellationWindow: [24, [Validators.required, Validators.min(1)]],
+      banco: [''],
+      cuentaBancaria: ['', [Validators.minLength(10), Validators.maxLength(11)]],
+      clabeInterbancaria: ['', [Validators.minLength(18), Validators.maxLength(18)]],
       weeklySchedule: this.fb.array([])
     });
   }
@@ -67,7 +70,10 @@ export class ConfigDrawerComponent implements OnInit, OnChanges {
     this.configForm.patchValue({
       professionalName: cfg.professionalName,
       professionalCedula: cfg.professionalCedula,
-      cancellationWindow: cfg.cancellationWindow
+      cancellationWindow: cfg.cancellationWindow,
+      banco: cfg.banco,
+      cuentaBancaria: cfg.cuentaBancaria,
+      clabeInterbancaria: cfg.clabeInterbancaria
     });
 
     this.scheduleArray.clear();

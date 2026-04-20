@@ -32,6 +32,31 @@ export class BookingComponent implements OnInit {
   readonly availableSlots = signal<SlotDisponibilidad[]>([]);
   readonly currentMonthDate = signal<Date>(new Date());
 
+  // Nueva señal computada para filtrar slots pasados
+  readonly filteredSlots = computed(() => {
+    const slots = this.availableSlots();
+    const selectedDate = this.fb.state().selectedDate;
+    if (!selectedDate) return slots;
+
+    const now = new Date();
+    const isToday = selectedDate.getDate() === now.getDate() &&
+                    selectedDate.getMonth() === now.getMonth() &&
+                    selectedDate.getFullYear() === now.getFullYear();
+
+    if (!isToday) return slots;
+
+    // Filtrar slots cuya hora de inicio sea posterior a la actual
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+
+    return slots.filter(slot => {
+      const [h, m] = slot.horaInicio.split(':').map(Number);
+      if (h > currentHour) return true;
+      if (h === currentHour && m > currentMin) return true;
+      return false;
+    });
+  });
+
   readonly currentMonthName = computed(() => {
     const name = this.currentMonthDate().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     return name.charAt(0).toUpperCase() + name.slice(1);
@@ -75,6 +100,7 @@ export class BookingComponent implements OnInit {
     this.bookingPhone = this.state().customerPhone;
     
     this.loadMonthlyAvailability();
+    this.fb.getClinicInfo(this.tenantId, this.sucursalId);
     this.scrollToTop();
   }
 
@@ -109,6 +135,14 @@ export class BookingComponent implements OnInit {
     this.loadMonthlyAvailability();
   }
 
+  isPastDay(dateStr: string): boolean {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dayDate = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return dayDate < today;
+  }
+
   onDateSelect(day: DisponibilidadDia): void {
     if (!day.esLaboral || day.estaLlena) return;
     
@@ -117,6 +151,7 @@ export class BookingComponent implements OnInit {
     const dateObj = new Date(y, m - 1, d);
     
     this.fb.setDate(dateObj);
+    this.availableSlots.set([]); // Limpiar inmediatamente para evitar clics en slots viejos
     this.loadSlots(dateStr);
   }
 
@@ -130,9 +165,9 @@ export class BookingComponent implements OnInit {
       this.state().serviceId
     ).subscribe({
       next: (slots) => {
+        this.spinner.hide(); // Ocultar primero para liberar la interfaz
         this.availableSlots.set(slots);
         this.isLoadingSlots.set(false);
-        this.spinner.hide();
       },
       error: () => {
         this.isLoadingSlots.set(false);
@@ -142,7 +177,9 @@ export class BookingComponent implements OnInit {
   }
 
   onSlotSelect(slot: SlotDisponibilidad): void {
+    if (!slot.disponible) return;
     this.fb.setSlot(slot);
+    // Solo desplazamos si es necesario para mostrar el botón de continuar
     this.scrollToBottom();
   }
 
@@ -162,7 +199,7 @@ export class BookingComponent implements OnInit {
           behavior: 'smooth' 
         });
       }
-    }, 100);
+    }, 150); // Incrementar ligeramente para no interrumpir el registro del clic
   }
 
   private scrollToTop(): void {
@@ -243,6 +280,12 @@ export class BookingComponent implements OnInit {
     // Formato completo esperado por OffsetDateTime: YYYY-MM-DDTHH:mm:ss-06:00
     const fechaLocalConOffset = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(parseInt(timeParts[0]))}:${pad(parseInt(timeParts[1]))}:00${offsetStr}`;
 
+    const totalPriceStr = this.state().price || '0';
+    const numericTotal = parseFloat(totalPriceStr.replace(/[^0-9.]/g, '')) || 0;
+    const numericDeposit = this.fb.calculateDeposit(totalPriceStr);
+    
+    console.log('Booking Debug:', { totalPriceStr, numericTotal, numericDeposit });
+
     const citaDto = {
       sucursalId: this.sucursalId,
       servicioId: this.state().serviceId,
@@ -250,9 +293,15 @@ export class BookingComponent implements OnInit {
       duracionMinutos: this.state().duracionMinutos,
       pacienteNombre: this.bookingName,
       pacienteTelefono: this.bookingPhone,
-      motivoConsulta: this.state().serviceName,
-      notasRecepcion: this.bookingNotes
+      motivoConsulta: this.bookingNotes || this.state().serviceName,
+      notasRecepcion: `Servicio solicitado: ${this.state().serviceName}`,
+      montoTotal: numericTotal,
+      montoPagado: numericDeposit
     };
+    
+    console.log('--- ENVIANDO CITA AL BACKEND ---');
+    console.log('CitaDTO:', citaDto);
+    console.log('--------------------------------');
 
     this.fb.confirmBooking(citaDto, file).subscribe({
       next: (res) => {

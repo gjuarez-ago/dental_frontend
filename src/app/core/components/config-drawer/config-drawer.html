@@ -42,6 +42,25 @@
         </div>
       </section>
 
+      <!-- DATOS PARA DEPÓSITO -->
+      <section class="form-section">
+        <label class="section-label">Datos para Depósito del Anticipo</label>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Institución Bancaria</label>
+            <input type="text" formControlName="banco" placeholder="Ej. BBVA, Santander...">
+          </div>
+          <div class="form-group">
+            <label>Número de Cuenta</label>
+            <input type="text" formControlName="cuentaBancaria" placeholder="10-11 dígitos" maxlength="11">
+          </div>
+          <div class="form-group">
+            <label>CLABE Interbancaria</label>
+            <input type="text" formControlName="clabeInterbancaria" placeholder="18 dígitos" maxlength="18">
+          </div>
+        </div>
+      </section>
+
       <!-- HORARIOS -->
       <section class="form-section">
         <label class="section-label">Horarios Laborales por Día</label>

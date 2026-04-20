@@ -4,13 +4,13 @@ import { ServiceDentalService } from '../../core/services/service-dental.service
 import { ServicioDental } from '../../core/models/service-dental.model';
 import { ServiceDrawerComponent } from './components/service-drawer/service-drawer';
 import { LayoutService } from '../../core/services/layout.service';
-import { NgxSpinnerService } from 'ngx-spinner';
+import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-services',
   standalone: true,
-  imports: [CommonModule, ServiceDrawerComponent],
+  imports: [CommonModule, ServiceDrawerComponent, NgxSpinnerModule],
   templateUrl: './services.html',
   styleUrl: './services.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

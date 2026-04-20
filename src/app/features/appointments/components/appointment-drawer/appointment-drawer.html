@@ -3,8 +3,8 @@
     <!-- Header -->
     <header class="drawer-header">
       <div class="header-text">
-        <h2>Nueva Cita Médica</h2>
-        <p>Agenda un espacio en la agenda para el paciente.</p>
+        <h2>{{ layout.selectedCitaForEdit() ? 'Reprogramar Cita Médica' : 'Nueva Cita Médica' }}</h2>
+        <p>{{ layout.selectedCitaForEdit() ? 'Ajusta la fecha, hora o duración de la consulta existente.' : 'Agenda un nuevo espacio en la agenda para el paciente.' }}</p>
       </div>
       <button class="close-btn" (click)="closeDrawer()">
         <i class="ph ph-x"></i>
@@ -21,11 +21,12 @@
           
           <div class="input-group" [class.error]="isInvalid('pacienteId')">
             <label for="patientSearch">Buscar Paciente *</label>
-            <div class="input-wrapper">
+            <div class="input-wrapper" [class.disabled]="layout.selectedCitaForEdit()">
               <i class="ph ph-user-search"></i>
               <input id="patientSearch" type="text" 
                      [value]="patientSearch()"
                      (input)="onPatientSearch($event)"
+                     [readonly]="layout.selectedCitaForEdit()"
                      placeholder="Nombre o ID del paciente...">
               
               @if (showPatientResults()) {
@@ -67,6 +68,20 @@
                     <option [value]="s.id">{{ s.nombre }}</option>
                   }
                 </select>
+              </div>
+              @if (selectedServiceDuration()) {
+                <div class="service-meta-info animate-fade-in">
+                  <i class="ph ph-clock"></i>
+                  <span>Duración: <strong>{{ selectedServiceDuration() }} minutos</strong></span>
+                </div>
+              }
+            </div>
+
+            <div class="input-group cost-group" [class.error]="isInvalid('montoTotal')">
+              <label for="montoTotal">Costo Total ($) *</label>
+              <div class="input-wrapper">
+                <span class="currency-prefix">$</span>
+                <input id="montoTotal" type="number" formControlName="montoTotal" placeholder="0.00">
               </div>
             </div>
           </div>
@@ -114,13 +129,7 @@
             </div>
           </div>
 
-          <div class="input-group">
-            <label for="duracionMinutos">Duración estimada (minutos) *</label>
-            <div class="input-wrapper">
-              <i class="ph ph-timer"></i>
-              <input id="duracionMinutos" type="number" formControlName="duracionMinutos" step="10">
-            </div>
-          </div>
+
         </div>
 
         <!-- Sección 3: Notas -->
@@ -149,9 +158,9 @@
       <button class="btn-cancel" (click)="closeDrawer()" [disabled]="isSaving()">Descartar</button>
       <button class="btn-save" (click)="onSubmit()" [disabled]="appointmentForm.invalid || isSaving()">
         @if (isSaving()) {
-          <i class="ph ph-spinner-gap spinning"></i> Agendando...
+          <i class="ph ph-spinner-gap spinning"></i> {{ layout.selectedCitaForEdit() ? 'Reprogramando...' : 'Agendando...' }}
         } @else {
-          <i class="ph ph-calendar-plus"></i> Confirmar Cita
+          <i class="ph ph-calendar-plus"></i> {{ layout.selectedCitaForEdit() ? 'Guardar Cambios' : 'Confirmar Cita' }}
         }
       </button>
     </footer>

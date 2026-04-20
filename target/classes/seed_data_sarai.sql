@@ -34,7 +34,7 @@ VALUES (
 
 -- 4. CREAR USUARIOS
 -- Sarai Rios (DUEÑA / ADMIN)
-INSERT INTO usuarios (id, tenant_id, sucursal_id_principal, rol, telefono_contacto, email, nip_hash, requiere_cambio_nip, nombre_completo, cedula_profesional, reg_borrado, created_at, updated_at)
+INSERT INTO usuarios (id, tenant_id, sucursal_id_principal, rol, telefono_contacto, email, nip_hash, requiere_cambio_nip, nombre_completo, cedula_profesional, es_personal_clinico, reg_borrado, created_at, updated_at)
 VALUES (
     '550e8400-e29b-41d4-a716-446655440002', 
     '550e8400-e29b-41d4-a716-446655440000', 
@@ -46,13 +46,14 @@ VALUES (
     false, 
     'Sarai Rios', 
     'DENT-SR-2024-X', 
+    true,
     1, 
     NOW(), 
     NOW()
 );
 
 -- Dr. Julián Galavis (MÉDICO)
-INSERT INTO usuarios (id, tenant_id, sucursal_id_principal, rol, telefono_contacto, email, nip_hash, requiere_cambio_nip, nombre_completo, cedula_profesional, reg_borrado, created_at, updated_at)
+INSERT INTO usuarios (id, tenant_id, sucursal_id_principal, rol, telefono_contacto, email, nip_hash, requiere_cambio_nip, nombre_completo, cedula_profesional, es_personal_clinico, reg_borrado, created_at, updated_at)
 VALUES (
     '550e8400-e29b-41d4-a716-446655440003', 
     '550e8400-e29b-41d4-a716-446655440000', 
@@ -64,13 +65,14 @@ VALUES (
     true, 
     'Dr. Julián Galavis', 
     'MED-JG-1234567', 
+    true,
     1, 
     NOW(), 
     NOW()
 );
 
 -- Recepcionista Elena (REPCESIONISTA)
-INSERT INTO usuarios (id, tenant_id, sucursal_id_principal, rol, telefono_contacto, email, nip_hash, requiere_cambio_nip, nombre_completo, reg_borrado, created_at, updated_at)
+INSERT INTO usuarios (id, tenant_id, sucursal_id_principal, rol, telefono_contacto, email, nip_hash, requiere_cambio_nip, nombre_completo, es_personal_clinico, reg_borrado, created_at, updated_at)
 VALUES (
     '550e8400-e29b-41d4-a716-446655440004', 
     '550e8400-e29b-41d4-a716-446655440000', 
@@ -81,6 +83,7 @@ VALUES (
     '$2a$10$8.IlnEVC.O776G1/Z1lV2uW3r5E.iGkH.0e/ZzU8D9O3a.0E6VpEi', 
     false, 
     'Elena Ruiz', 
+    false,
     1, 
     NOW(), 
     NOW()

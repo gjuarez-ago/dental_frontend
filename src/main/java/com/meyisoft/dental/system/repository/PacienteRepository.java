@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,6 +14,13 @@ import java.util.UUID;
 @Repository
 public interface PacienteRepository extends JpaRepository<Paciente, UUID> {
     
+    @Query("SELECT COUNT(p) FROM Paciente p WHERE p.tenantId = :tenantId " +
+           "AND p.regBorrado = 1 AND p.createdAt BETWEEN :start AND :end")
+    long countNewPatientsByRange(
+            @Param("tenantId") UUID tenantId, 
+            @Param("start") OffsetDateTime start, 
+            @Param("end") OffsetDateTime end);
+
     List<Paciente> findByTenantIdAndRegBorrado(UUID tenantId, Integer regBorrado);
     
     Optional<Paciente> findByIdAndTenantIdAndRegBorrado(UUID id, UUID tenantId, Integer regBorrado);

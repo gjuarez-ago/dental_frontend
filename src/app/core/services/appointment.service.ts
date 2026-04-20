@@ -5,6 +5,17 @@ import { Observable, Subject, map } from 'rxjs';
 import { Cita, AppointmentStatus } from '../models/appointment.model';
 import { ApiResponse } from './patient.service';
 
+export interface DashboardStats {
+  ingresosPorValidar: number;
+  comprobantesPendientesCount: number;
+  ingresosHoy: number;
+  ingresosHoyTrend: number;
+  citasHoyCount: number;
+  citasHoyTrend: number;
+  pacientesNuevosCount: number;
+  pacientesNuevosTrend: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -21,11 +32,15 @@ export class AppointmentService {
     this._citaGuardada$.next(cita);
   }
 
-  getCitas(sucursalId: string, start: string, end: string): Observable<Cita[]> {
+  getCitas(sucursalId: string, start: string, end: string, doctorId?: string): Observable<Cita[]> {
     let params = new HttpParams()
       .set('sucursalId', sucursalId)
       .set('start', start)
       .set('end', end);
+
+    if (doctorId) {
+      params = params.set('doctorId', doctorId);
+    }
 
     return this.http.get<ApiResponse<Cita[]>>(this.apiUrl, { params }).pipe(
       map(res => res.ok ? res.result : [])
@@ -63,13 +78,38 @@ export class AppointmentService {
     );
   }
 
-  confirmarCita(id: string, doctorId: string): Observable<ApiResponse<Cita>> {
-    const params = new HttpParams().set('doctorId', doctorId);
+  getDashboardSummary(doctorId?: string): Observable<DashboardStats | null> {
+    let params = new HttpParams();
+    if (doctorId) {
+      params = params.set('doctorId', doctorId);
+    }
+    return this.http.get<ApiResponse<DashboardStats>>(`${this.apiUrl}/dashboard-summary`, { params }).pipe(
+      map(res => res.ok ? res.result : null)
+    );
+  }
+
+  confirmarCita(id: string, doctorId: string, montoTotal?: number): Observable<ApiResponse<Cita>> {
+    let params = new HttpParams().set('doctorId', doctorId);
+    if (montoTotal !== undefined && montoTotal !== null) {
+      params = params.set('montoTotal', montoTotal.toString());
+    }
     return this.http.patch<ApiResponse<Cita>>(`${this.apiUrl}/${id}/confirmar`, {}, { params });
   }
 
   rechazarCita(id: string, motivo: string): Observable<ApiResponse<Cita>> {
     const params = new HttpParams().set('motivo', motivo);
     return this.http.patch<ApiResponse<Cita>>(`${this.apiUrl}/${id}/rechazar`, {}, { params });
+  }
+
+  cancelarCita(id: string, motivo: string): Observable<ApiResponse<Cita>> {
+    const params = new HttpParams().set('motivo', motivo);
+    return this.http.patch<ApiResponse<Cita>>(`${this.apiUrl}/${id}/cancelar`, {}, { params });
+  }
+
+  reprogramarCita(id: string, fechaHora: string, duracionMinutos: number): Observable<ApiResponse<Cita>> {
+    const params = new HttpParams()
+      .set('nuevaFechaHora', fechaHora)
+      .set('nuevaDuracion', duracionMinutos.toString());
+    return this.http.put<ApiResponse<Cita>>(`${this.apiUrl}/${id}/reprogramar`, {}, { params });
   }
 }

@@ -7,13 +7,16 @@ import { environment } from '../../../environments/environment';
 
 export interface User {
   id: string;
-  tenantId: string;
-  sucursalIdPrincipal: string;
-  rol: string;
+  tenantId?: string;
+  sucursalIdPrincipal?: string;
+  rol?: string; // Para usuarios CRM
+  role?: string; // Para pacientes (según claims del JWT)
   nombreCompleto: string;
   email: string | null;
-  telefonoContacto: string;
-  fotografiaUrl: string | null;
+  telefono: string; // Para pacientes
+  telefonoContacto?: string; // Para usuarios CRM
+  pinCambiado?: boolean;
+  emailVerificado?: boolean;
 }
 
 export interface AuthResponse {
@@ -48,7 +51,7 @@ export class AuthService {
       localStorage.removeItem('user');
     }
     this.currentUser.set(null);
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 
   isLoggedIn(): boolean {

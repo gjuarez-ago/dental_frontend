@@ -1,18 +1,19 @@
 <div class="appointments-page premium-view animate-fade-in">
 
-    <!-- HEADER ESTILO APP -->
-    <header class="app-header">
-        <div class="header-left">
-            <div class="month-selector">
-                <button class="nav-month-btn" (click)="changeMonth(-1)"><i class="ph ph-caret-left"></i></button>
-                <h1>{{ currentMonth() }}</h1>
-                <button class="nav-month-btn" (click)="changeMonth(1)"><i class="ph ph-caret-right"></i></button>
-            </div>
+    <header class="page-header">
+        <div class="header-info">
+            <h1>Calendario de Citas</h1>
+            <p>Seguimiento de tratamientos y programación diaria.</p>
         </div>
-        <div class="header-right">
+        <div class="header-actions">
+            <div class="month-controls">
+                <button class="nav-btn" (click)="changeMonth(-1)"><i class="ph ph-caret-left"></i></button>
+                <span class="month-label">{{ currentMonth() }}</span>
+                <button class="nav-btn" (click)="changeMonth(1)"><i class="ph ph-caret-right"></i></button>
+            </div>
             <button class="btn-today-minimal" (click)="setToday()">Hoy</button>
-            <button class="btn-compact-primary" (click)="layout.toggleAppointmentDrawer()">
-                Agendar Cita
+            <button class="btn-primary" (click)="layout.toggleAppointmentDrawer()">
+                <i class="ph ph-calendar-plus"></i> Agendar Cita
             </button>
         </div>
     </header>
@@ -72,8 +73,7 @@
                 <div class="card-content-wrapper">
                     <div class="patient-avatar">
                         {{ appointment.pacienteNombre ? appointment.pacienteNombre.substring(0,1) : 'P' }}{{
-                        appointment.pacienteNombre?.split(' ')?.length! > 1 ? appointment.pacienteNombre?.split('
-                        ')![1].substring(0,1) : '' }}
+                        appointment.pacienteNombre?.split(' ')?.length! > 1 ? appointment.pacienteNombre?.split(' ')![1].substring(0,1) : '' }}
                     </div>
 
                     <div class="card-info">
@@ -88,8 +88,16 @@
                             <div class="detail-row">
                                 <span class="service-name">{{ appointment.servicioNombre || 'Consulta General' }}</span>
                                 <span class="separator">•</span>
-                                <span class="doctor-name">{{ appointment.doctorNombre || 'Por asignar' }}</span>
+                                <span class="doctor-name" [class.unassigned]="!appointment.doctorNombre">
+                                    {{ appointment.doctorNombre || 'Por asignar' }}
+                                </span>
                             </div>
+                            @if (appointment.motivoConsulta) {
+                            <div class="motivo-row">
+                                <i class="ph ph-chat-circle-dots"></i>
+                                <span>{{ appointment.motivoConsulta }}</span>
+                            </div>
+                            }
                         </div>
 
                         <div class="info-footer">
@@ -109,7 +117,14 @@
                 </div>
 
                 <div class="card-actions">
-                    @if (appointment.estado === 'POR_CONFIRMAR' || appointment.estado === 'CONFIRMADA') {
+                    @if (appointment.estado === 'POR_CONFIRMAR') {
+                    <button class="action-btn next-step highlight" (click)="openConfirmationDrawer(appointment)"
+                        title="Confirmar Pago y Cita">
+                        <i class="ph ph-currency-dollar"></i>
+                        <span class="btn-label">Confirmar Pago</span>
+                    </button>
+                    }
+                    @if (appointment.estado === 'CONFIRMADA') {
                     <button class="action-btn next-step" (click)="updateStatus(appointment.id!, StatusEnum.LLEGADA)"
                         [title]="getStatusData(StatusEnum.LLEGADA).actionLabel">
                         <i class="ph" [class]="getStatusData(StatusEnum.LLEGADA).icon"></i>
@@ -143,7 +158,19 @@
                         <span class="btn-label">Ver Historial</span>
                     </button>
                     }
-                    <button class="more-btn"><i class="ph ph-dots-three-outline-vertical"></i></button>
+                    
+                    @if (appointment.estado === 'POR_CONFIRMAR' || appointment.estado === 'CONFIRMADA' || appointment.estado === 'LLEGADA') {
+                    <button class="action-btn danger-minimal" (click)="openCancellationDrawer(appointment)" title="Cancelar Cita">
+                        <i class="ph ph-calendar-x"></i>
+                        <span class="btn-label">Cancelar</span>
+                    </button>
+                    }
+
+                    @if (appointment.estado === 'POR_CONFIRMAR' || appointment.estado === 'CONFIRMADA' || appointment.estado === 'LLEGADA') {
+                    <button class="action-btn next-step" (click)="openRescheduleDrawer(appointment)" title="Reprogramar Cita">
+                        <i class="ph ph-calendar-plus"></i>
+                    </button>
+                    }
                 </div>
             </div>
             } @empty {

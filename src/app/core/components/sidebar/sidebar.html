@@ -17,7 +17,7 @@
     <nav class="nav-links">
       @for (item of filteredMenuItems; track item.path) {
       <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item"
-        [title]="item.label">
+        [title]="item.label" (click)="layout.closeSidebar()">
         <span class="icon">
           <i [class]="item.icon"></i>
         </span>

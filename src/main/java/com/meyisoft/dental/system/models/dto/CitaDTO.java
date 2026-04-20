@@ -35,5 +35,6 @@ public class CitaDTO {
     // Información financiera básica
     private java.math.BigDecimal montoTotal;
     private java.math.BigDecimal montoPagado;
+    private String comprobanteUrl;
     private String motivoRechazo;
 }

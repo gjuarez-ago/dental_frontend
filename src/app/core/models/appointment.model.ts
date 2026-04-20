@@ -38,6 +38,7 @@ export interface Cita {
   montoPagado?: number;
   ticketStatus?: TicketStatus;
   source?: string; // CRM, APP, PUBLIC
+  comprobanteUrl?: string;
 }
 
 export interface DisponibilidadDia {

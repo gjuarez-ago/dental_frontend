@@ -1,14 +1,13 @@
 <div class="users-container animate-fade-in">
   <!-- Header con Estética Premium -->
   <header class="page-header">
-    <div class="header-content">
-      <div class="title-section">
-        <h1 class="gradient-text">Gestión de Usuarios</h1>
-        <p class="subtitle">Administra los accesos y roles de tu sucursal</p>
-      </div>
-      
-      <div class="actions-section">
-        <div class="search-bar">
+    <div class="header-info">
+      <h1>Gestión de Usuarios</h1>
+      <p>Administración de accesos y roles de la sucursal.</p>
+    </div>
+    
+    <div class="header-actions">
+      <div class="search-bar">
           <i class="ph ph-magnifying-glass"></i>
           <input 
             type="text" 
@@ -26,7 +25,6 @@
           <span class="plus-icon">+</span>
           Crear Usuario
         </button>
-      </div>
     </div>
   </header>
 
@@ -43,20 +41,25 @@
         <button class="icon-btn edit" (click)="openEditDrawer(user)" title="Editar">
           <i class="ph ph-pencil"></i>
         </button>
-        <button class="icon-btn delete" (click)="eliminarUser(user)" title="Eliminar">
+        <button *ngIf="user.rol !== 'OWNER'" class="icon-btn delete" (click)="eliminarUser(user)" title="Deshabilitar">
           <i class="ph ph-trash"></i>
         </button>
       </div>
 
       <div class="user-avatar">
-        <img [src]="user.fotografiaUrl || 'assets/images/default-avatar.png'" [alt]="user.nombreCompleto">
+        <div class="avatar-initials">
+          {{ user.nombreCompleto.substring(0,1) }}{{ user.nombreCompleto.split(' ').length > 1 ? user.nombreCompleto.split(' ')[1].substring(0,1) : '' }}
+        </div>
         <div class="role-badge" [ngClass]="user.rol.toLowerCase()">
           {{ user.rol }}
         </div>
       </div>
 
       <div class="user-info">
-        <h3>{{ user.nombreCompleto }}</h3>
+        <h3>
+          {{ user.nombreCompleto }}
+          <i class="ph-fill ph-check-circle verified-icon" *ngIf="user.esPersonalClinico" title="Personal Clínico Verificado"></i>
+        </h3>
         <div class="info-row">
           <i class="ph ph-envelope"></i>
           <span>{{ user.email || 'Sin correo' }}</span>

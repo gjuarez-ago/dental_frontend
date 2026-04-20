@@ -1,8 +1,8 @@
 import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import { AppointmentService } from '../../core/services/appointment.service';
 import { LayoutService } from '../../core/services/layout.service';
-import { NgxSpinnerService } from 'ngx-spinner';
 import { signal, computed } from '@angular/core';
 import { Cita, AppointmentStatus } from '../../core/models/appointment.model';
 import { APPOINTMENT_STATUS_METADATA } from '../../core/constants/appointment-status.constants';
@@ -18,6 +18,7 @@ export interface CalendarDay {
 
 import { AuthService } from '../../core/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
+import { ActivatedRoute } from '@angular/router';
 
 import { PaymentDrawerComponent } from './components/payment-drawer/payment-drawer';
 
@@ -25,7 +26,7 @@ import { PaymentDrawerComponent } from './components/payment-drawer/payment-draw
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, PaymentDrawerComponent],
+  imports: [CommonModule, PaymentDrawerComponent, NgxSpinnerModule],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -37,6 +38,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   private readonly spinner = inject(NgxSpinnerService);
   private readonly authService = inject(AuthService);
   private readonly toastr = inject(ToastrService);
+  private readonly route = inject(ActivatedRoute);
 
   // Exponer enum y metadatos al template
   public readonly StatusEnum = AppointmentStatus;
@@ -173,7 +175,20 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadMonthData(); // Carga inicial
 
-    // Escuchar cuando el admin-layout (u otro componente) guarda una cita
+    // 1. Escuchar parámetros de la URL para autoselección de fecha
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(params => {
+        if (params['date']) {
+          // El formato esperado es YYYY-MM-DD
+          const incomingDate = new Date(params['date'] + 'T00:00:00');
+          if (!isNaN(incomingDate.getTime())) {
+            this.selectDay(incomingDate);
+          }
+        }
+      });
+
+    // 2. Escuchar cuando el admin-layout (u otro componente) guarda una cita
     // para recargar automáticamente el calendario sin importar cuál drawer emitió
     this.appointmentService.citaGuardada$
       .pipe(takeUntil(this.destroy$))
@@ -196,8 +211,13 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     console.log('Sucursal ID (LoadMonth):', sucursalId);
 
     if (!sucursalId) return;
+    this.spinner.show();
+    
+    const user = this.authService.currentUser();
+    const doctorFilterId = user?.rol === 'DOCTOR' ? user.id : undefined;
 
-    this.appointmentService.getCitas(sucursalId, start, end)
+    this.appointmentService.getCitas(sucursalId, start, end, doctorFilterId)
+      .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: (data) => {
           this.monthAppointments.set(data);
@@ -243,7 +263,11 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     }
 
     this.spinner.show();
-    this.appointmentService.getCitas(sucursalId, start, end)
+
+    const user = this.authService.currentUser();
+    const doctorFilterId = user?.rol === 'DOCTOR' ? user.id : undefined;
+
+    this.appointmentService.getCitas(sucursalId, start, end, doctorFilterId)
       .pipe(finalize(() => this.spinner.hide()))
       .subscribe({
         next: (data) => {
@@ -289,6 +313,39 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   onPaymentReceived() {
     this.refreshDailyAppointments();
     this.loadMonthData();
+  }
+
+  openConfirmationDrawer(cita: Cita) {
+    const user = this.authService.currentUser();
+    if (user?.rol === 'DOCTOR') {
+      // Auto-confirmar para el mismo doctor
+      this.spinner.show();
+      this.appointmentService.confirmarCita(cita.id!, user.id).pipe(
+        finalize(() => this.spinner.hide())
+      ).subscribe({
+        next: (res) => {
+          if (res.ok) {
+            this.onAppointmentConfirmed();
+          }
+        }
+      });
+    } else {
+      this.layout.openConfirmationDrawer(cita);
+    }
+  }
+
+  onAppointmentConfirmed() {
+    this.toastr.success('Cita confirmada y pago validado.', '¡Éxito!');
+    this.refreshDailyAppointments();
+    this.loadMonthData();
+  }
+
+  openCancellationDrawer(cita: Cita) {
+    this.layout.openCancellationDrawer(cita);
+  }
+
+  openRescheduleDrawer(cita: Cita) {
+    this.layout.openAppointmentDrawer(new Date(cita.fechaHora), cita);
   }
 
   onAppointmentSaved(cita: Cita) {

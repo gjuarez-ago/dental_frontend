@@ -45,7 +45,7 @@
 
                     @for (day of monthlyDays(); track day.fecha) {
                     <button class="day" [class.selected]="state().selectedDate?.toISOString()?.startsWith(day.fecha)"
-                        [class.disabled]="!day.esLaboral || day.estaLlena" (click)="onDateSelect(day)">
+                        [class.disabled]="!day.esLaboral || day.estaLlena || isPastDay(day.fecha)" (click)="onDateSelect(day)">
                         {{ day.fecha.split('-')[2] }}
                         @if (day.estaLlena) { <span class="dot-full"></span> }
                     </button>
@@ -67,12 +67,19 @@
                 </div>
                 }
 
-                <div class="slots-grid">
-                    @for (slot of availableSlots(); track slot.horaInicio) {
-                    <button class="slot-btn" [class.selected]="state().selectedSlot?.horaInicio === slot.horaInicio"
-                        [disabled]="!slot.disponible" (click)="onSlotSelect(slot)">
+                <div class="slots-grid animate-fade-in">
+                    @for (slot of filteredSlots(); track slot.horaInicio) {
+                    <button class="slot-btn" 
+                        [class.selected]="state().selectedSlot?.horaInicio === slot.horaInicio"
+                        [disabled]="!slot.disponible" 
+                        (click)="onSlotSelect(slot)">
                         {{ slot.horaInicio }}
                     </button>
+                    }
+                    @empty {
+                        <div class="no-slots-alert">
+                            No hay horarios disponibles para esta fecha.
+                        </div>
                     }
                 </div>
             </div>
@@ -92,7 +99,9 @@
             <!-- DOCTOR PROFILE (Compact) -->
             <div class="doctor-card card">
                 <div class="doctor-profile">
-                    <img [src]="doctor.img" [alt]="doctor.name" class="doctor-img">
+                    <div class="doctor-initials-avatar">
+                        {{ doctor.name.substring(0,1) }}{{ doctor.name.split(' ').length > 1 ? doctor.name.split(' ')[1].substring(0,1) : '' }}
+                    </div>
                     <div class="doctor-info">
                         <h3>{{ doctor.name }}</h3>
                         <span class="doctor-tag">{{ doctor.title }}</span>
@@ -117,18 +126,16 @@
             <div class="card form-card">
                 <div class="form-group">
                     <label for="pName">Nombre Completo</label>
-                    <div class="input-wrapper">
-                        <i class="ph ph-user"></i>
-                        <input type="text" id="pName" [(ngModel)]="bookingName" placeholder="Ej. Ana García" required>
+                    <div class="input-wrapper no-icon">
+                        <input type="text" id="pName" [(ngModel)]="bookingName" placeholder="Tu nombre completo" required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="pPhone">WhatsApp de contacto</label>
-                    <div class="input-wrapper">
-                        <i class="ph ph-whatsapp-logo"></i>
+                    <div class="input-wrapper no-icon">
                         <input type="tel" id="pPhone" [ngModel]="bookingPhone" (input)="onPhoneInput($event)"
-                            placeholder="10 dígitos (solo números)" maxlength="10" required>
+                            placeholder="Número de WhatsApp (10 dígitos)" maxlength="10" required>
                     </div>
                     @if (bookingPhone && !isPhoneValid()) {
                     <p class="error-msg" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem;">Deben ser
@@ -137,12 +144,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="pNotes">¿Deseas dejarnos alguna nota? (Opcional)</label>
-                    <div class="input-wrapper">
-                        <i class="ph ph-note"></i>
-                        <textarea id="pNotes" [(ngModel)]="bookingNotes" placeholder="Ej. Tengo dolor en una muela..."
-                            rows="2"
-                            style="width: 100%; border: none; background: transparent; padding: 0.5rem; outline: none;"></textarea>
+                    <label for="pNotes">¿Cuál es el motivo de tu visita?</label>
+                    <div class="input-wrapper no-icon">
+                        <textarea id="pNotes" [(ngModel)]="bookingNotes" placeholder="Algún detalle que debamos saber..."
+                            rows="4"></textarea>
                     </div>
                 </div>
             </div>
@@ -213,21 +218,21 @@
             <!-- TRANSFER DETAILS -->
             <div class="card transfer-card">
                 <div class="card-header">
-                    <h3>Detalles de Transferencia BBVA</h3>
+                    <h3>Detalles de Transferencia {{ bankDetails().bank }}</h3>
                 </div>
                 <div class="transfer-grid">
                     <div class="transfer-item">
                         <span class="label">BANCO</span>
-                        <p>{{ bankDetails.bank }}</p>
+                        <p>{{ bankDetails().bank }}</p>
                     </div>
                     <div class="transfer-item">
                         <span class="label">BENEFICIARIO</span>
-                        <p>{{ bankDetails.holder }}</p>
+                        <p>{{ bankDetails().holder }}</p>
                     </div>
                     <div class="transfer-item full-width">
                         <span class="label">CLABE INTERBANCARIA</span>
                         <div class="clabe-copy">
-                            <p>{{ bankDetails.clabe }}</p>
+                            <p>{{ bankDetails().clabe }}</p>
                             <i class="ph ph-copy"></i>
                         </div>
                     </div>
@@ -326,7 +331,7 @@
             <span>PAGO</span>
         </a>
     </nav>
-    <ngx-spinner bdColor="rgba(26, 43, 76, 0.85)" size="medium" color="#BEE7DF" type="ball-scale-multiple" [fullScreen]="true">
+    <ngx-spinner bdColor="rgba(26, 43, 76, 0.4)" size="medium" color="#BEE7DF" type="ball-scale-multiple" [fullScreen]="true">
         <p style="color: white; font-family: 'Manrope', sans-serif; font-weight: 600; margin-top: 1rem;">
             Procesando...
         </p>

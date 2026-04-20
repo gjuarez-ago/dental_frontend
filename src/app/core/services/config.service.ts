@@ -16,6 +16,9 @@ export interface UserConfig {
   professionalCedula: string;
   cancellationWindow: number;
   weeklySchedule: DaySchedule[];
+  banco: string;
+  cuentaBancaria: string;
+  clabeInterbancaria: string;
 }
 
 // Mapeo entre frontend (español) y backend (inglés)
@@ -53,7 +56,10 @@ export class ConfigService {
       { day: 'Viernes', enabled: true, startTime: '09:00', endTime: '18:00' },
       { day: 'Sábado', enabled: true, startTime: '09:00', endTime: '14:00' },
       { day: 'Domingo', enabled: false, startTime: '09:00', endTime: '18:00' }
-    ]
+    ],
+    banco: '',
+    cuentaBancaria: '',
+    clabeInterbancaria: ''
   });
 
   readonly config = this._config.asReadonly();
@@ -118,7 +124,10 @@ export class ConfigService {
       professionalName: res.nombreCompleto ?? '',
       professionalCedula: res.cedulaProfesional ?? '',
       cancellationWindow: res.ventanaCancelacion ?? 24,
-      weeklySchedule: schedule
+      weeklySchedule: schedule,
+      banco: res.banco ?? '',
+      cuentaBancaria: res.cuentaBancaria ?? '',
+      clabeInterbancaria: res.clabeInterbancaria ?? ''
     });
   }
 
@@ -137,7 +146,10 @@ export class ConfigService {
       nombreCompleto: config.professionalName,
       cedulaProfesional: config.professionalCedula,
       ventanaCancelacion: config.cancellationWindow,
-      horarios: horarios
+      horarios: horarios,
+      banco: config.banco,
+      cuentaBancaria: config.cuentaBancaria,
+      clabeInterbancaria: config.clabeInterbancaria
     };
   }
 }

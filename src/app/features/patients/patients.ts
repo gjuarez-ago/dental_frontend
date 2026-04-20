@@ -2,21 +2,25 @@ import { Component, ChangeDetectionStrategy, signal, computed, inject, OnInit } 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
+import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import { PatientDrawerComponent } from './components/patient-drawer/patient-drawer';
 import { PatientService } from '../../core/services/patient.service';
 import { Patient } from '../../core/models/patient.model';
 import { finalize } from 'rxjs';
+import { LayoutService } from '../../core/services/layout.service';
 
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgxPaginationModule, PatientDrawerComponent],
+  imports: [CommonModule, FormsModule, NgxPaginationModule, PatientDrawerComponent, NgxSpinnerModule],
   templateUrl: './patients.html',
   styleUrl: './patients.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PatientsComponent implements OnInit {
   private readonly patientService = inject(PatientService);
+  private readonly spinner = inject(NgxSpinnerService);
+  private readonly layout = inject(LayoutService);
   
   searchTerm = signal('');
   isDrawerOpen = signal(false);
@@ -42,16 +46,19 @@ export class PatientsComponent implements OnInit {
 
   loadPatients() {
     this.isLoading.set(true);
-    this.patientService.getPatients().subscribe({
-      next: (patients) => {
-        this.ALL_PATIENTS.set(patients);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Error al cargar pacientes:', err);
-        this.isLoading.set(false);
-      }
-    });
+    this.spinner.show();
+    this.patientService.getPatients()
+      .pipe(finalize(() => this.spinner.hide()))
+      .subscribe({
+        next: (patients) => {
+          this.ALL_PATIENTS.set(patients);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Error al cargar pacientes:', err);
+          this.isLoading.set(false);
+        }
+      });
   }
 
   filteredPatients = computed(() => {
@@ -101,6 +108,10 @@ export class PatientsComponent implements OnInit {
   closeDrawer() {
     this.isDrawerOpen.set(false);
     this.selectedPatient.set(null);
+  }
+
+  onNewAppointment(patient: Patient) {
+    this.layout.openAppointmentDrawerForPatient(patient);
   }
 
   onPatientSaved(newPatient: Patient) {

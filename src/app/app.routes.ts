@@ -9,7 +9,10 @@ import { LandingComponent } from './features/landing/landing';
 import { ServicesComponent } from './features/services/services';
 import { authGuard } from './core/guards/auth.guard';
 import { publicGuard } from './core/guards/public.guard';
+import { roleGuard } from './core/guards/role.guard';
+import { UserRole } from './core/models/user-role.enum';
 import { UsuariosComponent } from './features/usuarios/usuarios';
+import { MyAppointmentsComponent } from './features/patient/my-appointments/my-appointments';
 
 export const routes: Routes = [
   {
@@ -27,6 +30,12 @@ export const routes: Routes = [
     component: LoginComponent,
     title: 'Login - MEYISOFT POS',
     canActivate: [publicGuard]
+  },
+  {
+    path: 'mis-citas',
+    component: MyAppointmentsComponent,
+    canActivate: [authGuard],
+    title: 'Mis Citas | Portal del Paciente'
   },
   {
     path: 'dashboard',
@@ -56,7 +65,9 @@ export const routes: Routes = [
       {
         path: 'users',
         component: UsuariosComponent,
-        title: 'Gestión de Usuarios | MEYISOFT POS'
+        title: 'Gestión de Usuarios | MEYISOFT POS',
+        canActivate: [roleGuard],
+        data: { roles: [UserRole.OWNER, UserRole.SUPER_ADMIN] }
       }
     ]
   },

@@ -1,8 +1,8 @@
 <div class="patients-page animate-fade-in">
   <header class="page-header">
     <div class="header-info">
-      <h1>Panel de Revisión Administrativa</h1>
-      <p>Auditoría de comprobantes de pago y agenda diaria.</p>
+      <h1>Gestión de Pacientes</h1>
+      <p>Administración de expedientes dentales y agenda clínica.</p>
     </div>
     <div class="header-actions">
       <button class="btn-primary" (click)="openNewPatientDrawer()">
@@ -120,7 +120,9 @@
                 <button class="icon-action-btn edit" (click)="openEditDrawer(patient)" title="Editar Expediente">
                   <i class="ph ph-pencil-line"></i>
                 </button>
-                <button class="icon-action-btn" title="Nueva Cita"><i class="ph ph-calendar-plus"></i></button>
+                <button class="icon-action-btn" (click)="onNewAppointment(patient)" title="Nueva Cita">
+                  <i class="ph ph-calendar-plus"></i>
+                </button>
               </td>
             </tr>
           }

@@ -11,15 +11,6 @@
   </div>
 
   <div class="navbar-right">
-    <!-- Notification -->
-    <button class="icon-btn notify-btn" (click)="layout.toggleNotificationDrawer()" aria-label="Notifications" title="Ver notificaciones">
-      <span class="badge"></span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-      </svg>
-    </button>
-
     <!-- Settings -->
     <button class="icon-btn" (click)="layout.toggleConfigDrawer()" aria-label="Settings" title="Configuración">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -33,9 +24,9 @@
     <div class="divider"></div>
 
     <!-- User Profile -->
-    <div class="user-profile" role="button" aria-haspopup="true">
-      <div class="avatar">
-        <img src="https://i.pravatar.cc/150?u=admin" alt="Admin Profile">
+    <div class="user-profile" role="button" aria-haspopup="true" [title]="auth.currentUser()?.nombreCompleto || 'Usuario'">
+      <div class="avatar initials-avatar">
+        {{ userInitials() }}
       </div>
     </div>
   </div>

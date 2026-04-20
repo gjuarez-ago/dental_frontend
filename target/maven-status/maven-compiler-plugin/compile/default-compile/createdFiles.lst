@@ -38,6 +38,7 @@ com\meyisoft\dental\system\models\request\LoginRequest.class
 com\meyisoft\dental\system\models\dto\PacienteDTO$PacienteDTOBuilder.class
 com\meyisoft\dental\system\models\request\UsuarioRequest.class
 com\meyisoft\dental\system\enums\TenantPlan.class
+com\meyisoft\dental\system\service\CitaService$DashboardStats.class
 com\meyisoft\dental\system\entity\Paciente$PacienteBuilder.class
 com\meyisoft\dental\system\controller\UsuarioController.class
 com\meyisoft\dental\system\service\CitaService$DayConfig.class

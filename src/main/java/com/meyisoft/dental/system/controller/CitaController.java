@@ -32,9 +32,10 @@ public class CitaController {
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam UUID sucursalId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime start,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime end) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime end,
+            @RequestParam(required = false) UUID doctorId) {
         
-        List<CitaDTO> result = service.listarPorRango(principal.getTenantId(), sucursalId, start, end);
+        List<CitaDTO> result = service.listarPorRango(principal.getTenantId(), sucursalId, start, end, doctorId);
         
         return ResponseEntity.ok(ApiResponse.<List<CitaDTO>>builder()
                 .ok(true)
@@ -109,9 +110,10 @@ public class CitaController {
     public ResponseEntity<ApiResponse<CitaDTO>> confirmarCita(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id,
-            @RequestParam UUID doctorId) {
+            @RequestParam UUID doctorId,
+            @RequestParam(required = false) java.math.BigDecimal montoTotal) {
         
-        CitaDTO result = service.confirmarCita(id, doctorId, principal.getTenantId());
+        CitaDTO result = service.confirmarCita(id, doctorId, montoTotal, principal.getTenantId());
         
         return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
                 .ok(true)
@@ -130,6 +132,25 @@ public class CitaController {
         CitaDTO result = service.rechazarCita(id, motivo, principal.getTenantId());
         
         return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
+                .ok(true)
+                .result(result)
+                .timestamp(OffsetDateTime.now())
+                .build());
+    }
+
+    @GetMapping("/dashboard-summary")
+    @Operation(summary = "Obtener resumen de estadísticas para el dashboard")
+    public ResponseEntity<ApiResponse<CitaService.DashboardStats>> getDashboardSummary(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) UUID sucursalId,
+            @RequestParam(required = false) UUID doctorId) {
+        
+        // Si no se envía sucursalId expresamente, usamos la principal del usuario
+        UUID finalSucursalId = (sucursalId != null) ? sucursalId : principal.getSucursalId();
+        
+        CitaService.DashboardStats result = service.getDashboardSummary(principal.getTenantId(), finalSucursalId, doctorId);
+        
+        return ResponseEntity.ok(ApiResponse.<CitaService.DashboardStats>builder()
                 .ok(true)
                 .result(result)
                 .timestamp(OffsetDateTime.now())

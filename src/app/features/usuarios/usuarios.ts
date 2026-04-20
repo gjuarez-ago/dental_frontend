@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, computed, inject, OnInit, e
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
+import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { UsuarioResponse } from '../../core/models/user.model';
@@ -12,7 +13,7 @@ import { finalize } from 'rxjs';
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgxPaginationModule, UsuarioDrawerComponent],
+  imports: [CommonModule, FormsModule, NgxPaginationModule, UsuarioDrawerComponent, NgxSpinnerModule],
   templateUrl: './usuarios.html',
   styleUrl: './usuarios.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -20,6 +21,7 @@ import { finalize } from 'rxjs';
 export class UsuariosComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
+  private readonly spinner = inject(NgxSpinnerService);
   
   searchTerm = signal('');
   isDrawerOpen = signal(false);
@@ -60,16 +62,19 @@ export class UsuariosComponent implements OnInit {
     if (!currentUser?.sucursalIdPrincipal) return;
 
     this.isLoading.set(true);
-    this.userService.listarPorSucursal(currentUser.sucursalIdPrincipal).subscribe({
-      next: (users) => {
-        this.ALL_USERS.set(users);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Error al cargar usuarios:', err);
-        this.isLoading.set(false);
-      }
-    });
+    this.spinner.show();
+    this.userService.listarPorSucursal(currentUser.sucursalIdPrincipal)
+      .pipe(finalize(() => this.spinner.hide()))
+      .subscribe({
+        next: (users) => {
+          this.ALL_USERS.set(users);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Error al cargar usuarios:', err);
+          this.isLoading.set(false);
+        }
+      });
   }
 
   filteredUsers = computed(() => {
@@ -112,13 +117,16 @@ export class UsuariosComponent implements OnInit {
   }
 
   eliminarUser(user: UsuarioResponse) {
-    if (!this.canManage() || !confirm(`¿Estás seguro de eliminar a ${user.nombreCompleto}?`)) return;
+    if (!this.canManage() || !confirm(`¿Estás seguro de deshabilitar a ${user.nombreCompleto}? Esta acción quedará registrada en la bitácora de auditoría.`)) return;
     
-    this.userService.eliminar(user.id).subscribe({
-      next: () => {
-        this.loadUsers();
-      },
-      error: (err) => console.error('Error al eliminar usuario:', err)
-    });
+    this.spinner.show();
+    this.userService.eliminar(user.id)
+      .pipe(finalize(() => this.spinner.hide()))
+      .subscribe({
+        next: () => {
+          this.loadUsers();
+        },
+        error: (err) => console.error('Error al deshabilitar usuario:', err)
+      });
   }
 }

@@ -1,45 +1,25 @@
 <div class="admin-panel animate-fade-in">
   <!-- Header -->
-  <header class="panel-header">
-    <h1 class="title">Panel de Revisión Administrativa</h1>
-    <p class="subtitle">Auditoría de comprobantes de pago y agenda diaria.</p>
+  <header class="page-header">
+    <div class="header-info">
+      <h1>Panel de Revisión Administrativa</h1>
+      <p>Auditoría de comprobantes de pago y agenda diaria.</p>
+    </div>
   </header>
 
   <!-- Summary Section -->
   <section class="summary-grid">
-    <!-- <div class="card summary-card velocity-card">
-      <div class="card-content">
-        <span class="card-label">Tasa de Asistencia</span>
-        <p class="card-desc">Pacientes con puntualidad hoy</p>
-        <div class="velocity-stats">
-          <h2 class="main-stat">95 <span class="unit">%</span></h2>
-          <span class="trend-badge">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
-              <polyline points="17 18 23 18 23 12"></polyline>
-            </svg>
-            +2%
-          </span>
-        </div>
-      </div>
-      
-      <div class="velocity-chart">
-        @for (h of [80, 95, 90, 85, 95, 100, 90, 95]; track $index) {
-        <div class="bar" [style.height.%]="h"></div>
-        }
-      </div>
-    </div> -->
-
     <div class="card summary-card queue-card">
       <div class="card-content">
         <span class="card-label">Ingresos por Validar</span>
-        <h2 class="main-stat count">$4,500 MXN</h2>
+        <h2 class="main-stat count">${{ dashboardStats()?.ingresosPorValidar?.toLocaleString('es-MX',
+          {minimumFractionDigits: 2}) || '0.00' }} MXN</h2>
         <p class="est-wait">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
           </svg>
-          {{ comprobantesPendientes().length }} comprobantes pendientes
+          {{ dashboardStats()?.comprobantesPendientesCount || 0 }} comprobantes pendientes
         </p>
       </div>
       <div class="queue-icon-bg">
@@ -50,7 +30,7 @@
 
   <!-- Stats Grid -->
   <section class="summary-grid stats-only">
-    @for (stat of stats; track stat.label) {
+    @for (stat of stats(); track stat.label) {
     <div class="card stat-card">
       <div class="stat-icon" [style.background]="stat.color">
         <span class="icon">
@@ -70,7 +50,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
-            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M22 21v-2a4 4 0 0 1-3-3.87"></path>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
           </svg>
           }
@@ -98,8 +78,23 @@
     </div>
 
     <div class="verification-grid">
+      <!-- Skeleton Loading State -->
+      @if (loading()) {
+      @for (i of [1,2,3]; track $index) {
+      <div class="card verification-card skeleton-card">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+        </div>
+        <div class="skeleton-image"></div>
+        <div class="skeleton-footer"></div>
+      </div>
+      }
+      } @else {
       @for (item of comprobantesPendientes(); track item.id) {
-      <article class="card verification-card">
+      <article class="card verification-card animate-card-entry" [style.--index]="$index">
         <header class="card-header">
           <div class="patient-info">
             <div class="avatar">
@@ -122,9 +117,20 @@
             <i class="ph ph-stethoscope"></i>
             <span>{{ item.tratamiento }}</span>
           </div>
-          <div class="detail-row amount">
-            <i class="ph ph-money"></i>
-            <span>Monto: <b>{{ item.monto }} MXN</b></span>
+          @if (item.motivo) {
+          <div class="detail-row note">
+            <i class="ph ph-chat-circle-dots"></i>
+            <span><b>Motivo:</b> {{ item.motivo }}</span>
+          </div>
+          }
+          <div class="detail-row financial-v2">
+            <div class="main-amount">
+              <span class="label">Anticipo a Validar</span>
+              <span class="value"> {{ item.anticipo }}</span>
+            </div>
+            <div class="secondary-amount">
+              <span>Total aprox. de la consulta: <b>{{ item.monto }}</b></span>
+            </div>
           </div>
         </div>
 
@@ -148,6 +154,16 @@
         </footer>
       </article>
       }
+
+      @if (comprobantesPendientes().length === 0) {
+      <div class="empty-state">
+        <i class="ph ph-calendar-check"></i>
+        <h4>Todo al día</h4>
+        <p>No tienes solicitudes de confirmación pendientes.</p>
+      </div>
+      }
+      }
     </div>
   </section>
+
 </div>

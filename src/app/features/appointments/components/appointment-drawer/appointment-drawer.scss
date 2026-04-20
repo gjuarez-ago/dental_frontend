@@ -143,6 +143,21 @@
         color: #94a3b8;
       }
 
+      &.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        
+        input {
+          background: #f1f5f9 !important;
+          border-color: #e2e8f0 !important;
+          cursor: not-allowed;
+        }
+
+        i {
+          color: #cbd5e1 !important;
+        }
+      }
+
       &.textarea-wrapper {
         i { top: 1rem; }
         textarea { padding-left: 1rem; resize: none; }
@@ -168,6 +183,36 @@
     .input-wrapper input { border-color: #fecaca; background: #fffafb; }
     .error-msg { font-size: 0.75rem; color: #ef4444; font-weight: 600; margin-top: 0.5rem; display: block; }
   }
+
+  .service-meta-info {
+    margin-top: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--app-slate);
+    background: #f8fafc;
+    padding: 0.5rem 0.85rem;
+    border-radius: 10px;
+    border-left: 3px solid var(--app-blue);
+    line-height: 1;
+    animation: fadeIn 0.3s ease-out;
+
+    i {
+      color: var(--app-blue);
+      font-size: 1.1rem;
+    }
+
+    strong {
+      color: var(--app-navy);
+      font-weight: 850;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .time-picker-group {

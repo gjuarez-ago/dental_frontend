@@ -1,4 +1,5 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnChanges, SimpleChanges, OnDestroy, signal, computed, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnChanges, SimpleChanges, OnDestroy, signal, computed, inject, effect } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged, switchMap, finalize, of } from 'rxjs';
@@ -9,6 +10,7 @@ import { Patient } from '../../../../core/models/patient.model';
 import { ServicioDental } from '../../../../core/models/service-dental.model';
 import { AppointmentStatus, Cita } from '../../../../core/models/appointment.model';
 import { AuthService } from '../../../../core/services/auth.service';
+import { LayoutService } from '../../../../core/services/layout.service';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -25,6 +27,7 @@ export class AppointmentDrawerComponent implements OnChanges, OnDestroy {
   @Output() close = new EventEmitter<void>();
   @Output() saved = new EventEmitter<Cita>();
 
+  protected readonly layout = inject(LayoutService);
   private readonly fb = inject(FormBuilder);
   private readonly appointmentService = inject(AppointmentService);
   private readonly patientService = inject(PatientService);
@@ -41,6 +44,7 @@ export class AppointmentDrawerComponent implements OnChanges, OnDestroy {
     date: ['', [Validators.required]],
     time: ['', [Validators.required]],
     duracionMinutos: [30, [Validators.required, Validators.min(10)]],
+    montoTotal: [0, [Validators.required, Validators.min(0)]],
     motivoConsulta: ['', [Validators.required]],
     notasRecepcion: ['']
   });
@@ -50,6 +54,7 @@ export class AppointmentDrawerComponent implements OnChanges, OnDestroy {
   readonly services = signal<ServicioDental[]>([]);
   readonly patients = signal<Patient[]>([]);
   readonly isSaving = signal(false);
+  readonly selectedServiceDuration = signal<number | null>(null);
 
   // Restricciones
   readonly minDate = signal(new Date().toISOString().split('T')[0]);
@@ -59,28 +64,167 @@ export class AppointmentDrawerComponent implements OnChanges, OnDestroy {
   readonly filteredPatients = signal<Patient[]>([]);
   readonly showPatientResults = signal(false);
 
-  // Selectores de tiempo 12h
-  readonly hoursSelection = signal<string[]>(['1','2','3','4','5','6','7','8','9','10','11','12']);
-  readonly minutesSelection = signal<string[]>(['00','15','30','45']);
-  readonly periodsSelection = signal<string[]>(['AM','PM']);
-
   readonly tempHour = signal('09');
   readonly tempMinute = signal('00');
   readonly tempPeriod = signal('AM');
 
+  // Señales reactivas para filtrado
+  private readonly selectedDateSignal = toSignal(this.appointmentForm.get('date')!.valueChanges);
+  private readonly currentTime = signal(new Date());
+
+  readonly isToday = computed(() => {
+    const val = this.selectedDateSignal();
+    if (!val) return false;
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    return val === todayStr;
+  });
+
+  readonly periodsSelection = computed(() => {
+    if (!this.isToday()) return ['AM', 'PM'];
+    const now = this.currentTime();
+    return now.getHours() >= 12 ? ['PM'] : ['AM', 'PM'];
+  });
+
+  readonly hoursSelection = computed(() => {
+    const allHours = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+    if (!this.isToday()) return allHours;
+
+    const now = this.currentTime();
+    const currentPeriod = this.tempPeriod();
+    const nowHour24 = now.getHours();
+    const nowPeriod = nowHour24 >= 12 ? 'PM' : 'AM';
+
+    if (currentPeriod === 'AM' && nowPeriod === 'PM') return []; // No debería pasar si periodsSelection filtra bien
+    if (currentPeriod !== nowPeriod) return allHours;
+
+    // Si estamos en el mismo período, filtrar horas pasadas
+    let h12 = nowHour24 % 12;
+    h12 = h12 === 0 ? 12 : h12;
+
+    return allHours.filter(h => {
+      const hNum = parseInt(h);
+      // Caso especial 12: es la primera hora del ciclo (12 AM < 1 AM, 12 PM < 1 PM)
+      const normalizedH = hNum === 12 ? 0 : hNum;
+      const normalizedNow = h12 === 12 ? 0 : h12;
+      return normalizedH >= normalizedNow;
+    });
+  });
+
+  readonly minutesSelection = computed(() => {
+    const allMins = ['00','15','30','45'];
+    if (!this.isToday()) return allMins;
+
+    const now = this.currentTime();
+    const h12 = now.getHours() % 12 || 12;
+    const p = now.getHours() >= 12 ? 'PM' : 'AM';
+
+    if (this.tempPeriod() === p && parseInt(this.tempHour()) === h12) {
+      return allMins.filter(m => parseInt(m) > now.getMinutes());
+    }
+    return allMins;
+  });
+
   constructor() {
     this.loadInitialData();
+
+    // Efecto para asegurar que la selección siempre sea válida al cambiar filtros
+    effect(() => {
+      const availablePeriods = this.periodsSelection();
+      if (!availablePeriods.includes(this.tempPeriod())) {
+        this.tempPeriod.set(availablePeriods[0] || 'PM');
+      }
+
+      const availableHours = this.hoursSelection();
+      if (availableHours.length > 0 && !availableHours.includes(this.tempHour())) {
+        this.tempHour.set(availableHours[0]);
+      }
+
+      const availableMins = this.minutesSelection();
+      if (availableMins.length > 0 && !availableMins.includes(this.tempMinute())) {
+        this.tempMinute.set(availableMins[0]);
+      }
+      
+      this.updateTimeFromSelectors();
+    }, { allowSignalWrites: true });
+
+    // Efecto para modo edición/reprogramación
+    effect(() => {
+      const cita = this.layout.selectedCitaForEdit();
+      if (cita && this.isOpen) {
+        this.patchFormForEdit(cita);
+      }
+    }, { allowSignalWrites: true });
+
+    // Efecto para modo nueva cita con paciente pre-seleccionado
+    effect(() => {
+      const patient = this.layout.selectedPatientForAppointment();
+      if (patient && this.isOpen) {
+        this.selectPatient(patient);
+      }
+    }, { allowSignalWrites: true });
+  }
+
+  private patchFormForEdit(cita: any) {
+    const dateObj = new Date(cita.fechaHora);
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    
+    let h = dateObj.getHours();
+    const period = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+
+    this.tempHour.set(String(h));
+    this.tempMinute.set(String(dateObj.getMinutes()).padStart(2, '0'));
+    this.tempPeriod.set(period);
+    this.updateTimeFromSelectors();
+
+    this.appointmentForm.patchValue({
+      pacienteId: cita.pacienteId,
+      doctorId: cita.doctorId,
+      sucursalId: cita.sucursalId,
+      servicioId: cita.servicioId,
+      date: `${y}-${m}-${d}`,
+      duracionMinutos: cita.duracionMinutos,
+      montoTotal: cita.montoTotal,
+      motivoConsulta: cita.motivoConsulta,
+      notasRecepcion: cita.notasRecepcion
+    });
+    
+    this.patientSearch.set(cita.pacienteNombre || '');
+    this.appointmentForm.markAsPristine();
   }
 
   private loadInitialData() {
     this.appointmentService.getDoctores().subscribe(docs => this.doctors.set(docs));
-    this.serviceDentalService.getServicios().subscribe(svcs => this.services.set(svcs));
+    this.serviceDentalService.getServicios().subscribe(svcs => {
+      this.services.set(svcs);
+    });
+
+    // Escuchar cambios en el servicio para actualizar el precio sugerido y duración
+    this.appointmentForm.get('servicioId')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(id => {
+        const service = this.services().find(s => s.id === id);
+        if (service) {
+          this.appointmentForm.patchValue({ 
+            montoTotal: service.precioBase || 0,
+            duracionMinutos: service.duracionMinutos || 30
+          });
+          this.selectedServiceDuration.set(service.duracionMinutos || 30);
+        } else {
+          this.selectedServiceDuration.set(null);
+        }
+      });
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['isOpen'] && this.isOpen) {
       this.toggleBodyScroll(true);
-      this.resetFormWithDate();
+      if (!this.layout.selectedCitaForEdit()) {
+        this.resetFormWithDate();
+      }
     }
     if (changes['isOpen'] && !this.isOpen) {
       this.toggleBodyScroll(false);
@@ -88,7 +232,7 @@ export class AppointmentDrawerComponent implements OnChanges, OnDestroy {
   }
 
   private resetFormWithDate() {
-    const date = this.initialDate || new Date();
+    const date = this.layout.selectedDate() || new Date();
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -105,11 +249,32 @@ export class AppointmentDrawerComponent implements OnChanges, OnDestroy {
     this.tempMinute.set('00');
     this.tempPeriod.set(period);
     
+    // Si la hora actual ya pasó (ej: son las 4:33 y pusimos 4:00), saltar a la siguiente disponible
+    const currentMins = now.getMinutes();
+    if (this.isToday() && currentMins > 0) {
+      if (currentMins < 15) this.tempMinute.set('15');
+      else if (currentMins < 30) this.tempMinute.set('30');
+      else if (currentMins < 45) this.tempMinute.set('45');
+      else {
+        // Saltar a la siguiente hora
+        this.tempMinute.set('00');
+        h = h + 1;
+        if (h > 12) h = 1;
+        this.tempHour.set(String(h));
+        if (h === 12) this.tempPeriod.set(period === 'AM' ? 'PM' : 'AM');
+      }
+    }
+
     this.updateTimeFromSelectors();
 
     this.appointmentForm.patchValue({
-      date: formattedDate
-    });
+      date: formattedDate,
+      pacienteId: '',
+      servicioId: '',
+      motivoConsulta: '',
+      notasRecepcion: ''
+    }, { emitEvent: true }); 
+    
     this.patientSearch.set('');
     this.appointmentForm.markAsPristine();
     this.appointmentForm.markAsUntouched();
@@ -187,6 +352,29 @@ export class AppointmentDrawerComponent implements OnChanges, OnDestroy {
       
       const fechaHora = `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(min)}:00${sign}${offH}:${offM}`;
 
+      const citaId = this.layout.selectedCitaForEdit()?.id;
+
+      if (citaId) {
+        // MODO REPROGRAMAR
+        this.appointmentService.reprogramarCita(citaId, fechaHora, val.duracionMinutos)
+          .pipe(finalize(() => this.isSaving.set(false)))
+          .subscribe({
+            next: (res) => {
+              if (res.ok) {
+                this.toastr.success('Cita reprogramada con éxito', 'Operación Exitosa');
+                this.saved.emit(res.result);
+                this.closeDrawer();
+              }
+            },
+            error: (err) => {
+              const msg = err.error?.userMessage || 'No se pudo reprogramar la cita.';
+              this.toastr.error(msg, 'Error de Validación');
+            }
+          });
+        return;
+      }
+
+      // MODO AGENDAR NUEVA
       const cita: Cita = {
         pacienteId: val.pacienteId,
         doctorId: val.doctorId,
@@ -196,7 +384,8 @@ export class AppointmentDrawerComponent implements OnChanges, OnDestroy {
         duracionMinutos: val.duracionMinutos,
         estado: AppointmentStatus.CONFIRMADA,
         motivoConsulta: val.motivoConsulta,
-        notasRecepcion: val.notasRecepcion
+        notasRecepcion: val.notasRecepcion,
+        montoTotal: val.montoTotal
       };
 
       this.appointmentService.agendarCita(cita)
@@ -210,8 +399,6 @@ export class AppointmentDrawerComponent implements OnChanges, OnDestroy {
           },
           error: (err) => {
             console.error('Error al agendar:', err);
-            // La mayoría de los errores los maneja el interceptor,
-            // pero podemos añadir un mensaje genérico si el interceptor no tiene userMessage
             const msg = err.error?.userMessage || 'No se pudo agendar la cita. Verifica la disponibilidad.';
             this.toastr.error(msg, 'Error de Validación');
           }

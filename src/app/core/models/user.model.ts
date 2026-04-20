@@ -8,6 +8,7 @@ export interface UsuarioRequest {
   rol: UserRole | string;
   cedulaProfesional?: string;
   fotografiaUrl?: string;
+  esPersonalClinico?: boolean;
   sucursalId: string;
 }
 
@@ -19,6 +20,7 @@ export interface UsuarioResponse {
   rol: UserRole | string;
   cedulaProfesional?: string;
   fotografiaUrl?: string;
+  esPersonalClinico?: boolean;
   sucursalIdPrincipal: string;
   requiereCambioNip: boolean;
   createdAt: string;

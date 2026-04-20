@@ -27,8 +27,6 @@
     </footer>
   </div>
   
-  <app-notification-drawer></app-notification-drawer>
-
   <app-appointment-drawer
     [isOpen]="layout.isAppointmentDrawerOpen()"
     (close)="layout.closeAppointmentDrawer()"
@@ -36,6 +34,10 @@
   </app-appointment-drawer>
 
   <app-config-drawer [isOpen]="layout.isConfigOpen()"></app-config-drawer>
+
+  <app-confirmation-drawer></app-confirmation-drawer>
+  <app-rejection-drawer></app-rejection-drawer>
+  <app-cancellation-drawer></app-cancellation-drawer>
 
   <ngx-spinner bdColor="rgba(255,255,255,0.7)" size="medium" color="#1A2B4C" type="ball-scale-multiple" [fullScreen]="true">
     <p style="color: #1A2B4C; font-weight: 700; margin-top: 20px; font-family: 'Outfit', sans-serif;">Cargando clínica...</p>

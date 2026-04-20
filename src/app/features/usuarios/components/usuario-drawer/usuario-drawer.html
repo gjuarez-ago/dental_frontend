@@ -75,6 +75,24 @@
             </div>
           </div>
 
+          <!-- Verificación Legal para Doctores -->
+          <div class="legal-check-container" *ngIf="userForm.get('rol')?.value === UserRole.DOCTOR">
+            <div class="legal-check-content">
+              <div class="legal-text">
+                <label class="switch-title">Validación Clínica Legal *</label>
+                <p>Certifico que este colaborador es personal médico real y capacitado para consultas.</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" formControlName="esPersonalClinico">
+                <span class="slider round"></span>
+              </label>
+            </div>
+            <div class="legal-warning">
+              <i class="ph ph-info"></i>
+              <span>Esta opción confirma la idoneidad del médico ante la plataforma.</span>
+            </div>
+          </div>
+
           <div class="input-group warning" [class.error]="userForm.get('nip')?.touched && userForm.get('nip')?.invalid">
             <label for="nip">{{ user ? 'Cambiar NIP (Opcional)' : 'Asignar NIP de acceso (6 dígitos) *' }}</label>
             <div class="input-wrapper">

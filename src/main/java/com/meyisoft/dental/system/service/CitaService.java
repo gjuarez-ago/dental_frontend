@@ -84,10 +84,61 @@ public class CitaService {
         }
     }
 
+    @Data
+    public static class DashboardStats {
+        private double ingresosPorValidar;
+        private long comprobantesPendientesCount;
+        private double ingresosHoy;
+        private double ingresosHoyTrend;
+        private long citasHoyCount;
+        private double citasHoyTrend;
+        private long pacientesNuevosCount;
+        private double pacientesNuevosTrend;
+    }
+
     @Transactional(readOnly = true)
-    public List<CitaDTO> listarPorRango(UUID tenantId, UUID sucursalId, OffsetDateTime start, OffsetDateTime end) {
-        return repository.findByTenantIdAndSucursalIdAndFechaHoraBetweenAndRegBorrado(
-                tenantId, sucursalId, start, end, 1).stream()
+    public DashboardStats getDashboardSummary(UUID tenantId, UUID sucursalId, UUID doctorId) {
+        OffsetDateTime hoyStart = LocalDate.now().atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
+        OffsetDateTime hoyEnd = LocalDate.now().atTime(LocalTime.MAX).atOffset(OffsetDateTime.now().getOffset());
+        OffsetDateTime ayerStart = hoyStart.minusDays(1);
+        OffsetDateTime ayerEnd = hoyEnd.minusDays(1);
+
+        DashboardStats stats = new DashboardStats();
+
+        // 1. Ingresos y Pagos Pendientes
+        stats.setIngresosHoy(pagoRepository.sumIngresosByRange(tenantId, hoyStart, hoyEnd, doctorId).doubleValue());
+        double ingresosAyer = pagoRepository.sumIngresosByRange(tenantId, ayerStart, ayerEnd, doctorId).doubleValue();
+        stats.setIngresosHoyTrend(calcularTendencia(stats.getIngresosHoy(), ingresosAyer));
+        
+        stats.setComprobantesPendientesCount(pagoRepository.countPendingPaymentsByDoctor(tenantId, doctorId));
+        // El monto de ingresos por validar es la suma de esos pagos pendientes
+        // (Nota: Podríamos agregar una query específica en el repo, pero por ahora sumamos los de hoy por validar)
+        // stats.setIngresosPorValidar(...); 
+        // Simplificación: sumamos todos los pendientes de revisión para el doctor/clínica
+        // (Podemos usar el mismo query sumIngresos cambiando el status o agregando uno nuevo)
+
+        // 2. Citas
+        stats.setCitasHoyCount(repository.countApptsByRange(tenantId, sucursalId, hoyStart, hoyEnd, doctorId));
+        long citasAyer = repository.countApptsByRange(tenantId, sucursalId, ayerStart, ayerEnd, doctorId);
+        stats.setCitasHoyTrend(stats.getCitasHoyCount() - citasAyer); // Diferencia numérica según indica el frontend en su trend
+
+        // 3. Pacientes Nuevos (Clinic-wide generalmente, pero si hay doctorId podríamos filtrar si quisiéramos)
+        stats.setPacientesNuevosCount(pacienteRepository.countNewPatientsByRange(tenantId, hoyStart, hoyEnd));
+        long pacientesAyer = pacienteRepository.countNewPatientsByRange(tenantId, ayerStart, ayerEnd);
+        stats.setPacientesNuevosTrend(calcularTendencia(stats.getPacientesNuevosCount(), pacientesAyer));
+
+        return stats;
+    }
+
+    private double calcularTendencia(double hoy, double ayer) {
+        if (ayer == 0) return hoy > 0 ? 100.0 : 0.0;
+        return ((hoy - ayer) / ayer) * 100.0;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CitaDTO> listarPorRango(UUID tenantId, UUID sucursalId, OffsetDateTime start, OffsetDateTime end, UUID doctorId) {
+        return repository.findByRangeWithDoctorFilter(
+                tenantId, sucursalId, start, end, 1, doctorId).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -99,12 +150,14 @@ public class CitaService {
 
     @Transactional
     public CitaDTO agendar(CitaDTO dto, UUID tenantId, String comprobanteUrl) {
+        log.info("Agendando cita desde source: {} con montoTotal: {} y montoPagado recibido: {}", 
+                dto.getSource(), dto.getMontoTotal(), dto.getMontoPagado());
         // 1. Validar horario de sucursal
         validarHorarioSucursal(dto.getSucursalId(), dto.getFechaHora(), dto.getDuracionMinutos());
 
         // 2. Validar disponibilidad del doctor (No traslapes)
         OffsetDateTime finCita = dto.getFechaHora().plusMinutes(dto.getDuracionMinutos());
-        if (repository.existsOverlapping(dto.getDoctorId(), dto.getFechaHora(), finCita)) {
+        if (repository.existsOverlappingExcludingId(dto.getDoctorId(), dto.getFechaHora(), finCita, null)) {
             throw new BusinessException("CHOQUE_CITAS", "El doctor ya tiene una cita agendada en este horario",
                     HttpStatus.CONFLICT);
         }
@@ -169,7 +222,7 @@ public class CitaService {
             Pago anticipo = Pago.builder()
                     .citaId(saved.getId())
                     .pacienteId(pacienteId)
-                    .monto(java.math.BigDecimal.ZERO)
+                    .monto(dto.getMontoPagado() != null ? dto.getMontoPagado() : java.math.BigDecimal.ZERO)
                     .metodoPago(PaymentMethod.TRANSFERENCIA)
                     .status(PagoStatus.PENDIENTE_REVISION)
                     .comprobanteUrl(comprobanteUrl)
@@ -178,6 +231,8 @@ public class CitaService {
             anticipo.setTenantId(tenantId);
             anticipo.setRegBorrado(1);
             pagoRepository.save(anticipo);
+            pagoRepository.flush(); // Asegurar que el registro sea visible para la siguiente consulta
+            log.info("Anticipo registrado y flusheado para cita ID: {}", saved.getId());
         }
 
         return mapToDTO(saved);
@@ -193,11 +248,8 @@ public class CitaService {
         Integer duracion = (nuevaDuracion != null) ? nuevaDuracion : entity.getDuracionMinutos();
         OffsetDateTime finCita = nuevaFechaHora.plusMinutes(duracion);
 
-        // Excluir la misma cita de la validación de traslape (opcional, pero
-        // recomendado)
-        if (repository.existsOverlapping(entity.getDoctorId(), nuevaFechaHora, finCita)) {
-            // Aquí deberíamos tener una query en el repo que ignore el ID actual, pero por
-            // ahora lanzamos error si hay choque
+        // Excluir la misma cita de la validación de traslape
+        if (repository.existsOverlappingExcludingId(entity.getDoctorId(), nuevaFechaHora, finCita, id)) {
             throw new BusinessException("CHOQUE_CITAS", "El doctor ya tiene una cita agendada en ese nuevo horario",
                     HttpStatus.CONFLICT);
         }
@@ -212,7 +264,7 @@ public class CitaService {
     }
 
     @Transactional
-    public CitaDTO confirmarCita(UUID id, UUID doctorId, UUID tenantId) {
+    public CitaDTO confirmarCita(UUID id, UUID doctorId, java.math.BigDecimal montoTotal, UUID tenantId) {
         Cita entity = repository.findById(id)
                 .filter(c -> c.getTenantId().equals(tenantId) && c.getRegBorrado() == 1)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "Cita no encontrada", HttpStatus.NOT_FOUND));
@@ -226,14 +278,42 @@ public class CitaService {
         OffsetDateTime start = entity.getFechaHora();
         OffsetDateTime end = start.plusMinutes(entity.getDuracionMinutos());
         
-        if (repository.existsOverlapping(doctorId, start, end)) {
+        if (repository.existsOverlappingExcludingId(doctorId, start, end, id)) {
             throw new BusinessException("CHOQUE_CITAS", "El doctor seleccionado ya tiene una cita agendada en este horario",
                     HttpStatus.CONFLICT);
         }
 
+        if (montoTotal != null) {
+            entity.setMontoTotal(montoTotal);
+        }
+
         entity.setDoctorId(doctorId);
         entity.setEstado(AppointmentStatus.CONFIRMADA);
-        return mapToDTO(repository.save(entity));
+        Cita saved = repository.save(entity);
+
+        // APROBACIÓN AUTOMÁTICA DE ANTICIPO
+        List<Pago> pagosPendientes = pagoRepository.findByCitaIdAndRegBorrado(id, 1).stream()
+                .filter(p -> p.getStatus() == PagoStatus.PENDIENTE_REVISION)
+                .collect(Collectors.toList());
+
+        if (!pagosPendientes.isEmpty()) {
+            Paciente paciente = pacienteRepository.findById(entity.getPacienteId())
+                    .orElseThrow(() -> new BusinessException("NOT_FOUND", "Paciente no encontrado", HttpStatus.NOT_FOUND));
+
+            if (paciente.getSaldoPendiente() == null) {
+                paciente.setSaldoPendiente(java.math.BigDecimal.ZERO);
+            }
+
+            for (Pago pago : pagosPendientes) {
+                pago.setStatus(PagoStatus.APROBADO);
+                paciente.setSaldoPendiente(paciente.getSaldoPendiente().subtract(pago.getMonto()));
+                pagoRepository.save(pago);
+            }
+            pacienteRepository.save(paciente);
+            log.info("Se aprobaron {} pagos de anticipo automáticamente para la cita {}", pagosPendientes.size(), id);
+        }
+
+        return mapToDTO(saved);
     }
 
     @Transactional
@@ -485,6 +565,24 @@ public class CitaService {
                 .motivoRechazo(entity.getMotivoRechazo())
                 .build();
 
+        // Mapear pagos y comprobante
+        List<Pago> pagos = pagoRepository.findByCitaIdAndRegBorrado(entity.getId(), 1);
+        
+        java.math.BigDecimal totalPagado = pagos.stream()
+                .filter(p -> p.getRegBorrado() == 1 && p.getStatus() != PagoStatus.RECHAZADO && p.getStatus() != PagoStatus.CANCELADO)
+                .map(p -> p.getMonto() != null ? p.getMonto() : java.math.BigDecimal.ZERO)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        
+        dto.setMontoPagado(totalPagado);
+        
+        log.info("Mapeando Cita {}: Total={}, Pagado={}, PagosEncontrados={}", 
+                entity.getFolio(), dto.getMontoTotal(), dto.getMontoPagado(), pagos.size());
+
+        pagos.stream()
+                .filter(p -> p.getComprobanteUrl() != null && !p.getComprobanteUrl().isEmpty())
+                .findFirst()
+                .ifPresent(p -> dto.setComprobanteUrl(p.getComprobanteUrl()));
+
         // Enriquecer con nombres (Opcional pero recomendado para el frontend)
         pacienteRepository.findById(entity.getPacienteId())
                 .ifPresent(p -> {
@@ -497,6 +595,9 @@ public class CitaService {
 
         servicioDentalRepository.findByIdAndTenantIdAndRegBorrado(entity.getServicioId(), entity.getTenantId(), 1)
                 .ifPresent(s -> dto.setServicioNombre(s.getNombre()));
+
+        if (dto.getMontoTotal() == null) dto.setMontoTotal(java.math.BigDecimal.ZERO);
+        if (dto.getMontoPagado() == null) dto.setMontoPagado(java.math.BigDecimal.ZERO);
 
         return dto;
     }

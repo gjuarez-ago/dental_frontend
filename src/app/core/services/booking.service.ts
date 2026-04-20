@@ -111,13 +111,36 @@ export class BookingService {
     });
   }
 
-  // Datos Bancarios Reales
-  readonly bankDetails = {
-    bank: 'BBVA México',
-    holder: 'Sarai Rios',
-    clabe: '012 180 00123 4567 890',
+  // Datos Bancarios Dinámicos
+  private readonly _bankDetails = signal({
+    bank: 'Cargando...',
+    holder: '...',
+    clabe: '...',
     depositPercentage: 0.30
-  };
+  });
+
+  readonly bankDetails = this._bankDetails.asReadonly();
+
+  getClinicInfo(tenantId: string, sucursalId: string): void {
+    const params = new HttpParams()
+      .set('tenantId', tenantId)
+      .set('sucursalId', sucursalId);
+
+    this.http.get<ApiResponse<any>>(`${this.apiUrl}/agenda/clinic-info`, { params })
+      .subscribe({
+        next: (res) => {
+          if (res.ok && res.result) {
+            this._bankDetails.set({
+              bank: res.result.banco || 'No configurado',
+              holder: res.result.doctorName || 'Propietario',
+              clabe: res.result.clabeInterbancaria || 'No configurada',
+              depositPercentage: res.result.depositPercentage || 0.30
+            });
+          }
+        },
+        error: (err) => console.error('Error al cargar info de clínica:', err)
+      });
+  }
 
   setService(service: Partial<ServicioDental> & { nombre: string; price?: string }) {
     this._state.update(s => ({
@@ -148,6 +171,6 @@ export class BookingService {
   calculateDeposit(totalPrice: string): number {
     const numericPrice = parseFloat(totalPrice.replace(/[^0-9.]/g, ''));
     if (isNaN(numericPrice)) return 0;
-    return numericPrice * this.bankDetails.depositPercentage;
+    return numericPrice * this.bankDetails().depositPercentage;
   }
 }
