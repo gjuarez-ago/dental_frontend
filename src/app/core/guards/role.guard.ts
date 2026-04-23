@@ -27,8 +27,8 @@ export const roleGuard: CanActivateFn = (route, state) => {
     return true;
   }
 
-  // Si no tiene permiso, redirigir al dashboard y mostrar error
+  // Si no tiene permiso, redirigir según su rol y mostrar error
   toastr.error('No tienes permisos suficientes para acceder a este módulo.', 'Acceso Denegado');
-  router.navigate(['/dashboard']);
+  router.navigate([auth.getHomeRoute()]);
   return false;
 };
