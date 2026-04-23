@@ -4,6 +4,7 @@ import com.meyisoft.dental.system.enums.PagoStatus;
 import com.meyisoft.dental.system.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -15,7 +16,7 @@ import java.util.UUID;
 @Table(name = "pagos")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class Pago extends BaseEntity {
 

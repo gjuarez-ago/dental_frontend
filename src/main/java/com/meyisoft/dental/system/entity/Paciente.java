@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 import java.math.BigDecimal;
@@ -13,7 +14,7 @@ import java.math.BigDecimal;
 @Table(name = "pacientes")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class Paciente extends BaseEntity {
 
@@ -69,4 +70,15 @@ public class Paciente extends BaseEntity {
     @Column(name = "expediente_completo", nullable = false)
     @Builder.Default
     private Boolean expedienteCompleto = false;
+
+    @Column(name = "pin_hash")
+    private String pinHash;
+
+    @Column(name = "pin_cambiado")
+    @Builder.Default
+    private Boolean pinCambiado = false;
+
+    @Column(name = "email_verificado")
+    @Builder.Default
+    private Boolean emailVerificado = false;
 }

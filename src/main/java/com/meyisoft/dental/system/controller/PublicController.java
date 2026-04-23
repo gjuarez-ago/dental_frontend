@@ -32,8 +32,44 @@ public class PublicController {
     private final ServicioDentalService servicioDentalService;
     private final CitaService citaService;
     private final com.meyisoft.dental.system.repository.SucursalRepository sucursalRepository;
+    private final com.meyisoft.dental.system.repository.UsuarioRepository usuarioRepository;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
+
+    @GetMapping("/agenda/clinic-info")
+    @Operation(summary = "Obtener información de la clínica y datos bancarios (Público)")
+    public ResponseEntity<ApiResponse<com.meyisoft.dental.system.models.dto.ClinicInfoDTO>> getClinicInfo(
+            @RequestParam UUID tenantId,
+            @RequestParam UUID sucursalId) {
+        
+        // Buscamos la sucursal para obtener sus datos bancarios específicos
+        com.meyisoft.dental.system.entity.Sucursal sucursal = sucursalRepository.findById(sucursalId)
+                .filter(s -> s.getTenantId().equals(tenantId) && s.getRegBorrado() == 1)
+                .orElseThrow(() -> new com.meyisoft.dental.system.exception.BusinessException("NOT_FOUND", 
+                    "Sucursal no encontrada", org.springframework.http.HttpStatus.NOT_FOUND));
+
+        // Buscamos al OWNER del tenant para el nombre profesional/clínica (fallback o base)
+        com.meyisoft.dental.system.entity.Usuario owner = usuarioRepository.findByTenantIdAndRolAndRegBorrado(
+                tenantId, com.meyisoft.dental.system.enums.UserRole.OWNER, 1)
+                .stream().findFirst()
+                .orElseThrow(() -> new com.meyisoft.dental.system.exception.BusinessException("NOT_FOUND", 
+                    "No se encontró el propietario del tenant", org.springframework.http.HttpStatus.NOT_FOUND));
+
+        com.meyisoft.dental.system.models.dto.ClinicInfoDTO info = com.meyisoft.dental.system.models.dto.ClinicInfoDTO.builder()
+                .clinicName("MEYISOFT POS Dental") 
+                .doctorName(owner.getNombreCompleto())
+                .banco(sucursal.getBanco())
+                .cuentaBancaria(sucursal.getCuentaBancaria())
+                .clabeInterbancaria(sucursal.getClabeInterbancaria())
+                .depositPercentage(0.30) 
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.<com.meyisoft.dental.system.models.dto.ClinicInfoDTO>builder()
+                .ok(true)
+                .result(info)
+                .timestamp(OffsetDateTime.now())
+                .build());
+    }
 
     @GetMapping("/servicios")
     @Operation(summary = "Listar servicios de una empresa (Tenant) para la landing page")

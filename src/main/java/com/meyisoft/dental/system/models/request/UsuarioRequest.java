@@ -20,5 +20,6 @@ public class UsuarioRequest {
     private UserRole rol;
     private String cedulaProfesional;
     private String fotografiaUrl;
+    private Boolean esPersonalClinico;
     private UUID sucursalId;
 }

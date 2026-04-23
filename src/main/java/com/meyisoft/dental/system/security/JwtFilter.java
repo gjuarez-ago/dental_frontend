@@ -42,12 +42,16 @@ public class JwtFilter extends OncePerRequestFilter {
                 String tenantIdStr = claims.get("tenantId", String.class);
                 String sucursalIdStr = claims.get("sucursalId", String.class);
                 String role = claims.get("role", String.class);
+                String telefono = claims.get("telefono", String.class);
+                String email = claims.get("email", String.class);
 
                 UserPrincipal principal = UserPrincipal.builder()
                         .userId(UUID.fromString(userIdStr))
                         .tenantId(tenantIdStr != null ? UUID.fromString(tenantIdStr) : null)
                         .sucursalId(sucursalIdStr != null ? UUID.fromString(sucursalIdStr) : null)
                         .role(role)
+                        .telefono(telefono)
+                        .email(email)
                         .build();
 
                 String authorityRole = role != null ? "ROLE_" + role : "ROLE_USER";

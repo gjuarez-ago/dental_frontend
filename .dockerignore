@@ -1,0 +1,14 @@
+target/
+dist/
+node_modules/
+.git/
+.vscode/
+.editorconfig
+.prettierrc
+*.log
+.mvn/
+mvnw*
+Dockerfile
+cloudbuild.yaml
+README.md
+HELP.md

@@ -16,4 +16,6 @@ public class UserPrincipal {
     private UUID tenantId;
     private UUID sucursalId;
     private String role;
+    private String telefono;
+    private String email;
 }

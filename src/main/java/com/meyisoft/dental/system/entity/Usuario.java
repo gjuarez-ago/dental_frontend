@@ -4,6 +4,7 @@ import com.meyisoft.dental.system.enums.UserRole;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
@@ -16,16 +17,9 @@ import java.util.UUID;
 })
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Usuario {
-
-    @Id
-    @JdbcTypeCode(SqlTypes.UUID)
-    private UUID id;
-
-    @Column(name = "tenant_id", nullable = false)
-    @JdbcTypeCode(SqlTypes.UUID)
-    private UUID tenantId;
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class Usuario extends BaseEntity {
 
     @Column(name = "sucursal_id_principal")
     @JdbcTypeCode(SqlTypes.UUID)
@@ -59,21 +53,7 @@ public class Usuario {
     @Column(name = "fotografia_url")
     private String fotografiaUrl;
 
-    /** Soft-delete flag (1: active, 0: deleted) */
-    @Column(name = "reg_borrado", nullable = false)
+    @Column(name = "es_personal_clinico")
     @Builder.Default
-    private Integer regBorrado = 1;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    @Builder.Default
-    private OffsetDateTime createdAt = OffsetDateTime.now();
-
-    @Column(name = "updated_at", nullable = false)
-    @Builder.Default
-    private OffsetDateTime updatedAt = OffsetDateTime.now();
-
-    @PreUpdate
-    void onUpdate() {
-        this.updatedAt = OffsetDateTime.now();
-    }
+    private Boolean esPersonalClinico = false;
 }

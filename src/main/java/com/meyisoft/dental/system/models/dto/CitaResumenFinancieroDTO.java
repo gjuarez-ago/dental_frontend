@@ -15,6 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CitaResumenFinancieroDTO {
+
     private UUID citaId;
     private String pacienteNombre;
     private String servicioNombre;
@@ -24,4 +25,5 @@ public class CitaResumenFinancieroDTO {
     private boolean costoDefinido;
     private TicketStatus estadoTicket;
     private List<PagoDTO> historialPagos;
+
 }

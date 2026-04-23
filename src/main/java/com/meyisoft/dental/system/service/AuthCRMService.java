@@ -7,6 +7,7 @@ import com.meyisoft.dental.system.models.request.RegisterTenantRequest;
 import com.meyisoft.dental.system.models.response.AuthResponse;
 import com.meyisoft.dental.system.repository.EmpresaRepository;
 import com.meyisoft.dental.system.repository.UsuarioRepository;
+import com.meyisoft.dental.system.repository.PacienteRepository;
 import com.meyisoft.dental.system.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +23,7 @@ public class AuthCRMService {
 
     private final EmpresaRepository empresaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PacienteRepository pacienteRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -32,25 +34,34 @@ public class AuthCRMService {
     }
 
     public AuthResponse loginCRM(LoginRequest request) {
-        Usuario usuario = usuarioRepository.findByTelefonoContactoAndActive(request.getUser())
-                .orElseThrow(() -> new BusinessException(ErrorCodes.USER_NOT_FOUND, ErrorCodes.MSG_USER_NOT_FOUND,
-                        HttpStatus.NOT_FOUND));
-
-        if (!passwordEncoder.matches(request.getNip(), usuario.getNipHash())) {
-            throw new BusinessException(ErrorCodes.AUTH_INVALID_CREDENTIALS, "Credenciales inválidas",
-                    HttpStatus.UNAUTHORIZED);
+        // 1. Intentar como Usuario (Personal Clínico)
+        var usuarioOpt = usuarioRepository.findByTelefonoContactoAndActive(request.getUser());
+        
+        if (usuarioOpt.isPresent()) {
+            Usuario usuario = usuarioOpt.get();
+            if (!passwordEncoder.matches(request.getNip(), usuario.getNipHash())) {
+                throw new BusinessException(ErrorCodes.AUTH_INVALID_CREDENTIALS, "Credenciales inválidas", HttpStatus.UNAUTHORIZED);
+            }
+            return AuthResponse.builder()
+                    .token(jwtUtil.generateTokenForCRM(usuario.getId(), usuario.getTenantId(), usuario.getRol(), usuario.getSucursalIdPrincipal()))
+                    .user(usuario)
+                    .build();
         }
 
-        // Generar token usando los campos del nuevo modelo Usuario
-        String token = jwtUtil.generateTokenForCRM(
-                usuario.getId(),
-                usuario.getTenantId(),
-                usuario.getRol(),
-                usuario.getSucursalIdPrincipal());
+        // 2. Intentar como Paciente (Fallback global)
+        var pacienteOpt = pacienteRepository.findFirstByTelefonoAndRegBorrado(request.getUser(), 1);
+        if (pacienteOpt.isPresent()) {
+            var paciente = pacienteOpt.get();
+            if (!passwordEncoder.matches(request.getNip(), paciente.getPinHash())) {
+                throw new BusinessException(ErrorCodes.AUTH_INVALID_CREDENTIALS, "PIN inválido", HttpStatus.UNAUTHORIZED);
+            }
+            
+            return AuthResponse.builder()
+                    .token(jwtUtil.generateTokenForPatient(paciente.getId(), paciente.getTelefono(), paciente.getEmail()))
+                    .user(paciente)
+                    .build();
+        }
 
-        return AuthResponse.builder()
-                .token(token)
-                .user(usuario)
-                .build();
+        throw new BusinessException(ErrorCodes.USER_NOT_FOUND, ErrorCodes.MSG_USER_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 }

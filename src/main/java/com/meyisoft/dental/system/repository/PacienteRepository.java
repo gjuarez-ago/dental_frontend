@@ -24,6 +24,24 @@ public interface PacienteRepository extends JpaRepository<Paciente, UUID> {
     List<Paciente> findByTenantIdAndRegBorrado(UUID tenantId, Integer regBorrado);
     
     Optional<Paciente> findByIdAndTenantIdAndRegBorrado(UUID id, UUID tenantId, Integer regBorrado);
+    
+    Optional<Paciente> findByTelefonoAndTenantIdAndRegBorrado(String telefono, UUID tenantId, Integer regBorrado);
+
+    Optional<Paciente> findByEmailAndTenantIdAndRegBorrado(String email, UUID tenantId, Integer regBorrado);
+
+    /** Búsqueda global (Cross-tenant) para Login */
+    Optional<Paciente> findFirstByTelefonoAndRegBorrado(String telefono, Integer regBorrado);
+
+    /** Búsqueda global (Cross-tenant) para Portal */
+    List<Paciente> findAllByEmailAndRegBorrado(String email, Integer regBorrado);
+    
+    List<Paciente> findAllByTelefonoAndRegBorrado(String telefono, Integer regBorrado);
+    
+    @Query(value = "SELECT p FROM Paciente p WHERE p.telefono = :telefono AND p.tenantId = :tenantId AND p.regBorrado = :regBorrado AND p.id != :excludeId")
+    Optional<Paciente> findByTelefonoDuplicate(String telefono, UUID tenantId, Integer regBorrado, UUID excludeId);
+
+    @Query(value = "SELECT p FROM Paciente p WHERE p.email = :email AND p.tenantId = :tenantId AND p.regBorrado = :regBorrado AND p.id != :excludeId")
+    Optional<Paciente> findByEmailDuplicate(String email, UUID tenantId, Integer regBorrado, UUID excludeId);
 
     /**
      * Consulta optimizada que trae a los pacientes con su próxima cita (si existe)
@@ -41,4 +59,6 @@ public interface PacienteRepository extends JpaRepository<Paciente, UUID> {
            "p.created_at DESC", 
            nativeQuery = true)
     List<Paciente> findListadoPriorizado(@Param("tenantId") UUID tenantId);
+
+    long countByTenantIdAndCreatedAtBetweenAndRegBorrado(UUID tenantId, java.time.OffsetDateTime start, java.time.OffsetDateTime end, Integer regBorrado);
 }

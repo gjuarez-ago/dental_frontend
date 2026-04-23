@@ -44,6 +44,22 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String generateTokenForPatient(UUID pacienteId, String telefono, String email) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", UserRole.PACIENTE);
+        claims.put("type", "PATIENT");
+        claims.put("telefono", telefono);
+        claims.put("email", email);
+
+        return Jwts.builder()
+                .claims(claims)
+                .subject(pacienteId.toString())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
     public String generateTokenForCustomer(UUID globalUserId, UUID customerId, UUID tenantId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("tenantId", tenantId);

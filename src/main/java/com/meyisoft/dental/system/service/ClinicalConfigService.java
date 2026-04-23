@@ -59,6 +59,9 @@ public class ClinicalConfigService {
                 .cedulaProfesional(usuario.getCedulaProfesional())
                 .ventanaCancelacion(sucursal.getVentanaCancelacion())
                 .horarios(horariosMap)
+                .banco(sucursal.getBanco())
+                .cuentaBancaria(sucursal.getCuentaBancaria())
+                .clabeInterbancaria(sucursal.getClabeInterbancaria())
                 .build();
     }
 
@@ -84,6 +87,9 @@ public class ClinicalConfigService {
                             () -> new BusinessException(ErrorCodes.USER_NOT_FOUND, "Sucursal no encontrada", HttpStatus.NOT_FOUND));
 
             sucursal.setVentanaCancelacion(dto.getVentanaCancelacion());
+            sucursal.setBanco(dto.getBanco());
+            sucursal.setCuentaBancaria(dto.getCuentaBancaria());
+            sucursal.setClabeInterbancaria(dto.getClabeInterbancaria());
 
             try {
                 String horariosJson = objectMapper.writeValueAsString(dto.getHorarios());

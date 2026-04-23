@@ -8,6 +8,7 @@ import com.meyisoft.dental.system.enums.AppointmentStatus;
 import com.meyisoft.dental.system.enums.PagoStatus;
 import com.meyisoft.dental.system.enums.PaymentMethod;
 import com.meyisoft.dental.system.enums.TicketStatus;
+import com.meyisoft.dental.system.config.AuditAction;
 import com.meyisoft.dental.system.exception.BusinessException;
 import com.meyisoft.dental.system.models.dto.CitaResumenFinancieroDTO;
 import com.meyisoft.dental.system.models.dto.PagoDTO;
@@ -37,6 +38,7 @@ public class PagoService {
     private final ServicioDentalRepository servicioRepository;
 
     @Transactional
+    @AuditAction(modulo = "PAGOS", accion = "REGISTRAR", descripcion = "Registro de nuevo pago o abono")
     public PagoDTO registrarPago(PagoDTO dto, UUID tenantId) {
         log.info("Registrando pago de {} para cita {}", dto.getMonto(), dto.getCitaId());
 
@@ -72,6 +74,7 @@ public class PagoService {
                 : PagoStatus.APROBADO;
 
         Pago entity = Pago.builder()
+                .id(UUID.randomUUID())
                 .citaId(dto.getCitaId())
                 .pacienteId(dto.getPacienteId())
                 .monto(dto.getMonto())
@@ -160,6 +163,7 @@ public class PagoService {
     }
 
     @Transactional
+    @AuditAction(modulo = "PAGOS", accion = "ACTUALIZAR_STATUS", descripcion = "Cambio de estado en pago (Aprobación/Rechazo)")
     public PagoDTO actualizarStatus(UUID pagoId, PagoStatus nuevoStatus, String motivo, UUID tenantId) {
         Pago pago = repository.findById(pagoId)
                 .filter(p -> p.getTenantId().equals(tenantId) && p.getRegBorrado() == 1)

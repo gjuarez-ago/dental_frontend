@@ -21,7 +21,9 @@ public class UsuarioResponse {
     private UserRole rol;
     private String cedulaProfesional;
     private String fotografiaUrl;
+    private Boolean esPersonalClinico;
     private UUID sucursalIdPrincipal;
     private Boolean requiereCambioNip;
     private OffsetDateTime createdAt;
 }
+

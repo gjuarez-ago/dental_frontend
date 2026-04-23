@@ -2,6 +2,7 @@ package com.meyisoft.dental.system.controller;
 
 import com.meyisoft.dental.system.enums.AppointmentStatus;
 import com.meyisoft.dental.system.models.dto.CitaDTO;
+import com.meyisoft.dental.system.models.dto.DashboardStatsDTO;
 import com.meyisoft.dental.system.models.response.ApiResponse;
 import com.meyisoft.dental.system.security.UserPrincipal;
 import com.meyisoft.dental.system.service.CitaService;
@@ -38,6 +39,25 @@ public class CitaController {
         List<CitaDTO> result = service.listarPorRango(principal.getTenantId(), sucursalId, start, end, doctorId);
         
         return ResponseEntity.ok(ApiResponse.<List<CitaDTO>>builder()
+                .ok(true)
+                .result(result)
+                .timestamp(OffsetDateTime.now())
+                .build());
+    }
+
+    @GetMapping("/dashboard-summary")
+    @Operation(summary = "Obtener resumen para el dashboard con filtros opcionales")
+    public ResponseEntity<ApiResponse<DashboardStatsDTO>> getDashboardSummary(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) UUID sucursalId,
+            @RequestParam(required = false) UUID doctorId) {
+        
+        // Si no se envía sucursalId, usamos la principal del usuario
+        UUID finalSucursalId = (sucursalId != null) ? sucursalId : principal.getSucursalId();
+        
+        DashboardStatsDTO result = service.getDashboardSummary(principal.getTenantId(), finalSucursalId, doctorId);
+        
+        return ResponseEntity.ok(ApiResponse.<DashboardStatsDTO>builder()
                 .ok(true)
                 .result(result)
                 .timestamp(OffsetDateTime.now())
@@ -138,19 +158,17 @@ public class CitaController {
                 .build());
     }
 
-    @GetMapping("/dashboard-summary")
-    @Operation(summary = "Obtener resumen de estadísticas para el dashboard")
-    public ResponseEntity<ApiResponse<CitaService.DashboardStats>> getDashboardSummary(
+    @PutMapping("/{id}/reprogramar")
+    @Operation(summary = "Reprogramar fecha y hora de una cita")
+    public ResponseEntity<ApiResponse<CitaDTO>> reprogramarCita(
             @AuthenticationPrincipal UserPrincipal principal,
-            @RequestParam(required = false) UUID sucursalId,
-            @RequestParam(required = false) UUID doctorId) {
+            @PathVariable UUID id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime nuevaFechaHora,
+            @RequestParam(required = false) Integer nuevaDuracion) {
         
-        // Si no se envía sucursalId expresamente, usamos la principal del usuario
-        UUID finalSucursalId = (sucursalId != null) ? sucursalId : principal.getSucursalId();
+        CitaDTO result = service.reprogramar(id, nuevaFechaHora, nuevaDuracion, principal.getTenantId());
         
-        CitaService.DashboardStats result = service.getDashboardSummary(principal.getTenantId(), finalSucursalId, doctorId);
-        
-        return ResponseEntity.ok(ApiResponse.<CitaService.DashboardStats>builder()
+        return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
                 .ok(true)
                 .result(result)
                 .timestamp(OffsetDateTime.now())

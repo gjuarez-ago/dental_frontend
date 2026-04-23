@@ -19,13 +19,17 @@ VALUES (
     NOW()
 );
 
--- 3. CREAR SUCURSAL
-INSERT INTO sucursales (id, tenant_id, nombre_sucursal, horarios_laborales, ventana_cancelacion, reg_borrado, created_at, updated_at)
+-- 3. CREAR SUCURSAL (Con datos bancarios y contacto)
+INSERT INTO sucursales (id, tenant_id, nombre_sucursal, horarios_laborales, banco, cuenta_bancaria, clabe_interbancaria, telefono, ventana_cancelacion, reg_borrado, created_at, updated_at)
 VALUES (
     '550e8400-e29b-41d4-a716-446655440001', 
     '550e8400-e29b-41d4-a716-446655440000', 
     'Matriz Centro', 
     '[{"day": "Lunes", "enabled": false, "startTime": "09:00", "endTime": "18:00"}, {"day": "Martes", "enabled": true, "startTime": "09:00", "endTime": "18:00"}, {"day": "Miércoles", "enabled": true, "startTime": "09:00", "endTime": "18:00"}, {"day": "Jueves", "enabled": true, "startTime": "09:00", "endTime": "18:00"}, {"day": "Viernes", "enabled": true, "startTime": "09:00", "endTime": "18:00"}, {"day": "Sábado", "enabled": true, "startTime": "09:00", "endTime": "14:00"}, {"day": "Domingo", "enabled": false, "startTime": "09:00", "endTime": "18:00"}]', 
+    'BBVA México',
+    '1234567890',
+    '012345678901234567',
+    '9991234567',
     24, 
     1, 
     NOW(), 
@@ -86,5 +90,34 @@ VALUES (
     false,
     1, 
     NOW(), 
+    NOW()
+);
+
+-- 5. CREAR SERVICIOS DENTALES
+INSERT INTO servicios_dentales (id, tenant_id, nombre, descripcion, precio_base, duracion_minutos, color_etiqueta, reg_borrado, created_at, updated_at)
+VALUES (
+    '550e8400-e29b-41d4-a716-446655440005',
+    '550e8400-e29b-41d4-a716-446655440000',
+    'Limpieza Dental Profunda',
+    'Eliminación de sarro y placa bacteriana con ultrasonido.',
+    550.00,
+    45,
+    '#10B981',
+    1,
+    NOW(),
+    NOW()
+);
+
+INSERT INTO servicios_dentales (id, tenant_id, nombre, descripcion, precio_base, duracion_minutos, color_etiqueta, reg_borrado, created_at, updated_at)
+VALUES (
+    '550e8400-e29b-41d4-a716-446655440006',
+    '550e8400-e29b-41d4-a716-446655440000',
+    'Consulta General',
+    'Evaluación diagnóstica y presupuesto de tratamiento.',
+    200.00,
+    30,
+    '#6366F1',
+    1,
+    NOW(),
     NOW()
 );

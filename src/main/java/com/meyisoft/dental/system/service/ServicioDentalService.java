@@ -3,6 +3,7 @@ package com.meyisoft.dental.system.service;
 import com.meyisoft.dental.system.entity.ServicioDental;
 import com.meyisoft.dental.system.exception.BusinessException;
 import com.meyisoft.dental.system.exception.ErrorCodes;
+import com.meyisoft.dental.system.config.AuditAction;
 import com.meyisoft.dental.system.models.dto.ServicioDentalDTO;
 import com.meyisoft.dental.system.repository.ServicioDentalRepository;
 import com.meyisoft.dental.system.service.StorageService;
@@ -27,13 +28,15 @@ public class ServicioDentalService {
     @Transactional(readOnly = true)
     public List<ServicioDentalDTO> listarServicios(UUID tenantId) {
         return repository.findByTenantIdAndRegBorrado(tenantId, 1).stream()
-                .map(this::mapToDTO)
+                .map(s -> mapToDTO(s))
                 .collect(Collectors.toList());
     }
 
     @Transactional
+    @AuditAction(modulo = "SERVICIOS", accion = "CREAR", descripcion = "Registro de nuevo servicio en el catálogo")
     public ServicioDentalDTO crear(ServicioDentalDTO dto, UUID tenantId) {
         ServicioDental entity = ServicioDental.builder()
+                .id(UUID.randomUUID())
                 .nombre(dto.getNombre())
                 .descripcion(dto.getDescripcion())
                 .precioBase(dto.getPrecioBase())
@@ -50,6 +53,7 @@ public class ServicioDentalService {
     }
 
     @Transactional
+    @AuditAction(modulo = "SERVICIOS", accion = "ACTUALIZAR", descripcion = "Actualización de precio o datos de servicio")
     public ServicioDentalDTO actualizar(UUID id, ServicioDentalDTO dto, UUID tenantId) {
         ServicioDental entity = repository.findByIdAndTenantIdAndRegBorrado(id, tenantId, 1)
                 .orElseThrow(() -> new BusinessException(ErrorCodes.USER_NOT_FOUND, "Servicio no encontrado",
@@ -82,6 +86,7 @@ public class ServicioDentalService {
     }
 
     @Transactional
+    @AuditAction(modulo = "SERVICIOS", accion = "ELIMINAR", descripcion = "Baja de servicio del catálogo clínico")
     public void eliminar(UUID id, UUID tenantId) {
         ServicioDental entity = repository.findByIdAndTenantIdAndRegBorrado(id, tenantId, 1)
                 .orElseThrow(() -> new BusinessException(ErrorCodes.USER_NOT_FOUND, "Servicio no encontrado",

@@ -20,6 +20,9 @@ public class ClinicalConfigDTO {
     // De la tabla Sucursal
     private Integer ventanaCancelacion;
     private Map<String, DayConfigDTO> horarios;
+    private String banco;
+    private String cuentaBancaria;
+    private String clabeInterbancaria;
 
     @Data
     @Builder

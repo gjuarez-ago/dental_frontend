@@ -7,6 +7,7 @@ import com.meyisoft.dental.system.entity.Cita;
 import com.meyisoft.dental.system.entity.Sucursal;
 import com.meyisoft.dental.system.enums.AppointmentStatus;
 import com.meyisoft.dental.system.exception.BusinessException;
+import com.meyisoft.dental.system.config.AuditAction;
 import com.meyisoft.dental.system.models.dto.CitaDTO;
 import com.meyisoft.dental.system.repository.CitaRepository;
 import com.meyisoft.dental.system.repository.RegistroFolioRepository;
@@ -22,6 +23,8 @@ import com.meyisoft.dental.system.entity.Pago;
 import com.meyisoft.dental.system.entity.RegistroFolio;
 import com.meyisoft.dental.system.enums.PaymentMethod;
 import com.meyisoft.dental.system.enums.PagoStatus;
+import com.meyisoft.dental.system.models.dto.DashboardStatsDTO;
+import com.meyisoft.dental.system.models.dto.IncomeDetailDTO;
 import com.meyisoft.dental.system.models.dto.DisponibilidadDiaDTO;
 import com.meyisoft.dental.system.models.dto.SlotDisponibilidadDTO;
 import com.meyisoft.dental.system.entity.ServicioDental;
@@ -29,9 +32,11 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -40,6 +45,9 @@ import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -53,6 +61,7 @@ public class CitaService {
     private final UsuarioRepository usuarioRepository;
     private final RegistroFolioRepository folioRepository;
     private final PacienteRepository pacienteRepository;
+    private final PasswordEncoder passwordEncoder;
     private final PagoRepository pagoRepository;
     private final ServicioDentalRepository servicioDentalRepository;
     private final ObjectMapper objectMapper;
@@ -84,63 +93,52 @@ public class CitaService {
         }
     }
 
-    @Data
-    public static class DashboardStats {
-        private double ingresosPorValidar;
-        private long comprobantesPendientesCount;
-        private double ingresosHoy;
-        private double ingresosHoyTrend;
-        private long citasHoyCount;
-        private double citasHoyTrend;
-        private long pacientesNuevosCount;
-        private double pacientesNuevosTrend;
-    }
-
-    @Transactional(readOnly = true)
-    public DashboardStats getDashboardSummary(UUID tenantId, UUID sucursalId, UUID doctorId) {
-        OffsetDateTime hoyStart = LocalDate.now().atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
-        OffsetDateTime hoyEnd = LocalDate.now().atTime(LocalTime.MAX).atOffset(OffsetDateTime.now().getOffset());
-        OffsetDateTime ayerStart = hoyStart.minusDays(1);
-        OffsetDateTime ayerEnd = hoyEnd.minusDays(1);
-
-        DashboardStats stats = new DashboardStats();
-
-        // 1. Ingresos y Pagos Pendientes
-        stats.setIngresosHoy(pagoRepository.sumIngresosByRange(tenantId, hoyStart, hoyEnd, doctorId).doubleValue());
-        double ingresosAyer = pagoRepository.sumIngresosByRange(tenantId, ayerStart, ayerEnd, doctorId).doubleValue();
-        stats.setIngresosHoyTrend(calcularTendencia(stats.getIngresosHoy(), ingresosAyer));
-        
-        stats.setComprobantesPendientesCount(pagoRepository.countPendingPaymentsByDoctor(tenantId, doctorId));
-        // El monto de ingresos por validar es la suma de esos pagos pendientes
-        // (Nota: Podríamos agregar una query específica en el repo, pero por ahora sumamos los de hoy por validar)
-        // stats.setIngresosPorValidar(...); 
-        // Simplificación: sumamos todos los pendientes de revisión para el doctor/clínica
-        // (Podemos usar el mismo query sumIngresos cambiando el status o agregando uno nuevo)
-
-        // 2. Citas
-        stats.setCitasHoyCount(repository.countApptsByRange(tenantId, sucursalId, hoyStart, hoyEnd, doctorId));
-        long citasAyer = repository.countApptsByRange(tenantId, sucursalId, ayerStart, ayerEnd, doctorId);
-        stats.setCitasHoyTrend(stats.getCitasHoyCount() - citasAyer); // Diferencia numérica según indica el frontend en su trend
-
-        // 3. Pacientes Nuevos (Clinic-wide generalmente, pero si hay doctorId podríamos filtrar si quisiéramos)
-        stats.setPacientesNuevosCount(pacienteRepository.countNewPatientsByRange(tenantId, hoyStart, hoyEnd));
-        long pacientesAyer = pacienteRepository.countNewPatientsByRange(tenantId, ayerStart, ayerEnd);
-        stats.setPacientesNuevosTrend(calcularTendencia(stats.getPacientesNuevosCount(), pacientesAyer));
-
-        return stats;
-    }
-
-    private double calcularTendencia(double hoy, double ayer) {
-        if (ayer == 0) return hoy > 0 ? 100.0 : 0.0;
-        return ((hoy - ayer) / ayer) * 100.0;
-    }
-
     @Transactional(readOnly = true)
     public List<CitaDTO> listarPorRango(UUID tenantId, UUID sucursalId, OffsetDateTime start, OffsetDateTime end, UUID doctorId) {
-        return repository.findByRangeWithDoctorFilter(
-                tenantId, sucursalId, start, end, 1, doctorId).stream()
-                .map(this::mapToDTO)
+        List<Cita> citas = repository.findByRangeWithDoctorFilter(tenantId, sucursalId, start, end, 1, doctorId);
+
+        if (citas.isEmpty()) return new ArrayList<>();
+
+        // Optimización N+1: Precarga de datos relacionados
+        Set<UUID> pacienteIds = citas.stream().map(Cita::getPacienteId).filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+        Set<UUID> doctorIds = citas.stream().map(Cita::getDoctorId).filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+        Set<UUID> servicioIds = citas.stream().map(Cita::getServicioId).filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+        Set<UUID> citaIds = citas.stream().map(Cita::getId).collect(Collectors.toSet());
+
+        Map<UUID, Paciente> pacientesMap = pacienteRepository.findAllById(pacienteIds).stream()
+                .collect(Collectors.toMap(Paciente::getId, p -> p));
+        Map<UUID, Usuario> doctoresMap = usuarioRepository.findAllById(doctorIds).stream()
+                .collect(Collectors.toMap(Usuario::getId, d -> d));
+        Map<UUID, ServicioDental> serviciosMap = servicioDentalRepository.findAllById(servicioIds).stream()
+                .collect(Collectors.toMap(ServicioDental::getId, s -> s));
+        Map<UUID, List<Pago>> pagosMap = pagoRepository.findAllByCitaIdInAndRegBorrado(citaIds, 1).stream()
+                .collect(Collectors.groupingBy(Pago::getCitaId));
+
+        return citas.stream()
+                .sorted((c1, c2) -> {
+                    int p1 = getStatusPriority(c1.getEstado());
+                    int p2 = getStatusPriority(c2.getEstado());
+                    if (p1 != p2) {
+                        return Integer.compare(p1, p2);
+                    }
+                    return c1.getFechaHora().compareTo(c2.getFechaHora());
+                })
+                .map(c -> mapToDTOOptimized(c, pacientesMap, doctoresMap, serviciosMap, pagosMap))
                 .collect(Collectors.toList());
+    }
+
+    private int getStatusPriority(AppointmentStatus status) {
+        return switch (status) {
+            case EN_CONSULTA -> 1;
+            case LLEGADA -> 2;
+            case CONFIRMADA -> 3;
+            case POR_LIQUIDAR -> 4;
+            case POR_CONFIRMAR -> 5;
+            case FINALIZADA -> 6;
+            case AUSENTE -> 7;
+            case CANCELADA -> 8;
+            default -> 9;
+        };
     }
 
     @Transactional(readOnly = true)
@@ -149,56 +147,82 @@ public class CitaService {
     }
 
     @Transactional
+    @AuditAction(modulo = "CITAS", accion = "AGENDAR", descripcion = "Agendamiento de nueva cita médica")
     public CitaDTO agendar(CitaDTO dto, UUID tenantId, String comprobanteUrl) {
-        log.info("Agendando cita desde source: {} con montoTotal: {} y montoPagado recibido: {}", 
-                dto.getSource(), dto.getMontoTotal(), dto.getMontoPagado());
-        // 1. Validar horario de sucursal
-        validarHorarioSucursal(dto.getSucursalId(), dto.getFechaHora(), dto.getDuracionMinutos());
+        // 1. Obtener información del servicio
+        ServicioDental servicio = null;
+        if (dto.getServicioId() != null) {
+            servicio = servicioDentalRepository.findByIdAndTenantIdAndRegBorrado(dto.getServicioId(), tenantId, 1)
+                    .orElseThrow(() -> new BusinessException("NOT_FOUND", "Servicio no encontrado", HttpStatus.NOT_FOUND));
 
-        // 2. Validar disponibilidad del doctor (No traslapes)
-        OffsetDateTime finCita = dto.getFechaHora().plusMinutes(dto.getDuracionMinutos());
-        if (repository.existsOverlappingExcludingId(dto.getDoctorId(), dto.getFechaHora(), finCita, null)) {
-            throw new BusinessException("CHOQUE_CITAS", "El doctor ya tiene una cita agendada en este horario",
-                    HttpStatus.CONFLICT);
+            if (dto.getDuracionMinutos() == null) {
+                dto.setDuracionMinutos(servicio.getDuracionMinutos());
+            }
         }
 
-        // 3. Manejo de Paciente (Si es APP y no existe pacienteId, crear expediente
-        // incompleto)
+        if (dto.getDuracionMinutos() == null) dto.setDuracionMinutos(30);
+
+        // 2. Validar horario de sucursal
+        validarHorarioSucursal(dto.getSucursalId(), dto.getFechaHora(), dto.getDuracionMinutos());
+
+        // 3. Validar disponibilidad
+        OffsetDateTime finCita = dto.getFechaHora().plusMinutes(dto.getDuracionMinutos());
+        
+        // Validar consultorio
+        if (repository.countOverlappingSucursal(tenantId, dto.getSucursalId(), dto.getFechaHora(), finCita) > 0) {
+            throw new BusinessException("CHOQUE_CITAS", "El consultorio ya está ocupado en este horario", HttpStatus.CONFLICT);
+        }
+
+        // Validar doctor si está asignado
+        if (dto.getDoctorId() != null && repository.countOverlapping(tenantId, dto.getDoctorId(), dto.getFechaHora(), finCita) > 0) {
+            throw new BusinessException("CHOQUE_CITAS", "El doctor ya tiene una cita agendada en este horario", HttpStatus.CONFLICT);
+        }
+
+        // 4. Manejo de Paciente
         String source = (dto.getSource() != null) ? dto.getSource().toUpperCase() : "CRM";
         UUID pacienteId = dto.getPacienteId();
 
         if (pacienteId == null && (source.equals("APP") || source.equals("PUBLIC"))) {
             if (dto.getPacienteNombre() == null || dto.getPacienteNombre().trim().isEmpty()) {
-                throw new BusinessException("MISSING_DATA",
-                        "El nombre del paciente es obligatorio para agendar desde la App", HttpStatus.BAD_REQUEST);
+                throw new BusinessException("MISSING_DATA", "El nombre del paciente es obligatorio", HttpStatus.BAD_REQUEST);
             }
-            Paciente nuevoPaciente = Paciente.builder()
-                    .nombreCompleto(dto.getPacienteNombre())
-                    .telefono(dto.getPacienteTelefono())
-                    .expedienteCompleto(false)
-                    .build();
-            nuevoPaciente.setTenantId(tenantId);
-            nuevoPaciente.setRegBorrado(1);
-            pacienteId = pacienteRepository.save(nuevoPaciente).getId();
+
+            validarTelefono(dto.getPacienteTelefono());
+
+            Optional<Paciente> pacienteExistente = pacienteRepository.findByTelefonoAndTenantIdAndRegBorrado(
+                    dto.getPacienteTelefono(), tenantId, 1);
+
+            if (pacienteExistente.isPresent()) {
+                pacienteId = pacienteExistente.get().getId();
+            } else {
+                Paciente nuevoPaciente = Paciente.builder()
+                        .id(UUID.randomUUID())
+                        .nombreCompleto(dto.getPacienteNombre())
+                        .telefono(dto.getPacienteTelefono())
+                        .expedienteCompleto(false)
+                        .pinHash(passwordEncoder.encode("123456"))
+                        .pinCambiado(false)
+                        .build();
+                nuevoPaciente.setTenantId(tenantId);
+                nuevoPaciente.setRegBorrado(1);
+                pacienteId = pacienteRepository.save(nuevoPaciente).getId();
+            }
         } else if (pacienteId == null) {
             throw new BusinessException("MISSING_DATA", "El paciente es obligatorio", HttpStatus.BAD_REQUEST);
-        } else {
-            // Validar que el paciente exista y pertenezca al tenant
-            pacienteRepository.findById(pacienteId)
-                    .filter(p -> p.getTenantId().equals(tenantId) && p.getRegBorrado() == 1)
-                    .orElseThrow(
-                            () -> new BusinessException("NOT_FOUND", "Paciente no encontrado", HttpStatus.NOT_FOUND));
         }
 
-        // 4. Determinar estado inicial
-        AppointmentStatus estadoInicial = (source.equals("APP") || source.equals("PUBLIC"))
-                ? AppointmentStatus.POR_CONFIRMAR
-                : AppointmentStatus.CONFIRMADA;
+        // 5. Traslape Paciente
+        if (repository.countOverlappingPaciente(tenantId, pacienteId, dto.getFechaHora(), finCita) > 0) {
+            throw new BusinessException("CHOQUE_CITAS_PACIENTE", "El paciente ya tiene una cita agendada en este horario", HttpStatus.CONFLICT);
+        }
 
-        // 5. Generar Folio Profesional (CIT-YYYYMMDD-XXX)
+        AppointmentStatus estadoInicial = (source.equals("APP") || source.equals("PUBLIC"))
+                ? AppointmentStatus.POR_CONFIRMAR : AppointmentStatus.CONFIRMADA;
+
         String folio = generarSiguienteFolio(tenantId, "CITA");
 
         Cita entity = Cita.builder()
+                .id(UUID.randomUUID())
                 .pacienteId(pacienteId)
                 .doctorId(dto.getDoctorId())
                 .sucursalId(dto.getSucursalId())
@@ -210,107 +234,99 @@ public class CitaService {
                 .folio(folio)
                 .motivoConsulta(dto.getMotivoConsulta())
                 .notasRecepcion(dto.getNotasRecepcion())
-                .montoTotal(dto.getMontoTotal())
+                .montoTotal(servicio != null ? servicio.getPrecioBase() : BigDecimal.ZERO)
                 .build();
 
         entity.setTenantId(tenantId);
         entity.setRegBorrado(1);
         Cita saved = repository.save(entity);
 
-        // 6. Si es APP o PUBLIC, registrar el intento de anticipo con el comprobante
-        if (source.equals("APP") || source.equals("PUBLIC")) {
+        // Registrar anticipo si aplica
+        if ((source.equals("APP") || source.equals("PUBLIC")) && dto.getMontoPagado() != null) {
             Pago anticipo = Pago.builder()
+                    .id(UUID.randomUUID())
                     .citaId(saved.getId())
                     .pacienteId(pacienteId)
-                    .monto(dto.getMontoPagado() != null ? dto.getMontoPagado() : java.math.BigDecimal.ZERO)
+                    .monto(dto.getMontoPagado())
                     .metodoPago(PaymentMethod.TRANSFERENCIA)
                     .status(PagoStatus.PENDIENTE_REVISION)
                     .comprobanteUrl(comprobanteUrl)
-                    .notas("Anticipo pendiente de validación desde " + source)
+                    .folioPago(dto.getReferenciaPago())
+                    .notas("Anticipo desde " + source)
                     .build();
             anticipo.setTenantId(tenantId);
             anticipo.setRegBorrado(1);
             pagoRepository.save(anticipo);
-            pagoRepository.flush(); // Asegurar que el registro sea visible para la siguiente consulta
-            log.info("Anticipo registrado y flusheado para cita ID: {}", saved.getId());
         }
 
         return mapToDTO(saved);
     }
 
     @Transactional
+    @AuditAction(modulo = "CITAS", accion = "REPROGRAMAR", descripcion = "Cambio de fecha/hora de cita existente")
     public CitaDTO reprogramar(UUID id, OffsetDateTime nuevaFechaHora, Integer nuevaDuracion, UUID tenantId) {
         Cita entity = repository.findById(id)
                 .filter(c -> c.getTenantId().equals(tenantId) && c.getRegBorrado() == 1)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "Cita no encontrada", HttpStatus.NOT_FOUND));
 
-        // Validar choque en nuevo horario
         Integer duracion = (nuevaDuracion != null) ? nuevaDuracion : entity.getDuracionMinutos();
         OffsetDateTime finCita = nuevaFechaHora.plusMinutes(duracion);
 
-        // Excluir la misma cita de la validación de traslape
-        if (repository.existsOverlappingExcludingId(entity.getDoctorId(), nuevaFechaHora, finCita, id)) {
-            throw new BusinessException("CHOQUE_CITAS", "El doctor ya tiene una cita agendada en ese nuevo horario",
-                    HttpStatus.CONFLICT);
+        if (repository.countOverlappingSucursalExcludingId(tenantId, entity.getSucursalId(), nuevaFechaHora, finCita, id) > 0) {
+            throw new BusinessException("CHOQUE_CITAS", "El consultorio ya está ocupado", HttpStatus.CONFLICT);
+        }
+
+        if (entity.getDoctorId() != null && repository.countOverlappingExcludingId(tenantId, entity.getDoctorId(), nuevaFechaHora, finCita, id) > 0) {
+            throw new BusinessException("CHOQUE_CITAS", "El doctor ya está ocupado", HttpStatus.CONFLICT);
         }
 
         validarHorarioSucursal(entity.getSucursalId(), nuevaFechaHora, duracion);
 
         entity.setFechaHora(nuevaFechaHora);
         entity.setDuracionMinutos(duracion);
-        entity.setEstado(AppointmentStatus.CONFIRMADA); // Se marca como confirmada al reprogramar
+        entity.setEstado(AppointmentStatus.CONFIRMADA);
 
         return mapToDTO(repository.save(entity));
     }
 
     @Transactional
-    public CitaDTO confirmarCita(UUID id, UUID doctorId, java.math.BigDecimal montoTotal, UUID tenantId) {
+    @AuditAction(modulo = "CITAS", accion = "CONFIRMAR", descripcion = "Confirmación de cita por personal clínico")
+    public CitaDTO confirmarCita(UUID id, UUID doctorId, BigDecimal montoTotal, UUID tenantId) {
         Cita entity = repository.findById(id)
                 .filter(c -> c.getTenantId().equals(tenantId) && c.getRegBorrado() == 1)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "Cita no encontrada", HttpStatus.NOT_FOUND));
 
         if (entity.getEstado() != AppointmentStatus.POR_CONFIRMAR) {
-            throw new BusinessException("INVALID_STATE", "Solo se pueden confirmar citas en espera",
-                    HttpStatus.BAD_REQUEST);
+            throw new BusinessException("INVALID_STATE", "La cita ya no está pendiente de confirmar", HttpStatus.BAD_REQUEST);
         }
 
-        // Validar disponibilidad del doctor (No traslapes)
         OffsetDateTime start = entity.getFechaHora();
         OffsetDateTime end = start.plusMinutes(entity.getDuracionMinutos());
-        
-        if (repository.existsOverlappingExcludingId(doctorId, start, end, id)) {
-            throw new BusinessException("CHOQUE_CITAS", "El doctor seleccionado ya tiene una cita agendada en este horario",
-                    HttpStatus.CONFLICT);
+
+        if (repository.countOverlappingExcludingId(tenantId, doctorId, start, end, id) > 0) {
+            throw new BusinessException("CHOQUE_CITAS", "El doctor ya tiene otra cita en este horario", HttpStatus.CONFLICT);
         }
 
-        if (montoTotal != null) {
-            entity.setMontoTotal(montoTotal);
-        }
-
+        if (montoTotal != null) entity.setMontoTotal(montoTotal);
         entity.setDoctorId(doctorId);
         entity.setEstado(AppointmentStatus.CONFIRMADA);
         Cita saved = repository.save(entity);
 
-        // APROBACIÓN AUTOMÁTICA DE ANTICIPO
+        // Aprobar pagos pendientes y actualizar saldo del paciente
         List<Pago> pagosPendientes = pagoRepository.findByCitaIdAndRegBorrado(id, 1).stream()
                 .filter(p -> p.getStatus() == PagoStatus.PENDIENTE_REVISION)
                 .collect(Collectors.toList());
 
         if (!pagosPendientes.isEmpty()) {
-            Paciente paciente = pacienteRepository.findById(entity.getPacienteId())
-                    .orElseThrow(() -> new BusinessException("NOT_FOUND", "Paciente no encontrado", HttpStatus.NOT_FOUND));
+            Paciente paciente = pacienteRepository.findById(entity.getPacienteId()).orElseThrow();
+            if (paciente.getSaldoPendiente() == null) paciente.setSaldoPendiente(BigDecimal.ZERO);
 
-            if (paciente.getSaldoPendiente() == null) {
-                paciente.setSaldoPendiente(java.math.BigDecimal.ZERO);
-            }
-
-            for (Pago pago : pagosPendientes) {
-                pago.setStatus(PagoStatus.APROBADO);
-                paciente.setSaldoPendiente(paciente.getSaldoPendiente().subtract(pago.getMonto()));
-                pagoRepository.save(pago);
+            for (Pago p : pagosPendientes) {
+                p.setStatus(PagoStatus.APROBADO);
+                paciente.setSaldoPendiente(paciente.getSaldoPendiente().subtract(p.getMonto()));
+                pagoRepository.save(p);
             }
             pacienteRepository.save(paciente);
-            log.info("Se aprobaron {} pagos de anticipo automáticamente para la cita {}", pagosPendientes.size(), id);
         }
 
         return mapToDTO(saved);
@@ -318,287 +334,204 @@ public class CitaService {
 
     @Transactional
     public CitaDTO rechazarCita(UUID id, String motivo, UUID tenantId) {
+        return cancelarCita(id, motivo, tenantId);
+    }
+
+    @Transactional
+    public CitaDTO cancelarCita(UUID id, String motivo, UUID tenantId) {
         Cita entity = repository.findById(id)
                 .filter(c -> c.getTenantId().equals(tenantId) && c.getRegBorrado() == 1)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "Cita no encontrada", HttpStatus.NOT_FOUND));
 
-        if (entity.getEstado() != AppointmentStatus.POR_CONFIRMAR) {
-            throw new BusinessException("INVALID_STATE", "Solo se pueden rechazar citas en espera",
-                    HttpStatus.BAD_REQUEST);
-        }
-
         entity.setEstado(AppointmentStatus.CANCELADA);
         entity.setMotivoRechazo(motivo);
-        return mapToDTO(repository.save(entity));
+        Cita saved = repository.save(entity);
+
+        pagoRepository.findByCitaIdAndRegBorrado(id, 1).forEach(pago -> {
+            if (pago.getStatus() == PagoStatus.PENDIENTE_REVISION) pago.setStatus(PagoStatus.RECHAZADO);
+            else if (pago.getStatus() == PagoStatus.APROBADO) pago.setStatus(PagoStatus.CANCELADO);
+            pagoRepository.save(pago);
+        });
+
+        return mapToDTO(saved);
     }
 
     @Transactional(readOnly = true)
     public List<CitaDTO> listarPorConfirmar(UUID tenantId, UUID sucursalId) {
-        if (sucursalId != null) {
-            return repository.findByTenantIdAndSucursalIdAndEstadoAndRegBorrado(tenantId, sucursalId, AppointmentStatus.POR_CONFIRMAR, 1)
-                    .stream().map(this::mapToDTO).collect(Collectors.toList());
-        }
-        return repository.findByTenantIdAndEstadoAndRegBorrado(tenantId, AppointmentStatus.POR_CONFIRMAR, 1)
-                .stream().map(this::mapToDTO).collect(Collectors.toList());
+        List<Cita> list = (sucursalId != null) 
+            ? repository.findByTenantIdAndSucursalIdAndEstadoAndRegBorrado(tenantId, sucursalId, AppointmentStatus.POR_CONFIRMAR, 1)
+            : repository.findByTenantIdAndEstadoAndRegBorrado(tenantId, AppointmentStatus.POR_CONFIRMAR, 1);
+        return list.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
     @Transactional
-    public CitaDTO actualizarEstado(UUID id, AppointmentStatus nuevoEstado, java.math.BigDecimal montoTotal,
-            UUID tenantId) {
+    public CitaDTO actualizarEstado(UUID id, AppointmentStatus nuevoEstado, BigDecimal montoTotal, UUID tenantId) {
         Cita entity = repository.findById(id)
                 .filter(c -> c.getTenantId().equals(tenantId) && c.getRegBorrado() == 1)
                 .orElseThrow(() -> new BusinessException("NOT_FOUND", "Cita no encontrada", HttpStatus.NOT_FOUND));
 
         entity.setEstado(nuevoEstado);
-        if (montoTotal != null) {
-            entity.setMontoTotal(montoTotal);
-        }
+        if (montoTotal != null) entity.setMontoTotal(montoTotal);
         return mapToDTO(repository.save(entity));
     }
+
+    @Transactional(readOnly = true)
+    public DashboardStatsDTO getDashboardSummary(UUID tenantId, UUID sucursalId, UUID doctorId) {
+        OffsetDateTime now = OffsetDateTime.now(com.meyisoft.dental.system.utils.DateUtils.MEXICO_OFFSET);
+        OffsetDateTime todayStart = now.toLocalDate().atStartOfDay().atOffset(com.meyisoft.dental.system.utils.DateUtils.MEXICO_OFFSET);
+        OffsetDateTime todayEnd = now.toLocalDate().atTime(23, 59, 59).atOffset(com.meyisoft.dental.system.utils.DateUtils.MEXICO_OFFSET);
+        OffsetDateTime yesterdayStart = todayStart.minusDays(1);
+        OffsetDateTime yesterdayEnd = todayEnd.minusDays(1);
+
+        BigDecimal ingresosHoy = pagoRepository.sumIngresosByTenantAndDateRange(tenantId, todayStart, todayEnd, doctorId);
+        BigDecimal ingresosAyer = pagoRepository.sumIngresosByTenantAndDateRange(tenantId, yesterdayStart, yesterdayEnd, doctorId);
+        
+        long citasHoy = repository.countApptsByRange(tenantId, sucursalId, todayStart, todayEnd, doctorId);
+        long citasAyer = repository.countApptsByRange(tenantId, sucursalId, yesterdayStart, yesterdayEnd, doctorId);
+
+        BigDecimal ingresosPendientes = pagoRepository.sumIngresosPendientesByTenant(tenantId, doctorId);
+        long countPendientes = pagoRepository.countPendingPaymentsByDoctor(tenantId, doctorId);
+
+        long pacientesHoy = pacienteRepository.countByTenantIdAndCreatedAtBetweenAndRegBorrado(tenantId, todayStart, todayEnd, 1);
+        long pacientesAyer = pacienteRepository.countByTenantIdAndCreatedAtBetweenAndRegBorrado(tenantId, yesterdayStart, yesterdayEnd, 1);
+
+        List<IncomeDetailDTO> detalleHoy = pagoRepository.findByTenantIdAndStatusAndCreatedAtBetweenAndRegBorrado(
+                tenantId, PagoStatus.APROBADO, todayStart, todayEnd, 1)
+                .stream().map(pago -> IncomeDetailDTO.builder().monto(pago.getMonto()).fecha(pago.getCreatedAt()).build())
+                .collect(Collectors.toList());
+
+        return DashboardStatsDTO.builder()
+                .ingresosPorValidar(ingresosPendientes)
+                .comprobantesPendientesCount(countPendientes)
+                .ingresosHoy(ingresosHoy)
+                .ingresosHoyTrend(calculateTrend(ingresosHoy, ingresosAyer))
+                .citasHoyCount(citasHoy)
+                .citasHoyTrend(citasHoy - citasAyer)
+                .pacientesNuevosCount(pacientesHoy)
+                .pacientesNuevosTrend(calculateTrend(BigDecimal.valueOf(pacientesHoy), BigDecimal.valueOf(pacientesAyer)))
+                .ingresosDetalleHoy(detalleHoy)
+                .build();
+    }
+
+    private double calculateTrend(BigDecimal current, BigDecimal previous) {
+        if (previous == null || previous.compareTo(BigDecimal.ZERO) == 0) return current.compareTo(BigDecimal.ZERO) > 0 ? 100.0 : 0.0;
+        return ((current.doubleValue() - previous.doubleValue()) / previous.doubleValue()) * 100.0;
+    }
+
+    // --- MÉTODOS DE DISPONIBILIDAD (MANTENIDOS) ---
 
     @Transactional(readOnly = true)
     public List<DisponibilidadDiaDTO> obtenerDisponibilidadMes(UUID tenantId, UUID sucursalId, int mes, int anio) {
         YearMonth yearMonth = YearMonth.of(anio, mes);
         List<DisponibilidadDiaDTO> disponibilidad = new ArrayList<>();
-
         List<Usuario> doctores = usuarioRepository.findByTenantIdAndRolAndRegBorrado(tenantId, UserRole.DOCTOR, 1)
-                .stream()
-                .filter(d -> d.getSucursalIdPrincipal() != null && d.getSucursalIdPrincipal().equals(sucursalId))
-                .collect(Collectors.toList());
+                .stream().filter(d -> sucursalId.equals(d.getSucursalIdPrincipal())).collect(Collectors.toList());
+
+        OffsetDateTime start = yearMonth.atDay(1).atStartOfDay().atOffset(com.meyisoft.dental.system.utils.DateUtils.MEXICO_OFFSET);
+        OffsetDateTime end = yearMonth.atEndOfMonth().atTime(23, 59, 59).atOffset(com.meyisoft.dental.system.utils.DateUtils.MEXICO_OFFSET);
+        List<Cita> citasMes = repository.findAllActiveByTenantAndSucursalInRange(tenantId, sucursalId, start, end);
 
         for (int day = 1; day <= yearMonth.lengthOfMonth(); day++) {
             LocalDate fecha = yearMonth.atDay(day);
             DayConfig config = obtenerConfiguracionDia(sucursalId, fecha);
-
             boolean esLaboral = config != null && config.isActive();
             boolean estaLlena = true;
-
             if (esLaboral && !doctores.isEmpty()) {
-                // Verificar si hay al menos un slot disponible en el día (paso de 30 min)
-                List<SlotDisponibilidadDTO> slots = calcularSlotsParaFecha(tenantId, sucursalId, fecha, 30, doctores);
-                estaLlena = slots.stream().noneMatch(SlotDisponibilidadDTO::isDisponible);
+                List<Cita> citasDia = citasMes.stream().filter(c -> c.getFechaHora().toLocalDate().equals(fecha)).collect(Collectors.toList());
+                estaLlena = calcularSlotsParaFechaOptimizado(tenantId, sucursalId, fecha, 30, doctores, citasDia).stream().noneMatch(SlotDisponibilidadDTO::isDisponible);
             }
-
             disponibilidad.add(new DisponibilidadDiaDTO(fecha, estaLlena, esLaboral));
         }
-
         return disponibilidad;
     }
 
     @Transactional(readOnly = true)
-    public List<SlotDisponibilidadDTO> obtenerSlotsDisponibles(UUID tenantId, UUID sucursalId, LocalDate fecha,
-            UUID servicioId) {
-        ServicioDental servicio = servicioDentalRepository.findByIdAndTenantIdAndRegBorrado(servicioId, tenantId, 1)
-                .orElseThrow(() -> new BusinessException("NOT_FOUND", "Servicio no encontrado", HttpStatus.NOT_FOUND));
-
+    public List<SlotDisponibilidadDTO> obtenerSlotsDisponibles(UUID tenantId, UUID sucursalId, LocalDate fecha, UUID servicioId) {
+        ServicioDental servicio = servicioDentalRepository.findByIdAndTenantIdAndRegBorrado(servicioId, tenantId, 1).orElseThrow();
         List<Usuario> doctores = usuarioRepository.findByTenantIdAndRolAndRegBorrado(tenantId, UserRole.DOCTOR, 1)
-                .stream()
-                .filter(d -> d.getSucursalIdPrincipal() != null && d.getSucursalIdPrincipal().equals(sucursalId))
-                .collect(Collectors.toList());
-
+                .stream().filter(d -> sucursalId.equals(d.getSucursalIdPrincipal())).collect(Collectors.toList());
         int duracion = servicio.getDuracionMinutos() != null ? servicio.getDuracionMinutos() : 30;
-
-        return calcularSlotsParaFecha(tenantId, sucursalId, fecha, duracion, doctores);
+        OffsetDateTime s = fecha.atStartOfDay().atOffset(com.meyisoft.dental.system.utils.DateUtils.MEXICO_OFFSET);
+        OffsetDateTime e = fecha.atTime(23, 59, 59).atOffset(com.meyisoft.dental.system.utils.DateUtils.MEXICO_OFFSET);
+        List<Cita> citasDia = repository.findAllActiveByTenantAndSucursalInRange(tenantId, sucursalId, s, e);
+        return calcularSlotsParaFechaOptimizado(tenantId, sucursalId, fecha, duracion, doctores, citasDia).stream().filter(SlotDisponibilidadDTO::isDisponible).collect(Collectors.toList());
     }
 
-    private List<SlotDisponibilidadDTO> calcularSlotsParaFecha(UUID tenantId, UUID sucursalId, LocalDate fecha,
-            int duracion, List<Usuario> doctores) {
+    private List<SlotDisponibilidadDTO> calcularSlotsParaFechaOptimizado(UUID tenantId, UUID sucursalId, LocalDate fecha, int duracion, List<Usuario> doctores, List<Cita> citasDia) {
         List<SlotDisponibilidadDTO> slots = new ArrayList<>();
         DayConfig config = obtenerConfiguracionDia(sucursalId, fecha);
-
-        if (config == null || !config.isActive() || config.getStartTime() == null || config.getEndTime() == null) {
-            return slots;
-        }
-
-        LocalTime apertura = LocalTime.parse(config.getStartTime());
+        if (config == null || !config.isActive()) return slots;
+        LocalTime actual = LocalTime.parse(config.getStartTime());
         LocalTime cierre = LocalTime.parse(config.getEndTime());
-
-        LocalTime actual = apertura;
         while (actual.plusMinutes(duracion).isBefore(cierre) || actual.plusMinutes(duracion).equals(cierre)) {
-            LocalTime finSlot = actual.plusMinutes(duracion);
-            OffsetDateTime slotStart = actual.atDate(fecha).atOffset(OffsetDateTime.now().getOffset());
-            OffsetDateTime slotEnd = finSlot.atDate(fecha).atOffset(OffsetDateTime.now().getOffset());
-
-            boolean disponible = false;
-            for (Usuario doctor : doctores) {
-                // Si el doctor está libre en este rango, el slot es tomable
-                if (!repository.existsOverlapping(doctor.getId(), slotStart, slotEnd)) {
-                    disponible = true;
-                    break;
-                }
-            }
-
-            if (fecha.equals(LocalDate.now()) && slotStart.isBefore(OffsetDateTime.now())) {
-                disponible = false;
-            }
-
-            slots.add(new SlotDisponibilidadDTO(actual, finSlot, disponible));
-            actual = actual.plusMinutes(30); // Usamos paso de 30 min para dar más flexibilidad
+            LocalTime fin = actual.plusMinutes(duracion);
+            OffsetDateTime s = actual.atDate(fecha).atOffset(com.meyisoft.dental.system.utils.DateUtils.MEXICO_OFFSET);
+            OffsetDateTime e = fin.atDate(fecha).atOffset(com.meyisoft.dental.system.utils.DateUtils.MEXICO_OFFSET);
+            boolean ocupado = citasDia.stream().anyMatch(c -> c.getFechaHora().isBefore(e) && c.getFechaHora().plusMinutes(c.getDuracionMinutos()).isAfter(s));
+            boolean disp = !ocupado;
+            if (fecha.equals(LocalDate.now(com.meyisoft.dental.system.utils.DateUtils.MEXICO_OFFSET)) && s.isBefore(OffsetDateTime.now(com.meyisoft.dental.system.utils.DateUtils.MEXICO_OFFSET))) disp = false;
+            slots.add(new SlotDisponibilidadDTO(actual, fin, disp));
+            actual = actual.plusMinutes(30);
         }
-
         return slots;
     }
 
     private DayConfig obtenerConfiguracionDia(UUID sucursalId, LocalDate fecha) {
         Sucursal sucursal = sucursalRepository.findById(sucursalId).orElse(null);
-        if (sucursal == null || sucursal.getHorariosLaborales() == null)
-            return null;
-
+        if (sucursal == null || sucursal.getHorariosLaborales() == null) return null;
         try {
-            String json = sucursal.getHorariosLaborales();
-            if (json.trim().startsWith("{")) {
-                java.util.Map<String, DayConfig> configs = objectMapper.readValue(json,
-                        new TypeReference<java.util.Map<String, DayConfig>>() {
-                        });
-
-                String englishKey = fecha.getDayOfWeek().name().toLowerCase();
-                String spanishKey = fecha.getDayOfWeek().getDisplayName(TextStyle.FULL, new Locale("es", "ES"))
-                        .toLowerCase();
-
-                DayConfig config = configs.get(englishKey);
-                if (config == null) {
-                    config = configs.get(spanishKey);
-                }
-                return config;
-            } else {
-                List<java.util.Map<String, Object>> list = objectMapper.readValue(json,
-                        new TypeReference<List<java.util.Map<String, Object>>>() {
-                        });
-                String daySpanish = fecha.getDayOfWeek().getDisplayName(TextStyle.FULL, new Locale("es", "ES"));
-                for (java.util.Map<String, Object> item : list) {
-                    if (daySpanish.equalsIgnoreCase((String) item.get("day"))) {
-                        return objectMapper.convertValue(item, DayConfig.class);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error al parsear horarios: {}", e.getMessage());
-        }
-        return null;
+            Map<String, DayConfig> configs = objectMapper.readValue(sucursal.getHorariosLaborales(), new TypeReference<Map<String, DayConfig>>() {});
+            String key = fecha.getDayOfWeek().name().toLowerCase();
+            return configs.get(key);
+        } catch (Exception e) { return null; }
     }
 
     private String generarSiguienteFolio(UUID tenantId, String tipo) {
-        java.time.LocalDate hoy = java.time.LocalDate.now();
-        RegistroFolio registro = folioRepository
-                .findByTenantIdAndTipoAndFechaAndRegBorrado(tenantId, tipo, hoy, 1)
-                .orElseGet(() -> {
-                    RegistroFolio nuevo = RegistroFolio
-                            .builder()
-                            .tipo(tipo)
-                            .fecha(hoy)
-                            .ultimoNumero(0)
-                            .build();
-                    nuevo.setTenantId(tenantId);
-                    nuevo.setRegBorrado(1);
-                    return nuevo;
-                });
-
-        int siguiente = registro.getUltimoNumero() + 1;
-        registro.setUltimoNumero(siguiente);
-        folioRepository.save(registro);
-
-        String fechaStr = hoy.format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
-        return String.format("CIT-%s-%04d", fechaStr, siguiente);
+        LocalDate hoy = LocalDate.now();
+        RegistroFolio reg = folioRepository.findByTenantIdAndTipoAndFechaAndRegBorrado(tenantId, tipo, hoy, 1).orElseGet(() -> {
+            RegistroFolio n = RegistroFolio.builder().id(UUID.randomUUID()).tipo(tipo).fecha(hoy).ultimoNumero(0).build();
+            n.setTenantId(tenantId); n.setRegBorrado(1); return n;
+        });
+        reg.setUltimoNumero(reg.getUltimoNumero() + 1);
+        folioRepository.save(reg);
+        return String.format("CIT-%s-%04d", hoy.format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")), reg.getUltimoNumero());
     }
 
     private void validarHorarioSucursal(UUID sucursalId, OffsetDateTime fechaHora, Integer duracion) {
-        if (fechaHora.isBefore(OffsetDateTime.now())) {
-            throw new BusinessException("PAST_DATE", "No se puede agendar en el pasado", HttpStatus.BAD_REQUEST);
-        }
-
         DayConfig config = obtenerConfiguracionDia(sucursalId, fechaHora.toLocalDate());
-
-        if (config != null) {
-            if (!config.isActive()) {
-                throw new BusinessException("CLOSED_DAY", "La sucursal está cerrada este " +
-                        fechaHora.getDayOfWeek().getDisplayName(TextStyle.FULL,
-                                new java.util.Locale("es", "ES")),
-                        HttpStatus.BAD_REQUEST);
-            }
-
-            if (config.getStartTime() != null && config.getEndTime() != null) {
-                try {
-                    LocalTime apertura = LocalTime.parse(config.getStartTime());
-                    LocalTime cierre = LocalTime.parse(config.getEndTime());
-                    LocalTime citaInicio = fechaHora.toLocalTime();
-                    LocalTime citaFin = fechaHora.plusMinutes(duracion).toLocalTime();
-
-                    log.info("Validando horario: Cita {}-{} | Sucursal {}-{}",
-                            citaInicio, citaFin, apertura, cierre);
-
-                    if (citaInicio.isBefore(apertura) || citaInicio.isAfter(cierre)) {
-                        log.warn("Cita fuera de rango: Inicio {} < Apertura {} o Inicio {} > Cierre {}",
-                                citaInicio, apertura, citaInicio, cierre);
-                        throw new BusinessException("OUT_OF_HOURS", "Fuera de horario laboral",
-                                HttpStatus.BAD_REQUEST);
-                    }
-
-                    if (citaFin.isAfter(cierre)) {
-                        log.warn("Cita excede cierre: Fin {} > Cierre {}", citaFin, cierre);
-                        throw new BusinessException("OUT_OF_HOURS", "La cita termina después del cierre",
-                                HttpStatus.BAD_REQUEST);
-                    }
-                } catch (BusinessException e) {
-                    throw e;
-                } catch (Exception e) {
-                    log.error("Error al validar horario: {}", e.getMessage());
-                }
-            }
+        if (config != null && (!config.isActive() || fechaHora.toLocalTime().isBefore(LocalTime.parse(config.getStartTime())) || fechaHora.toLocalTime().plusMinutes(duracion).isAfter(LocalTime.parse(config.getEndTime())))) {
+            throw new BusinessException("OUT_OF_HOURS", "Fuera de horario laboral", HttpStatus.BAD_REQUEST);
         }
     }
 
-    private CitaDTO mapToDTO(Cita entity) {
-        CitaDTO dto = CitaDTO.builder()
-                .id(entity.getId())
-                .pacienteId(entity.getPacienteId())
-                .doctorId(entity.getDoctorId())
-                .sucursalId(entity.getSucursalId())
-                .servicioId(entity.getServicioId())
-                .fechaHora(entity.getFechaHora())
-                .duracionMinutos(entity.getDuracionMinutos())
-                .estado(entity.getEstado())
-                .source(entity.getSource())
-                .folio(entity.getFolio())
-                .motivoConsulta(entity.getMotivoConsulta())
-                .notasRecepcion(entity.getNotasRecepcion())
-                .montoTotal(entity.getMontoTotal())
-                .motivoRechazo(entity.getMotivoRechazo())
-                .build();
+    private CitaDTO mapToDTO(Cita entity) { return mapToDTOOptimized(entity, null, null, null, null); }
 
-        // Mapear pagos y comprobante
-        List<Pago> pagos = pagoRepository.findByCitaIdAndRegBorrado(entity.getId(), 1);
+    private CitaDTO mapToDTOOptimized(Cita entity, Map<UUID, Paciente> pacientes, Map<UUID, Usuario> doctores, Map<UUID, ServicioDental> servicios, Map<UUID, List<Pago>> pagosPorCita) {
+        CitaDTO dto = CitaDTO.builder().id(entity.getId()).pacienteId(entity.getPacienteId()).doctorId(entity.getDoctorId()).sucursalId(entity.getSucursalId()).servicioId(entity.getServicioId()).fechaHora(entity.getFechaHora()).duracionMinutos(entity.getDuracionMinutos()).estado(entity.getEstado()).source(entity.getSource()).folio(entity.getFolio()).motivoConsulta(entity.getMotivoConsulta()).notasRecepcion(entity.getNotasRecepcion()).montoTotal(entity.getMontoTotal()).motivoRechazo(entity.getMotivoRechazo()).build();
         
-        java.math.BigDecimal totalPagado = pagos.stream()
-                .filter(p -> p.getRegBorrado() == 1 && p.getStatus() != PagoStatus.RECHAZADO && p.getStatus() != PagoStatus.CANCELADO)
-                .map(p -> p.getMonto() != null ? p.getMonto() : java.math.BigDecimal.ZERO)
-                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
-        
-        dto.setMontoPagado(totalPagado);
-        
-        log.info("Mapeando Cita {}: Total={}, Pagado={}, PagosEncontrados={}", 
-                entity.getFolio(), dto.getMontoTotal(), dto.getMontoPagado(), pagos.size());
+        if (entity.getPacienteId() != null) {
+            Paciente p = (pacientes != null) ? pacientes.get(entity.getPacienteId()) : pacienteRepository.findById(entity.getPacienteId()).orElse(null);
+            if (p != null) { dto.setPacienteNombre(p.getNombreCompleto()); dto.setPacienteTelefono(p.getTelefono()); }
+        }
+        if (entity.getDoctorId() != null) {
+            Usuario d = (doctores != null) ? doctores.get(entity.getDoctorId()) : usuarioRepository.findById(entity.getDoctorId()).orElse(null);
+            if (d != null) dto.setDoctorNombre(d.getNombreCompleto());
+        }
+        if (entity.getServicioId() != null) {
+            ServicioDental s = (servicios != null) ? servicios.get(entity.getServicioId()) : servicioDentalRepository.findById(entity.getServicioId()).orElse(null);
+            if (s != null) dto.setServicioNombre(s.getNombre());
+        }
 
-        pagos.stream()
-                .filter(p -> p.getComprobanteUrl() != null && !p.getComprobanteUrl().isEmpty())
-                .findFirst()
-                .ifPresent(p -> dto.setComprobanteUrl(p.getComprobanteUrl()));
-
-        // Enriquecer con nombres (Opcional pero recomendado para el frontend)
-        pacienteRepository.findById(entity.getPacienteId())
-                .ifPresent(p -> {
-                    dto.setPacienteNombre(p.getNombreCompleto());
-                    dto.setPacienteTelefono(p.getTelefono());
-                });
-
-        usuarioRepository.findById(entity.getDoctorId())
-                .ifPresent(d -> dto.setDoctorNombre(d.getNombreCompleto()));
-
-        servicioDentalRepository.findByIdAndTenantIdAndRegBorrado(entity.getServicioId(), entity.getTenantId(), 1)
-                .ifPresent(s -> dto.setServicioNombre(s.getNombre()));
-
-        if (dto.getMontoTotal() == null) dto.setMontoTotal(java.math.BigDecimal.ZERO);
-        if (dto.getMontoPagado() == null) dto.setMontoPagado(java.math.BigDecimal.ZERO);
-
+        List<Pago> pagos = (pagosPorCita != null) ? pagosPorCita.get(entity.getId()) : pagoRepository.findByCitaIdAndRegBorrado(entity.getId(), 1);
+        if (pagos != null) {
+            BigDecimal pagado = pagos.stream().filter(p -> p.getStatus() == PagoStatus.APROBADO || p.getStatus() == PagoStatus.PENDIENTE_REVISION).map(Pago::getMonto).reduce(BigDecimal.ZERO, BigDecimal::add);
+            dto.setMontoPagado(pagado);
+            pagos.stream().filter(p -> p.getComprobanteUrl() != null).findFirst().ifPresent(p -> dto.setComprobanteUrl(p.getComprobanteUrl()));
+        }
         return dto;
+    }
+
+    private void validarTelefono(String telefono) {
+        if (telefono == null || !telefono.matches("^[0-9]{10}$")) throw new BusinessException("INVALID_PHONE", "Teléfono inválido", HttpStatus.BAD_REQUEST);
     }
 }

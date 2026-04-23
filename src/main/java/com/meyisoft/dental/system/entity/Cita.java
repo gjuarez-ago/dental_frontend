@@ -3,6 +3,7 @@ package com.meyisoft.dental.system.entity;
 import com.meyisoft.dental.system.enums.AppointmentStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -14,7 +15,7 @@ import java.util.UUID;
 @Table(name = "citas")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class Cita extends BaseEntity {
 
@@ -22,7 +23,7 @@ public class Cita extends BaseEntity {
     @JdbcTypeCode(SqlTypes.UUID)
     private UUID pacienteId;
 
-    @Column(name = "doctor_id", nullable = false)
+    @Column(name = "doctor_id")
     @JdbcTypeCode(SqlTypes.UUID)
     private UUID doctorId;
 
