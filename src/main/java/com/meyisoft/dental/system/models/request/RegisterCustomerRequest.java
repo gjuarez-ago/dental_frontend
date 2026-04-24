@@ -11,16 +11,16 @@ import java.util.UUID;
 public class RegisterCustomerRequest {
     @NotBlank
     private String fullName;
-    
+
     @NotBlank
     @Email
     private String email;
-    
+
     private String phone;
-    
+
     @NotBlank
     private String password;
-    
+
     @NotNull
     private UUID tenantId;
 }

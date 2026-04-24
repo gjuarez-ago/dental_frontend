@@ -10,5 +10,6 @@ import java.util.UUID;
 
 @Repository
 public interface RegistroFolioRepository extends JpaRepository<RegistroFolio, UUID> {
-    Optional<RegistroFolio> findByTenantIdAndTipoAndFechaAndRegBorrado(UUID tenantId, String tipo, LocalDate fecha, Integer regBorrado);
+    Optional<RegistroFolio> findByTenantIdAndTipoAndFechaAndRegBorrado(UUID tenantId, String tipo, LocalDate fecha,
+            Integer regBorrado);
 }

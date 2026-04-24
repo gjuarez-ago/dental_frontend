@@ -20,7 +20,7 @@ public class CitaDTO {
     private String pacienteNombre; // Auxiliar para el frontend
     private String pacienteTelefono; // Para perfiles incompletos desde App
     private UUID doctorId;
-    private String doctorNombre;   // Auxiliar para el frontend
+    private String doctorNombre; // Auxiliar para el frontend
     private UUID sucursalId;
     private UUID servicioId;
     private String servicioNombre; // Auxiliar para el frontend
@@ -31,7 +31,7 @@ public class CitaDTO {
     private String notasRecepcion;
     private String source; // APP, CRM
     private String folio;
-    
+
     // Información financiera básica
     private java.math.BigDecimal montoTotal;
     private java.math.BigDecimal montoPagado;

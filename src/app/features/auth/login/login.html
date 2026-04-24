@@ -9,8 +9,7 @@
         (click)="setLoginMode('PACIENTE')">
         <i class="ph ph-user"></i> Paciente
       </button>
-      <button type="button" class="role-btn" [class.active]="loginMode() === 'STAFF'"
-        (click)="setLoginMode('STAFF')">
+      <button type="button" class="role-btn" [class.active]="loginMode() === 'STAFF'" (click)="setLoginMode('STAFF')">
         <i class="ph ph-stethoscope"></i> Personal
       </button>
     </div>
@@ -181,13 +180,11 @@
                 (click)="completeForm.patchValue({ genero: 'MASCULINO' })">
                 <i class="ph ph-gender-male"></i> Masculino
               </button>
-              <button type="button" class="gender-btn"
-                [class.active]="completeForm.get('genero')?.value === 'FEMENINO'"
+              <button type="button" class="gender-btn" [class.active]="completeForm.get('genero')?.value === 'FEMENINO'"
                 (click)="completeForm.patchValue({ genero: 'FEMENINO' })">
                 <i class="ph ph-gender-female"></i> Femenino
               </button>
-              <button type="button" class="gender-btn"
-                [class.active]="completeForm.get('genero')?.value === 'OTRO'"
+              <button type="button" class="gender-btn" [class.active]="completeForm.get('genero')?.value === 'OTRO'"
                 (click)="completeForm.patchValue({ genero: 'OTRO' })">
                 <i class="ph ph-gender-nonbinary"></i> Otro
               </button>
@@ -263,13 +260,11 @@
                 (click)="registerForm.patchValue({ genero: 'MASCULINO' })">
                 <i class="ph ph-gender-male"></i> Masculino
               </button>
-              <button type="button" class="gender-btn"
-                [class.active]="registerForm.get('genero')?.value === 'FEMENINO'"
+              <button type="button" class="gender-btn" [class.active]="registerForm.get('genero')?.value === 'FEMENINO'"
                 (click)="registerForm.patchValue({ genero: 'FEMENINO' })">
                 <i class="ph ph-gender-female"></i> Femenino
               </button>
-              <button type="button" class="gender-btn"
-                [class.active]="registerForm.get('genero')?.value === 'OTRO'"
+              <button type="button" class="gender-btn" [class.active]="registerForm.get('genero')?.value === 'OTRO'"
                 (click)="registerForm.patchValue({ genero: 'OTRO' })">
                 <i class="ph ph-gender-nonbinary"></i> Otro
               </button>
@@ -294,7 +289,7 @@
     </ng-container>
 
     <footer class="login-footer">
-      © 2026 Meyisoft Dental
+      © 2026 meyisoft Dental
     </footer>
 
   </div>

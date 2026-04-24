@@ -36,7 +36,8 @@ public class ClinicalConfigService {
     @Transactional(readOnly = true)
     public ClinicalConfigDTO getClinicalConfig(UUID userId, UUID sucursalId) {
         Usuario usuario = usuarioRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCodes.USER_NOT_FOUND, ErrorCodes.MSG_USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCodes.USER_NOT_FOUND, ErrorCodes.MSG_USER_NOT_FOUND,
+                        HttpStatus.NOT_FOUND));
 
         UUID targetSucursalId = (sucursalId != null) ? sucursalId : usuario.getSucursalIdPrincipal();
 
@@ -50,7 +51,8 @@ public class ClinicalConfigService {
         }
 
         Sucursal sucursal = sucursalRepository.findById(targetSucursalId)
-                .orElseThrow(() -> new BusinessException(ErrorCodes.USER_NOT_FOUND, "Sucursal no encontrada", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCodes.USER_NOT_FOUND, "Sucursal no encontrada",
+                        HttpStatus.NOT_FOUND));
 
         Map<String, ClinicalConfigDTO.DayConfigDTO> horariosMap = parseHorarios(sucursal.getHorariosLaborales());
 
@@ -68,7 +70,8 @@ public class ClinicalConfigService {
     @Transactional
     public void updateClinicalConfig(UUID userId, UUID sucursalId, ClinicalConfigDTO dto) {
         Usuario usuario = usuarioRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCodes.USER_NOT_FOUND, ErrorCodes.MSG_USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCodes.USER_NOT_FOUND, ErrorCodes.MSG_USER_NOT_FOUND,
+                        HttpStatus.NOT_FOUND));
 
         // 1. Actualizar Usuario (Identidad Profesional)
         usuario.setNombreCompleto(dto.getNombreCompleto());
@@ -81,7 +84,8 @@ public class ClinicalConfigService {
         if (targetSucursalId != null) {
             Sucursal sucursal = sucursalRepository.findById(targetSucursalId)
                     .orElseThrow(
-                            () -> new BusinessException(ErrorCodes.USER_NOT_FOUND, "Sucursal no encontrada", HttpStatus.NOT_FOUND));
+                            () -> new BusinessException(ErrorCodes.USER_NOT_FOUND, "Sucursal no encontrada",
+                                    HttpStatus.NOT_FOUND));
 
             sucursal.setVentanaCancelacion(dto.getVentanaCancelacion());
 
@@ -90,7 +94,8 @@ public class ClinicalConfigService {
                 sucursal.setHorariosLaborales(horariosJson);
             } catch (JsonProcessingException e) {
                 log.error("Error serializando horarios: {}", e.getMessage());
-                throw new BusinessException("CONFIG-001", "Error al procesar el formato de horarios", HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new BusinessException("CONFIG-001", "Error al procesar el formato de horarios",
+                        HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             sucursalRepository.save(sucursal);

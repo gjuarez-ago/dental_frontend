@@ -24,136 +24,138 @@ import java.util.UUID;
 @Tag(name = "Citas", description = "Gestión de la agenda dental")
 public class CitaController {
 
-    private final CitaService service;
+        private final CitaService service;
 
-    @GetMapping
-    @Operation(summary = "Listar citas por rango de fechas y sucursal")
-    public ResponseEntity<ApiResponse<List<CitaDTO>>> listarCitas(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @RequestParam UUID sucursalId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime start,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime end,
-            @RequestParam(required = false) UUID doctorId) {
-        
-        List<CitaDTO> result = service.listarPorRango(principal.getTenantId(), sucursalId, start, end, doctorId);
-        
-        return ResponseEntity.ok(ApiResponse.<List<CitaDTO>>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+        @GetMapping
+        @Operation(summary = "Listar citas por rango de fechas y sucursal")
+        public ResponseEntity<ApiResponse<List<CitaDTO>>> listarCitas(
+                        @AuthenticationPrincipal UserPrincipal principal,
+                        @RequestParam UUID sucursalId,
+                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime start,
+                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime end,
+                        @RequestParam(required = false) UUID doctorId) {
 
-    @GetMapping("/doctores")
-    @Operation(summary = "Listar doctores del tenant")
-    public ResponseEntity<ApiResponse<List<Usuario>>> getDoctores(
-            @AuthenticationPrincipal UserPrincipal principal) {
-        
-        List<Usuario> result = service.listarDoctores(principal.getTenantId());
-        
-        return ResponseEntity.ok(ApiResponse.<List<Usuario>>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+                List<CitaDTO> result = service.listarPorRango(principal.getTenantId(), sucursalId, start, end,
+                                doctorId);
 
-    @PostMapping
-    @Operation(summary = "Agendar una nueva cita")
-    public ResponseEntity<ApiResponse<CitaDTO>> agendarCita(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @RequestBody CitaDTO dto) {
-        
-        CitaDTO result = service.agendar(dto, principal.getTenantId(), null);
-        
-        return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+                return ResponseEntity.ok(ApiResponse.<List<CitaDTO>>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
 
-    @PatchMapping("/{id}/estado")
-    @Operation(summary = "Actualizar el estado de una cita (Confirmar, Llegada, Completada, etc.)")
-    public ResponseEntity<ApiResponse<CitaDTO>> actualizarEstado(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @PathVariable UUID id,
-            @RequestParam AppointmentStatus estado,
-            @RequestParam(required = false) java.math.BigDecimal montoTotal) {
-        
-        CitaDTO result = service.actualizarEstado(id, estado, montoTotal, principal.getTenantId());
-        
-        return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+        @GetMapping("/doctores")
+        @Operation(summary = "Listar doctores del tenant")
+        public ResponseEntity<ApiResponse<List<Usuario>>> getDoctores(
+                        @AuthenticationPrincipal UserPrincipal principal) {
 
-    @GetMapping("/por-confirmar")
-    @Operation(summary = "Listar citas que requieren verificación (desde App/Web)")
-    public ResponseEntity<ApiResponse<List<CitaDTO>>> listarPorConfirmar(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @RequestParam(required = false) UUID sucursalId) {
-        
-        List<CitaDTO> result = service.listarPorConfirmar(principal.getTenantId(), sucursalId);
-        
-        return ResponseEntity.ok(ApiResponse.<List<CitaDTO>>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+                List<Usuario> result = service.listarDoctores(principal.getTenantId());
 
-    @Operation(summary = "Confirmar una cita pendiente asignando/validando el doctor")
-    @PatchMapping("/{id}/confirmar")
-    public ResponseEntity<ApiResponse<CitaDTO>> confirmarCita(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @PathVariable UUID id,
-            @RequestParam UUID doctorId,
-            @RequestParam(required = false) java.math.BigDecimal montoTotal) {
-        
-        CitaDTO result = service.confirmarCita(id, doctorId, montoTotal, principal.getTenantId());
-        
-        return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+                return ResponseEntity.ok(ApiResponse.<List<Usuario>>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
 
-    @PatchMapping("/{id}/rechazar")
-    @Operation(summary = "Rechazar una cita pendiente con motivo")
-    public ResponseEntity<ApiResponse<CitaDTO>> rechazarCita(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @PathVariable UUID id,
-            @RequestParam String motivo) {
-        
-        CitaDTO result = service.rechazarCita(id, motivo, principal.getTenantId());
-        
-        return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+        @PostMapping
+        @Operation(summary = "Agendar una nueva cita")
+        public ResponseEntity<ApiResponse<CitaDTO>> agendarCita(
+                        @AuthenticationPrincipal UserPrincipal principal,
+                        @RequestBody CitaDTO dto) {
 
-    @GetMapping("/dashboard-summary")
-    @Operation(summary = "Obtener resumen de estadísticas para el dashboard")
-    public ResponseEntity<ApiResponse<CitaService.DashboardStats>> getDashboardSummary(
-            @AuthenticationPrincipal UserPrincipal principal,
-            @RequestParam(required = false) UUID sucursalId,
-            @RequestParam(required = false) UUID doctorId) {
-        
-        // Si no se envía sucursalId expresamente, usamos la principal del usuario
-        UUID finalSucursalId = (sucursalId != null) ? sucursalId : principal.getSucursalId();
-        
-        CitaService.DashboardStats result = service.getDashboardSummary(principal.getTenantId(), finalSucursalId, doctorId);
-        
-        return ResponseEntity.ok(ApiResponse.<CitaService.DashboardStats>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+                CitaDTO result = service.agendar(dto, principal.getTenantId(), null);
+
+                return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
+
+        @PatchMapping("/{id}/estado")
+        @Operation(summary = "Actualizar el estado de una cita (Confirmar, Llegada, Completada, etc.)")
+        public ResponseEntity<ApiResponse<CitaDTO>> actualizarEstado(
+                        @AuthenticationPrincipal UserPrincipal principal,
+                        @PathVariable UUID id,
+                        @RequestParam AppointmentStatus estado,
+                        @RequestParam(required = false) java.math.BigDecimal montoTotal) {
+
+                CitaDTO result = service.actualizarEstado(id, estado, montoTotal, principal.getTenantId());
+
+                return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
+
+        @GetMapping("/por-confirmar")
+        @Operation(summary = "Listar citas que requieren verificación (desde App/Web)")
+        public ResponseEntity<ApiResponse<List<CitaDTO>>> listarPorConfirmar(
+                        @AuthenticationPrincipal UserPrincipal principal,
+                        @RequestParam(required = false) UUID sucursalId) {
+
+                List<CitaDTO> result = service.listarPorConfirmar(principal.getTenantId(), sucursalId);
+
+                return ResponseEntity.ok(ApiResponse.<List<CitaDTO>>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
+
+        @Operation(summary = "Confirmar una cita pendiente asignando/validando el doctor")
+        @PatchMapping("/{id}/confirmar")
+        public ResponseEntity<ApiResponse<CitaDTO>> confirmarCita(
+                        @AuthenticationPrincipal UserPrincipal principal,
+                        @PathVariable UUID id,
+                        @RequestParam UUID doctorId,
+                        @RequestParam(required = false) java.math.BigDecimal montoTotal) {
+
+                CitaDTO result = service.confirmarCita(id, doctorId, montoTotal, principal.getTenantId());
+
+                return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
+
+        @PatchMapping("/{id}/rechazar")
+        @Operation(summary = "Rechazar una cita pendiente con motivo")
+        public ResponseEntity<ApiResponse<CitaDTO>> rechazarCita(
+                        @AuthenticationPrincipal UserPrincipal principal,
+                        @PathVariable UUID id,
+                        @RequestParam String motivo) {
+
+                CitaDTO result = service.rechazarCita(id, motivo, principal.getTenantId());
+
+                return ResponseEntity.ok(ApiResponse.<CitaDTO>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
+
+        @GetMapping("/dashboard-summary")
+        @Operation(summary = "Obtener resumen de estadísticas para el dashboard")
+        public ResponseEntity<ApiResponse<CitaService.DashboardStats>> getDashboardSummary(
+                        @AuthenticationPrincipal UserPrincipal principal,
+                        @RequestParam(required = false) UUID sucursalId,
+                        @RequestParam(required = false) UUID doctorId) {
+
+                // Si no se envía sucursalId expresamente, usamos la principal del usuario
+                UUID finalSucursalId = (sucursalId != null) ? sucursalId : principal.getSucursalId();
+
+                CitaService.DashboardStats result = service.getDashboardSummary(principal.getTenantId(),
+                                finalSucursalId, doctorId);
+
+                return ResponseEntity.ok(ApiResponse.<CitaService.DashboardStats>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
 }

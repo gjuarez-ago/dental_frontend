@@ -20,9 +20,9 @@ public class TestController {
             @RequestParam String email,
             @RequestParam String phone,
             @RequestParam String message) {
-        
+
         notificationService.sendGlobalNotification(email, phone, "Prueba de Notificación Dental", message);
-        
+
         return ApiResponse.success("Notificación en proceso de envío (Asíncrona)");
     }
 }

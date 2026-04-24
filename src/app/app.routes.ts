@@ -28,7 +28,7 @@ export const routes: Routes = [
   {
     path: 'login',
     component: LoginComponent,
-    title: 'Login - MEYISOFT POS',
+    title: 'Login - meyisoft POS',
     canActivate: [publicGuard]
   },
   {
@@ -65,7 +65,7 @@ export const routes: Routes = [
       {
         path: 'users',
         component: UsuariosComponent,
-        title: 'Gestión de Usuarios | MEYISOFT POS',
+        title: 'Gestión de Usuarios | meyisoft POS',
         canActivate: [roleGuard],
         data: { roles: [UserRole.OWNER, UserRole.SUPER_ADMIN] }
       }

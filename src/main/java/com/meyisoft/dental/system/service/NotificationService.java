@@ -17,11 +17,11 @@ public class NotificationService {
      */
     public void sendGlobalNotification(String emailTo, String phoneTo, String subject, String message) {
         log.info("Iniciando envío de notificación global a {}", emailTo);
-        
+
         if (emailTo != null && !emailTo.isEmpty()) {
             emailService.sendSimpleEmail(emailTo, subject, message);
         }
-        
+
         if (phoneTo != null && !phoneTo.isEmpty()) {
             whatsAppService.sendTextMessage(phoneTo, message);
         }

@@ -5,6 +5,7 @@ import com.meyisoft.dental.system.models.dto.DisponibilidadDiaDTO;
 import com.meyisoft.dental.system.models.dto.SlotDisponibilidadDTO;
 import com.meyisoft.dental.system.models.dto.ServicioDentalDTO;
 import com.meyisoft.dental.system.models.response.ApiResponse;
+import com.meyisoft.dental.system.repository.SucursalRepository;
 import com.meyisoft.dental.system.service.CitaService;
 import com.meyisoft.dental.system.service.ServicioDentalService;
 import com.meyisoft.dental.system.service.StorageService;
@@ -29,91 +30,96 @@ import java.util.UUID;
 @Tag(name = "Public", description = "Endpoints públicos para landing page y App móvil")
 public class PublicController {
 
-    private final ServicioDentalService servicioDentalService;
-    private final CitaService citaService;
-    private final com.meyisoft.dental.system.repository.SucursalRepository sucursalRepository;
-    private final StorageService storageService;
-    private final ObjectMapper objectMapper;
+        private final ServicioDentalService servicioDentalService;
+        private final CitaService citaService;
+        private final SucursalRepository sucursalRepository;
+        private final StorageService storageService;
+        private final ObjectMapper objectMapper;
 
-    @GetMapping("/servicios")
-    @Operation(summary = "Listar servicios de una empresa (Tenant) para la landing page")
-    public ResponseEntity<ApiResponse<List<ServicioDentalDTO>>> listarServicios(@RequestParam UUID tenantId) {
-        
-        List<ServicioDentalDTO> result = servicioDentalService.listarServicios(tenantId);
-        
-        return ResponseEntity.ok(ApiResponse.<List<ServicioDentalDTO>>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+        @GetMapping("/servicios")
+        @Operation(summary = "Listar servicios de una empresa (Tenant) para la landing page")
+        public ResponseEntity<ApiResponse<List<ServicioDentalDTO>>> listarServicios(@RequestParam UUID tenantId) {
 
-    @GetMapping("/agenda/disponibilidad-mes")
-    @Operation(summary = "Obtener calendario mensual con disponibilidad (multi-doctor)")
-    public ResponseEntity<ApiResponse<List<DisponibilidadDiaDTO>>> getDisponibilidadMes(
-            @RequestParam UUID tenantId,
-            @RequestParam UUID sucursalId,
-            @RequestParam int mes,
-            @RequestParam int anio) {
-        
-        List<DisponibilidadDiaDTO> result = citaService.obtenerDisponibilidadMes(tenantId, sucursalId, mes, anio);
-        
-        return ResponseEntity.ok(ApiResponse.<List<DisponibilidadDiaDTO>>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+                List<ServicioDentalDTO> result = servicioDentalService.listarServicios(tenantId);
 
-    @GetMapping("/agenda/slots-disponibles")
-    @Operation(summary = "Obtener slots horarios disponibles para una fecha y servicio específico")
-    public ResponseEntity<ApiResponse<List<SlotDisponibilidadDTO>>> getSlotsDisponibles(
-            @RequestParam UUID tenantId,
-            @RequestParam UUID sucursalId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
-            @RequestParam UUID servicioId) {
-        
-        List<SlotDisponibilidadDTO> result = citaService.obtenerSlotsDisponibles(tenantId, sucursalId, fecha, servicioId);
-        
-        return ResponseEntity.ok(ApiResponse.<List<SlotDisponibilidadDTO>>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
-
-    @PostMapping(value = "/agenda/agendar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Agendar una nueva cita desde la landing page con comprobante obligatorio")
-    public ResponseEntity<ApiResponse<CitaDTO>> agendarCita(
-            @RequestPart("cita") String citaJson,
-            @RequestPart("file") MultipartFile file) throws Exception {
-        
-        // 1. Deserializar DTO
-        CitaDTO dto = objectMapper.readValue(citaJson, CitaDTO.class);
-        
-        // 2. Validar archivo obligatorio
-        if (file == null || file.isEmpty()) {
-            throw new com.meyisoft.dental.system.exception.BusinessException("MISSING_FILE", 
-                "El comprobante de pago es obligatorio para agendar públicamente", org.springframework.http.HttpStatus.BAD_REQUEST);
+                return ResponseEntity.ok(ApiResponse.<List<ServicioDentalDTO>>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
         }
 
-        // 3. Subir archivo a R2
-        String comprobanteUrl = storageService.uploadFile(file, "comprobantes");
+        @GetMapping("/agenda/disponibilidad-mes")
+        @Operation(summary = "Obtener calendario mensual con disponibilidad (multi-doctor)")
+        public ResponseEntity<ApiResponse<List<DisponibilidadDiaDTO>>> getDisponibilidadMes(
+                        @RequestParam UUID tenantId,
+                        @RequestParam UUID sucursalId,
+                        @RequestParam int mes,
+                        @RequestParam int anio) {
 
-        // 4. Obtener TenantId desde la sucursal para aislamiento
-        com.meyisoft.dental.system.entity.Sucursal sucursal = sucursalRepository.findById(dto.getSucursalId())
-                .orElseThrow(() -> new com.meyisoft.dental.system.exception.BusinessException("NOT_FOUND", 
-                    "Sucursal no encontrada", org.springframework.http.HttpStatus.NOT_FOUND));
-        
-        dto.setSource("PUBLIC");
-        
-        // 5. Agendar
-        CitaDTO result = citaService.agendar(dto, sucursal.getTenantId(), comprobanteUrl);
+                List<DisponibilidadDiaDTO> result = citaService.obtenerDisponibilidadMes(tenantId, sucursalId, mes,
+                                anio);
 
-        return ResponseEntity.status(201).body(ApiResponse.<CitaDTO>builder()
-                .ok(true)
-                .result(result)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+                return ResponseEntity.ok(ApiResponse.<List<DisponibilidadDiaDTO>>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
+
+        @GetMapping("/agenda/slots-disponibles")
+        @Operation(summary = "Obtener slots horarios disponibles para una fecha y servicio específico")
+        public ResponseEntity<ApiResponse<List<SlotDisponibilidadDTO>>> getSlotsDisponibles(
+                        @RequestParam UUID tenantId,
+                        @RequestParam UUID sucursalId,
+                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+                        @RequestParam UUID servicioId) {
+
+                List<SlotDisponibilidadDTO> result = citaService.obtenerSlotsDisponibles(tenantId, sucursalId, fecha,
+                                servicioId);
+
+                return ResponseEntity.ok(ApiResponse.<List<SlotDisponibilidadDTO>>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
+
+        @PostMapping(value = "/agenda/agendar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        @Operation(summary = "Agendar una nueva cita desde la landing page con comprobante obligatorio")
+        public ResponseEntity<ApiResponse<CitaDTO>> agendarCita(
+                        @RequestPart("cita") String citaJson,
+                        @RequestPart("file") MultipartFile file) throws Exception {
+
+                // 1. Deserializar DTO
+                CitaDTO dto = objectMapper.readValue(citaJson, CitaDTO.class);
+
+                // 2. Validar archivo obligatorio
+                if (file == null || file.isEmpty()) {
+                        throw new com.meyisoft.dental.system.exception.BusinessException("MISSING_FILE",
+                                        "El comprobante de pago es obligatorio para agendar públicamente",
+                                        org.springframework.http.HttpStatus.BAD_REQUEST);
+                }
+
+                // 3. Subir archivo a R2
+                String comprobanteUrl = storageService.uploadFile(file, "comprobantes");
+
+                // 4. Obtener TenantId desde la sucursal para aislamiento
+                com.meyisoft.dental.system.entity.Sucursal sucursal = sucursalRepository.findById(dto.getSucursalId())
+                                .orElseThrow(() -> new com.meyisoft.dental.system.exception.BusinessException(
+                                                "NOT_FOUND",
+                                                "Sucursal no encontrada",
+                                                org.springframework.http.HttpStatus.NOT_FOUND));
+
+                dto.setSource("PUBLIC");
+
+                // 5. Agendar
+                CitaDTO result = citaService.agendar(dto, sucursal.getTenantId(), comprobanteUrl);
+
+                return ResponseEntity.status(201).body(ApiResponse.<CitaDTO>builder()
+                                .ok(true)
+                                .result(result)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
 }

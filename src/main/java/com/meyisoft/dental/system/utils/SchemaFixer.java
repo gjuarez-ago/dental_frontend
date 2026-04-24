@@ -7,7 +7,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * Parche temporal para corregir el esquema de la base de datos (Columnas faltantes en 'pagos').
+ * Parche temporal para corregir el esquema de la base de datos (Columnas
+ * faltantes en 'pagos').
  * Se puede eliminar una vez que el esquema esté actualizado en producción.
  */
 @Slf4j
@@ -22,7 +23,8 @@ public class SchemaFixer {
         log.info("Iniciando parche de esquema de base de datos...");
         try {
             // Añadir columna 'status' si no existe
-            jdbcTemplate.execute("ALTER TABLE pagos ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'APROBADO' NOT NULL");
+            jdbcTemplate.execute(
+                    "ALTER TABLE pagos ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'APROBADO' NOT NULL");
             log.info("Columna 'status' verificada/añadida.");
 
             // Añadir columna 'motivo_rechazo' si no existe

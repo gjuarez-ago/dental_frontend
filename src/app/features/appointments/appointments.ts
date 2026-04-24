@@ -36,7 +36,7 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   private readonly appointmentService = inject(AppointmentService);
   protected readonly layout = inject(LayoutService);
   private readonly spinner = inject(NgxSpinnerService);
-  private readonly authService = inject(AuthService);
+  protected readonly authService = inject(AuthService);
   private readonly toastr = inject(ToastrService);
   private readonly route = inject(ActivatedRoute);
 
@@ -120,6 +120,12 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       });
     }
     return days;
+  });
+
+  // Permisos
+  readonly isAllowedToCancel = computed(() => {
+    const role = this.authService.getUserRole();
+    return role === 'OWNER' || role === 'SUPER_ADMIN';
   });
 
   // Generación dinámica del Grid

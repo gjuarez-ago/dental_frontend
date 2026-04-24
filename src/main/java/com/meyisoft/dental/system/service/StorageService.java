@@ -29,7 +29,7 @@ public class StorageService {
     /**
      * Sube un archivo a Cloudflare R2
      *
-     * @param file Archivo a subir
+     * @param file   Archivo a subir
      * @param folder Carpeta virtual dentro del bucket (ej. "avatars", "products")
      * @return La URL pública completa del archivo subido
      */

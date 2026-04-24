@@ -24,79 +24,79 @@ import java.util.UUID;
 @Tag(name = "Servicios Dentales", description = "Endpoints para la gestión del catálogo de servicios")
 public class ServicioDentalController {
 
-    private final ServicioDentalService service;
-    private final StorageService storageService;
+        private final ServicioDentalService service;
+        private final StorageService storageService;
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Subir imagen de servicio a Cloudflare R2")
-    public ResponseEntity<ApiResponse<String>> uploadImage(
-            @RequestParam("file") MultipartFile file) {
-        
-        String url = storageService.uploadFile(file, "servicios");
-        
-        return ResponseEntity.ok(ApiResponse.<String>builder()
-                .ok(true)
-                .result(url)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+        @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        @Operation(summary = "Subir imagen de servicio a Cloudflare R2")
+        public ResponseEntity<ApiResponse<String>> uploadImage(
+                        @RequestParam("file") MultipartFile file) {
 
-    @GetMapping
-    @Operation(summary = "Listar todos los servicios del tenant")
-    public ResponseEntity<ApiResponse<List<ServicioDentalDTO>>> listar(
-            @AuthenticationPrincipal UserPrincipal principal) {
-        
-        List<ServicioDentalDTO> listado = service.listarServicios(principal.getTenantId());
-        
-        return ResponseEntity.ok(ApiResponse.<List<ServicioDentalDTO>>builder()
-                .ok(true)
-                .result(listado)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+                String url = storageService.uploadFile(file, "servicios");
 
-    @PostMapping
-    @Operation(summary = "Crear un nuevo servicio")
-    public ResponseEntity<ApiResponse<ServicioDentalDTO>> crear(
-            @RequestBody ServicioDentalDTO dto,
-            @AuthenticationPrincipal UserPrincipal principal) {
-        
-        ServicioDentalDTO creado = service.crear(dto, principal.getTenantId());
-        
-        return ResponseEntity.status(201).body(ApiResponse.<ServicioDentalDTO>builder()
-                .ok(true)
-                .result(creado)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+                return ResponseEntity.ok(ApiResponse.<String>builder()
+                                .ok(true)
+                                .result(url)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Actualizar un servicio existente")
-    public ResponseEntity<ApiResponse<ServicioDentalDTO>> actualizar(
-            @PathVariable UUID id,
-            @RequestBody ServicioDentalDTO dto,
-            @AuthenticationPrincipal UserPrincipal principal) {
-        
-        ServicioDentalDTO actualizado = service.actualizar(id, dto, principal.getTenantId());
-        
-        return ResponseEntity.ok(ApiResponse.<ServicioDentalDTO>builder()
-                .ok(true)
-                .result(actualizado)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+        @GetMapping
+        @Operation(summary = "Listar todos los servicios del tenant")
+        public ResponseEntity<ApiResponse<List<ServicioDentalDTO>>> listar(
+                        @AuthenticationPrincipal UserPrincipal principal) {
 
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar un servicio (Soft delete)")
-    public ResponseEntity<ApiResponse<Void>> eliminar(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal UserPrincipal principal) {
-        
-        service.eliminar(id, principal.getTenantId());
-        
-        return ResponseEntity.ok(ApiResponse.<Void>builder()
-                .ok(true)
-                .timestamp(OffsetDateTime.now())
-                .build());
-    }
+                List<ServicioDentalDTO> listado = service.listarServicios(principal.getTenantId());
+
+                return ResponseEntity.ok(ApiResponse.<List<ServicioDentalDTO>>builder()
+                                .ok(true)
+                                .result(listado)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
+
+        @PostMapping
+        @Operation(summary = "Crear un nuevo servicio")
+        public ResponseEntity<ApiResponse<ServicioDentalDTO>> crear(
+                        @RequestBody ServicioDentalDTO dto,
+                        @AuthenticationPrincipal UserPrincipal principal) {
+
+                ServicioDentalDTO creado = service.crear(dto, principal.getTenantId());
+
+                return ResponseEntity.status(201).body(ApiResponse.<ServicioDentalDTO>builder()
+                                .ok(true)
+                                .result(creado)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
+
+        @PutMapping("/{id}")
+        @Operation(summary = "Actualizar un servicio existente")
+        public ResponseEntity<ApiResponse<ServicioDentalDTO>> actualizar(
+                        @PathVariable UUID id,
+                        @RequestBody ServicioDentalDTO dto,
+                        @AuthenticationPrincipal UserPrincipal principal) {
+
+                ServicioDentalDTO actualizado = service.actualizar(id, dto, principal.getTenantId());
+
+                return ResponseEntity.ok(ApiResponse.<ServicioDentalDTO>builder()
+                                .ok(true)
+                                .result(actualizado)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
+
+        @DeleteMapping("/{id}")
+        @Operation(summary = "Eliminar un servicio (Soft delete)")
+        public ResponseEntity<ApiResponse<Void>> eliminar(
+                        @PathVariable UUID id,
+                        @AuthenticationPrincipal UserPrincipal principal) {
+
+                service.eliminar(id, principal.getTenantId());
+
+                return ResponseEntity.ok(ApiResponse.<Void>builder()
+                                .ok(true)
+                                .timestamp(OffsetDateTime.now())
+                                .build());
+        }
 }

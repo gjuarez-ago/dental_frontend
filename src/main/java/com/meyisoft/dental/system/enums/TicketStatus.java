@@ -9,16 +9,16 @@ public enum TicketStatus {
 
     /** Existe al menos un pago en espera de validación de comprobante */
     EN_REVISION,
-    
+
     /** El costo está definido pero no se ha recibido ningún pago confirmado */
     PENDIENTE,
-    
+
     /** Se han recibido pagos parciales pero hay saldo deudor */
     ABONADO,
-    
+
     /** La cuenta ha sido pagada al 100% */
     LIQUIDADO,
-    
+
     /** Marcado explícitamente como sin cargo (Cortesía) */
     CORTESIA
 }

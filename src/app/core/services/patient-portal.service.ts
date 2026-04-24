@@ -68,8 +68,12 @@ export class PatientPortalService {
     motivoConsulta?: string;
     referenciaPago: string;
     montoAnticipo: number;
-  }): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${this.API_URL}/book`, data);
+  }, file: File): Observable<ApiResponse<any>> {
+    const formData = new FormData();
+    formData.append('cita', JSON.stringify(data));
+    formData.append('file', file);
+    
+    return this.http.post<ApiResponse<any>>(`${this.API_URL}/book`, formData);
   }
 
   getMyClinic(): Observable<ApiResponse<{

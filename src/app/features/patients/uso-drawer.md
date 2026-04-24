@@ -1,6 +1,6 @@
 # Documentación: Patient Registration Drawer
 
-Este componente proporciona una interfaz elegante y de baja fricción para el registro de nuevos pacientes en el sistema **MEYISOFT POS**.
+Este componente proporciona una interfaz elegante y de baja fricción para el registro de nuevos pacientes en el sistema **meyisoft POS**.
 
 ## 🚀 Uso Rápido
 

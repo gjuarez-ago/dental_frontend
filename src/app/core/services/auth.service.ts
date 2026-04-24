@@ -42,7 +42,17 @@ export class AuthService {
   private readonly PATIENT_API = `${environment.apiUrl}/public/patient-auth`;
 
   // Signal para el estado reactivo del usuario
-  readonly currentUser = signal<User | null>(this.getStoredUser());
+  readonly currentUser = signal<User | null>(null);
+
+  constructor() {
+    // Inicializar el estado inmediatamente si estamos en el navegador
+    if (isPlatformBrowser(this.platformId)) {
+      const storedUser = this.getStoredUser();
+      if (storedUser) {
+        this.currentUser.set(storedUser);
+      }
+    }
+  }
 
   // ─── Login CRM (Personal Clínico) ─────────────────────────────────────────
   login(credentials: { user: string; nip: string }): Observable<AuthResponse> {

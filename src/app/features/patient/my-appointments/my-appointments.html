@@ -149,17 +149,30 @@
           </div>
         </div>
 
-        <div class="form-group payment-input">
-          <label>Número de Referencia (Úsalo como concepto en tu banca móvil)</label>
-          <div class="input-with-icon">
-            <i class="ph ph-hash"></i>
-            <input type="text" [ngModel]="referenciaPago()" (ngModelChange)="referenciaPago.set($event)" 
-                   placeholder="Ej: DEP-123456" />
+        <div class="form-group ticket-upload">
+          <label>Sube una foto de tu Ticket de Pago (Obligatorio)</label>
+          <div class="upload-zone" (click)="fileInput.click()" [class.has-file]="selectedFile()">
+            <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden />
+            
+            <ng-container *ngIf="!selectedFile()">
+              <i class="ph ph-camera"></i>
+              <span>Toca aquí para subir o tomar foto</span>
+            </ng-container>
+
+            <ng-container *ngIf="selectedFile()">
+              <div class="file-preview" (click)="$event.stopPropagation(); previewImageUrl.set(filePreview())">
+                <img [src]="filePreview()" alt="Ticket" />
+                <div class="file-info">
+                  <i class="ph ph-magnifying-glass-plus"></i>
+                  <span>Toca para ampliar</span>
+                </div>
+              </div>
+            </ng-container>
           </div>
-          <p class="helper-text">Escribe aquí el folio de tu comprobante o el concepto que usaste.</p>
+          <p class="helper-text">Formatos permitidos: JPG, PNG. Máximo 5MB.</p>
         </div>
 
-        <button class="btn-continue" (click)="goToConfirm()" [disabled]="!referenciaPago().trim()">
+        <button class="btn-continue" (click)="goToConfirm()" [disabled]="!selectedFile()">
           Continuar <i class="ph ph-arrow-right"></i>
         </button>
       </div>
@@ -174,7 +187,7 @@
           <div class="confirm-row"><span class="label">Fecha</span><span class="value">{{ formatDate(selectedDate()) | titlecase }}</span></div>
           <div class="confirm-row"><span class="label">Hora</span><span class="value">{{ selectedSlot()?.horaInicio }} - {{ selectedSlot()?.horaFin }}</span></div>
           <div class="confirm-row"><span class="label">Anticipo Requerido</span><span class="value highlight">${{ montoAnticipo() | number:'1.2-2' }}</span></div>
-          <div class="confirm-row"><span class="label">Tu Referencia</span><span class="value">{{ referenciaPago() }}</span></div>
+          <div class="confirm-row"><span class="label">Ticket adjunto</span><span class="value success">SÍ <i class="ph ph-check"></i></span></div>
         </div>
 
         <div class="mandatory-notice">
@@ -193,65 +206,82 @@
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- LISTADO DE CITAS -->
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <div class="appointments-grid" *ngIf="appointments().length > 0; else emptyState">
-      <div class="appointment-card-premium" *ngFor="let cita of appointments()">
-        <div class="card-status-line" [class]="cita.estado.toLowerCase()"></div>
-        <div class="card-body">
-          <div class="clinic-info">
-            <span class="clinic-badge">{{ cita.clinicaNombre }}</span>
-            <span class="sucursal-name"><i class="ph ph-map-pin"></i> {{ cita.sucursalNombre }}</span>
-          </div>
-          <div class="appointment-details">
-            <h3 class="service-name">{{ cita.servicioNombre }}</h3>
-            <div class="time-info">
-              <i class="ph ph-calendar-blank"></i>
-              <span>{{ cita.fechaHora | date:'EEEE d MMMM, y' | titlecase }}</span>
-              <span class="time-dot">•</span>
-              <i class="ph ph-clock"></i>
-              <span>{{ cita.fechaHora | date:'h:mm a' }}</span>
+    <!-- Filtros como Chips Scrollables -->
+    <div class="filter-chips-container" *ngIf="appointments().length > 0">
+      <div class="chips-scroll">
+        <button class="chip" [class.active]="selectedFilter() === 'TODAS'" (click)="selectedFilter.set('TODAS')">
+          <i class="ph ph-list"></i> Todas
+        </button>
+        <button class="chip" [class.active]="selectedFilter() === 'POR_CONFIRMAR'" (click)="selectedFilter.set('POR_CONFIRMAR')">
+          <i class="ph ph-clock"></i> Pendientes
+        </button>
+        <button class="chip" [class.active]="selectedFilter() === 'CONFIRMADA'" (click)="selectedFilter.set('CONFIRMADA')">
+          <i class="ph ph-check-circle"></i> Confirmadas
+        </button>
+        <button class="chip" [class.active]="selectedFilter() === 'FINALIZADA'" (click)="selectedFilter.set('FINALIZADA')">
+          <i class="ph ph-sparkle"></i> Pasadas
+        </button>
+        <button class="chip" [class.active]="selectedFilter() === 'CANCELADA'" (click)="selectedFilter.set('CANCELADA')">
+          <i class="ph ph-x-circle"></i> Canceladas
+        </button>
+      </div>
+      <span class="results-count">{{ filteredAppointments().length }} resultados</span>
+    </div>
+
+    <!-- Listado de Citas en Una Sola Línea -->
+    <div class="appointments-list-linear" *ngIf="!loading() && filteredAppointments().length > 0">
+      <div class="appointment-row" *ngFor="let cita of filteredAppointments()">
+        
+        <div class="row-date">
+          <span class="d">{{ cita.fechaHora | date:'dd' }}</span>
+          <span class="m">{{ cita.fechaHora | date:'MMM' | uppercase }}</span>
+        </div>
+
+        <div class="row-content">
+          <div class="main-info">
+            <h3>{{ cita.servicioNombre }}</h3>
+            <div class="sub-meta">
+              <span><i class="ph ph-clock"></i> {{ cita.fechaHora | date:'HH:mm' }} hs</span>
             </div>
           </div>
-          <div class="financial-summary">
-            <div class="finance-header">
-              <span class="label">Resumen de Pago</span>
-              <span class="folio">#{{ cita.folio }}</span>
-            </div>
-            <div class="finance-rows">
-              <div class="row"><span class="row-label">Costo Estimado</span><span class="row-value">${{ cita.montoBase | number:'1.2-2' }}</span></div>
-              <div class="row highlights"><span class="row-label">Monto Pagado</span><span class="row-value success">${{ cita.montoPagado | number:'1.2-2' }}</span></div>
-              <div class="row total" *ngIf="cita.saldoPendiente > 0"><span class="row-label">Saldo Pendiente</span><span class="row-value warning">${{ cita.saldoPendiente | number:'1.2-2' }}</span></div>
-            </div>
-            <div class="finance-disclaimer"><i class="ph ph-info"></i><span>El precio final puede variar según el diagnóstico clínico.</span></div>
+
+          <div class="status-badge-inline" [class]="statusLabels[cita.estado].class">
+            <i [class]="'ph ' + statusLabels[cita.estado].icon"></i>
+            <span>{{ statusLabels[cita.estado].label }}</span>
+          </div>
+
+          <div class="actions-inline">
+            <button class="btn-action-mini wa" (click)="contactWhatsApp(cita)" title="Contactar">
+              <i class="ph ph-whatsapp-logo"></i>
+            </button>
+            <span class="row-folio">#{{ cita.folio.split('-').pop() }}</span>
           </div>
         </div>
-        <div class="card-footer">
-          <div class="status-indicator">
-            <span class="status-dot" [class]="cita.estado.toLowerCase()"></span>
-            <span class="status-text">{{ cita.estado.replace('_', ' ') }}</span>
-          </div>
-          <div class="footer-actions">
-            <button class="btn-cancel" *ngIf="cita.permiteCancelar" (click)="cancelAppointment(cita)">Cancelar Cita</button>
-            <div class="locked-cancellation" *ngIf="!cita.permiteCancelar && cita.mensajeCancelacion">
-              <span class="cancel-msg">{{ cita.mensajeCancelacion }}</span>
-              <button class="btn-whatsapp" (click)="contactWhatsApp(cita)">
-                <i class="ph ph-whatsapp-logo"></i> Contactar Clínica
-              </button>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
 
-    <ng-template #emptyState>
-      <div class="empty-state" *ngIf="!loading()">
-        <i class="ph ph-calendar-slash"></i>
-        <h2>No tienes citas agendadas</h2>
-        <p>Cuando agendes una cita, aparecerá aquí.</p>
-        <button class="btn-primary" (click)="openBooking()"><i class="ph ph-plus"></i> Agendar Cita</button>
-      </div>
-    </ng-template>
+    <!-- Empty States -->
+    <div class="empty-state" *ngIf="!loading() && filteredAppointments().length === 0">
+      <i class="ph ph-calendar-blank"></i>
+      <h2 *ngIf="selectedFilter() === 'TODAS'">¿Aún no tienes citas?</h2>
+      <h2 *ngIf="selectedFilter() !== 'TODAS'">No hay citas con este estado</h2>
+      <p>Cuidar tu sonrisa es nuestra prioridad. ¡Agenda hoy mismo!</p>
+      <button class="btn-primary" (click)="openBooking()">
+        <i class="ph ph-plus-circle"></i> Agendar mi primera cita
+      </button>
+    </div>
   </main>
+</div>
+
+<!-- Modal de Previsualización de Imagen (Estilo NG Zorro) -->
+<div class="image-viewer-overlay" *ngIf="previewImageUrl()" (click)="previewImageUrl.set(null)" @fade>
+  <div class="viewer-controls">
+    <button class="close-viewer" (click)="previewImageUrl.set(null)">
+      <i class="ph ph-x"></i>
+    </button>
+  </div>
+  <div class="viewer-content" (click)="$event.stopPropagation()">
+    <img [src]="previewImageUrl()" alt="Vista previa completa" />
+  </div>
 </div>

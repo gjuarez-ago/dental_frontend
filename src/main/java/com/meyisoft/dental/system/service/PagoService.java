@@ -94,7 +94,7 @@ public class PagoService {
         }
         paciente.setSaldoPendiente(paciente.getSaldoPendiente().subtract(dto.getMonto()));
         pacienteRepository.save(paciente);
-        
+
         // 4. FINALIZAR CITA SI SALDO ES 0 Y ESTÁ EN POR_LIQUIDAR
         checkAndFinalizeCita(dto.getCitaId(), tenantId);
 
@@ -173,12 +173,12 @@ public class PagoService {
             }
         }
         Pago saved = repository.save(pago);
-        
+
         // Si el pago fue aprobado, verificar si se debe finalizar la cita
         if (nuevoStatus == PagoStatus.APROBADO) {
             checkAndFinalizeCita(pago.getCitaId(), tenantId);
         }
-        
+
         return mapToDTO(saved);
     }
 

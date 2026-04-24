@@ -46,14 +46,16 @@ public class UsuarioService {
         if (request.getRol() == UserRole.DOCTOR) {
             long doctorCount = usuarioRepository.countByTenantIdAndRolAndRegBorrado(tenantId, UserRole.DOCTOR, 1);
             if (doctorCount >= 3) {
-                throw new BusinessException("LIMITE_DOCTORES_EXCEDIDO", "Se ha alcanzado el límite máximo de 3 doctores por sucursal.");
+                throw new BusinessException("LIMITE_DOCTORES_EXCEDIDO",
+                        "Se ha alcanzado el límite máximo de 3 doctores por sucursal.");
             }
         }
 
         // 4. Validar teléfono duplicado
         usuarioRepository.findByTelefonoContactoAndActive(request.getTelefonoContacto())
                 .ifPresent(u -> {
-                    throw new BusinessException("TELEFONO_DUPLICADO", "Ya existe un usuario con este número de teléfono.");
+                    throw new BusinessException("TELEFONO_DUPLICADO",
+                            "Ya existe un usuario con este número de teléfono.");
                 });
 
         // 5. Crear entidad
@@ -79,7 +81,8 @@ public class UsuarioService {
     public UsuarioResponse actualizarUsuario(UUID id, UsuarioRequest request, UUID tenantId) {
         Usuario usuario = usuarioRepository.findById(id)
                 .filter(u -> u.getTenantId().equals(tenantId) && u.getRegBorrado() == 1)
-                .orElseThrow(() -> new BusinessException("USUARIO_NO_ENCONTRADO", "El usuario no existe o ha sido eliminado."));
+                .orElseThrow(() -> new BusinessException("USUARIO_NO_ENCONTRADO",
+                        "El usuario no existe o ha sido eliminado."));
 
         usuario.setNombreCompleto(request.getNombreCompleto());
         usuario.setEmail(request.getEmail());
@@ -102,7 +105,8 @@ public class UsuarioService {
     public void eliminarUsuario(UUID id, UUID tenantId) {
         Usuario usuario = usuarioRepository.findById(id)
                 .filter(u -> u.getTenantId().equals(tenantId) && u.getRegBorrado() == 1)
-                .orElseThrow(() -> new BusinessException("USUARIO_NO_ENCONTRADO", "El usuario no existe o ha sido eliminado."));
+                .orElseThrow(() -> new BusinessException("USUARIO_NO_ENCONTRADO",
+                        "El usuario no existe o ha sido eliminado."));
 
         usuario.setRegBorrado(0); // Soft delete
         usuarioRepository.save(usuario);

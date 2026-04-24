@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { FormsModule } from '@angular/forms';
 import { PatientPortalService, CitaPatient, ServicioItem, SlotItem } from '../../../core/services/patient-portal.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -16,6 +17,17 @@ type BookingStep = 'CLOSED' | 'SELECT_SERVICE' | 'SELECT_DATE' | 'SELECT_SLOT' |
   imports: [CommonModule, NgxSpinnerModule, ProfileSetupComponent, FormsModule],
   templateUrl: './my-appointments.html',
   styleUrl: './my-appointments.scss',
+  animations: [
+    trigger('fade', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('200ms ease-out', style({ opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in', style({ opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class MyAppointmentsComponent implements OnInit {
   private readonly portalService = inject(PatientPortalService);
@@ -36,6 +48,26 @@ export class MyAppointmentsComponent implements OnInit {
   selectedSlot = signal<SlotItem | null>(null);
   motivoConsulta = signal('');
   bookingLoading = signal(false);
+
+  // ─── Image Preview State ──────────────────────────────────────
+  previewImageUrl = signal<string | null>(null);
+
+  // ─── List State & Filters ─────────────────────────────────────
+  selectedFilter = signal<string>('POR_CONFIRMAR');
+  
+  filteredAppointments = computed(() => {
+    const list = this.appointments();
+    const filter = this.selectedFilter();
+    if (filter === 'TODAS') return list;
+    return list.filter(a => a.estado === filter);
+  });
+
+  statusLabels: Record<string, {label: string, icon: string, class: string}> = {
+    'POR_CONFIRMAR': { label: '⏳ Casi lista... ¡Te avisamos!', icon: 'ph-clock-countdown', class: 'waiting' },
+    'CONFIRMADA': { label: '✅ ¡Confirmada! Te esperamos', icon: 'ph-check-circle', class: 'confirmed' },
+    'FINALIZADA': { label: '⭐ ¡Atención completa!', icon: 'ph-sparkle', class: 'finished' },
+    'CANCELADA': { label: '❌ Cancelada', icon: 'ph-x-circle', class: 'cancelled' }
+  };
   clinicInfo = signal<{
     tenantId: string; 
     sucursalId: string;
@@ -47,6 +79,8 @@ export class MyAppointmentsComponent implements OnInit {
 
   // Pago
   referenciaPago = signal('');
+  selectedFile = signal<File | null>(null);
+  filePreview = signal<string | null>(null);
   
   // Anticipo Dinámico: Exactamente el 20% del costo del servicio
   montoAnticipo = computed(() => {
@@ -132,6 +166,8 @@ export class MyAppointmentsComponent implements OnInit {
     this.slots.set([]);
     this.motivoConsulta.set('');
     this.referenciaPago.set('');
+    this.selectedFile.set(null);
+    this.filePreview.set(null);
   }
 
   private loadServicios(): void {
@@ -202,8 +238,8 @@ export class MyAppointmentsComponent implements OnInit {
   }
 
   goToConfirm(): void {
-    if (!this.referenciaPago().trim()) {
-      this.toastr.warning('Por favor ingresa la referencia de tu transferencia');
+    if (!this.selectedFile()) {
+      this.toastr.warning('Por favor sube una foto de tu ticket de pago');
       return;
     }
     this.bookingStep.set('CONFIRM');
@@ -219,18 +255,19 @@ export class MyAppointmentsComponent implements OnInit {
   confirmBooking(): void {
     const slot = this.selectedSlot();
     const servicio = this.selectedServicio();
-    if (!slot || !servicio) return;
+    const file = this.selectedFile();
+    if (!servicio || !slot || !this.selectedDate() || !file) return;
 
-    this.bookingLoading.set(true);
     const fechaHora = `${this.selectedDate()}T${slot.horaInicio}-06:00`;
+    this.bookingLoading.set(true);
 
     this.portalService.bookAppointment({
       servicioId: servicio.id,
       fechaHora,
       motivoConsulta: this.motivoConsulta() || undefined,
-      referenciaPago: this.referenciaPago(),
+      referenciaPago: 'TICKET_ADJUNTO',
       montoAnticipo: this.montoAnticipo()
-    }).subscribe({
+    }, file).subscribe({
       next: (res) => {
         if (res.ok) {
           this.toastr.success('¡Cita agendada exitosamente!');
@@ -267,5 +304,51 @@ export class MyAppointmentsComponent implements OnInit {
     const phone = cita.sucursalTelefono.replace(/\D/g, '');
     const message = encodeURIComponent(`Hola, necesito ayuda con mi cita folio ${cita.folio} para el día ${this.formatDate(cita.fechaHora)}.`);
     window.open(`https://wa.me/52${phone}?text=${message}`, '_blank');
+  }
+
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        this.toastr.error('Por favor selecciona una imagen válida');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = () => {
+          // Crear canvas para redimensionar
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_SIZE = 1200;
+
+          // Mantener proporción
+          if (width > height) {
+            if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+          } else {
+            if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // Exportar como Blob comprimido (Calidad 0.7)
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, { type: 'image/jpeg' });
+              this.selectedFile.set(compressedFile);
+              this.filePreview.set(canvas.toDataURL('image/jpeg', 0.7));
+              console.log(`Imagen comprimida: de ${file.size / 1024}KB a ${compressedFile.size / 1024}KB`);
+            }
+          }, 'image/jpeg', 0.7);
+        };
+      };
+      reader.readAsDataURL(file);
+    }
   }
 }

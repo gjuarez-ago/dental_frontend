@@ -10,8 +10,8 @@ import java.util.UUID;
 
 @Repository
 public interface ServicioDentalRepository extends JpaRepository<ServicioDental, UUID> {
-    
+
     List<ServicioDental> findByTenantIdAndRegBorrado(UUID tenantId, Integer regBorrado);
-    
+
     Optional<ServicioDental> findByIdAndTenantIdAndRegBorrado(UUID id, UUID tenantId, Integer regBorrado);
 }

@@ -12,11 +12,11 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ClinicalConfigDTO {
-    
+
     // De la tabla Usuario
     private String nombreCompleto;
     private String cedulaProfesional;
-    
+
     // De la tabla Sucursal
     private Integer ventanaCancelacion;
     private Map<String, DayConfigDTO> horarios;

@@ -18,7 +18,8 @@ public class ClinicalConfigController {
     private final ClinicalConfigService clinicalConfigService;
 
     /**
-     * Obtiene la configuración operativa del consultorio para el usuario autenticado.
+     * Obtiene la configuración operativa del consultorio para el usuario
+     * autenticado.
      */
     @GetMapping
     public ApiResponse<ClinicalConfigDTO> getMapping(

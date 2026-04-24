@@ -159,7 +159,7 @@
                     </button>
                     }
                     
-                    @if (appointment.estado === 'POR_CONFIRMAR' || appointment.estado === 'CONFIRMADA' || appointment.estado === 'LLEGADA') {
+                    @if ((appointment.estado === 'POR_CONFIRMAR' || appointment.estado === 'CONFIRMADA' || appointment.estado === 'LLEGADA') && isAllowedToCancel()) {
                     <button class="action-btn danger-minimal" (click)="openCancellationDrawer(appointment)" title="Cancelar Cita">
                         <i class="ph ph-calendar-x"></i>
                         <span class="btn-label">Cancelar</span>

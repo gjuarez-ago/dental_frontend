@@ -73,7 +73,7 @@ public class ServicioDentalService {
             }
             entity.setImagenUrl(dto.getImagenUrl());
         }
-        
+
         if (dto.getRequiereValoracion() != null) {
             entity.setRequiereValoracion(dto.getRequiereValoracion());
         }
