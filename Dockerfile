@@ -15,4 +15,4 @@ COPY --from=backend-build /app/target/*.jar app.jar
 # Cloud Run escucha en el puerto definido por la variable de entorno $PORT (default 8080)
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-Dserver.port=${PORT}", "-jar", "app.jar"]
+ENTRYPOINT java -Dserver.port=${PORT} -jar app.jar

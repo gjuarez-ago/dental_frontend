@@ -2,6 +2,7 @@ package com.meyisoft.dental.system.service;
 
 import com.meyisoft.dental.system.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import java.io.IOException;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StorageService {
@@ -26,10 +28,13 @@ public class StorageService {
     @Value("${cloudflare.r2.public-url}")
     private String publicUrl;
 
+    @Value("${cloudflare.r2.endpoint}")
+    private String endpoint;
+
     /**
      * Sube un archivo a Cloudflare R2
      *
-     * @param file Archivo a subir
+     * @param file   Archivo a subir
      * @param folder Carpeta virtual dentro del bucket (ej. "avatars", "products")
      * @return La URL pública completa del archivo subido
      */
@@ -39,6 +44,12 @@ public class StorageService {
         }
 
         try {
+            // Si el endpoint es el de default, no intentamos subir a R2
+            if (endpoint.contains("default-endpoint.com")) {
+                log.warn("Usando configuración de R2 por defecto. El archivo no se subirá realmente.");
+                return "https://storage.googleapis.com/placeholder-dental/" + UUID.randomUUID();
+            }
+
             String originalFileName = file.getOriginalFilename();
             if (originalFileName == null) {
                 originalFileName = "unnamed_file";
@@ -68,6 +79,7 @@ public class StorageService {
             throw new BusinessException("UPLOAD_ERROR", "Error al procesar el archivo para subirlo. " + e.getMessage(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
+            log.error("Error crítico en R2: {}", e.getMessage());
             throw new BusinessException("S3_ERROR", "Error al comunicarse con Cloudflare R2. " + e.getMessage(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -84,6 +96,11 @@ public class StorageService {
         }
 
         try {
+            // Si el endpoint es el de default, no intentamos borrar en R2
+            if (endpoint.contains("default-endpoint.com")) {
+                return;
+            }
+
             // Extraer el "key" (la ruta después del dominio público)
             String baseUrl = publicUrl.endsWith("/") ? publicUrl : publicUrl + "/";
 
