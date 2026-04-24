@@ -259,10 +259,10 @@ export class BookingComponent implements OnInit {
       } catch (error) {
         console.error('Error al procesar la imagen:', error);
         alert('No se pudo procesar la imagen. Intenta con otra.');
+        this.spinner.hide(); // Solo ocultamos si hay error en la compresión
       } finally {
         // 3. Reset del input para permitir seleccionar el mismo archivo
         input.value = '';
-        this.spinner.hide();
       }
     }
   }
