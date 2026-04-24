@@ -232,11 +232,84 @@ export class BookingComponent implements OnInit {
     this.scrollToTop();
   }
 
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
+  async onFileSelected(event: any): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    
     if (file) {
-      this.confirmBooking(file);
+      // 1. Validar que sea solo imagen
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor selecciona solo archivos de imagen (JPG, PNG). Los PDF no están permitidos.');
+        input.value = '';
+        return;
+      }
+
+      try {
+        this.spinner.show();
+        // 2. Comprimir imagen (Máximo 500KB)
+        const compressedFile = await this.compressImage(file, 0.7, 1200);
+        
+        if (compressedFile.size > 500 * 1024) {
+          // Si aún es pesada, re-comprimir con menor calidad
+          const highCompression = await this.compressImage(compressedFile, 0.5, 1000);
+          this.confirmBooking(highCompression);
+        } else {
+          this.confirmBooking(compressedFile);
+        }
+      } catch (error) {
+        console.error('Error al procesar la imagen:', error);
+        alert('No se pudo procesar la imagen. Intenta con otra.');
+      } finally {
+        // 3. Reset del input para permitir seleccionar el mismo archivo
+        input.value = '';
+        this.spinner.hide();
+      }
     }
+  }
+
+  private compressImage(file: File, quality: number, maxWidth: number): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Redimensionar si es muy grande
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } else {
+                reject(new Error('Error al comprimir imagen'));
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
   }
 
   onPhoneInput(event: Event): void {

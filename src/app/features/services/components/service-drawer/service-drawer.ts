@@ -70,16 +70,85 @@ export class ServiceDrawerComponent implements OnChanges {
     this.selectedFile = null;
   }
 
-  onFileSelected(event: Event) {
+  async onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (file) {
-      this.selectedFile = file;
-      // Solo previsualización local, no subimos a Cloudflare todavía
-      const reader = new FileReader();
-      reader.onload = () => this.imagePreview.set(reader.result as string);
-      reader.readAsDataURL(file);
+      // 1. Validar que sea solo imagen
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor selecciona solo archivos de imagen (JPG, PNG). Los PDF no están permitidos.');
+        input.value = '';
+        return;
+      }
+
+      try {
+        this.isUploading.set(true);
+        // 2. Comprimir imagen (Máximo 500KB)
+        const compressedFile = await this.compressImage(file, 0.7, 1000);
+        
+        // Si sigue siendo muy grande, comprimir más
+        if (compressedFile.size > 500 * 1024) {
+          this.selectedFile = await this.compressImage(compressedFile, 0.5, 800);
+        } else {
+          this.selectedFile = compressedFile;
+        }
+
+        // Previsualización local
+        const reader = new FileReader();
+        reader.onload = () => this.imagePreview.set(reader.result as string);
+        reader.readAsDataURL(this.selectedFile);
+      } catch (error) {
+        console.error('Error al procesar la imagen:', error);
+      } finally {
+        // 3. Reset del input para permitir seleccionar el mismo archivo
+        input.value = '';
+        this.isUploading.set(false);
+      }
     }
+  }
+
+  private compressImage(file: File, quality: number, maxWidth: number): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } else {
+                reject(new Error('Error al comprimir imagen'));
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
   }
 
   private async handleImageUpload(): Promise<string | null> {
