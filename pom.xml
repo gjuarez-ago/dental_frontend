@@ -79,6 +79,13 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Cloud SQL Connector for safe connections from Cloud Run -->
+		<dependency>
+			<groupId>com.google.cloud.sql</groupId>
+			<artifactId>postgres-socket-factory</artifactId>
+			<version>1.15.0</version>
+		</dependency>
+
 		<!-- Firebase Admin SDK -->
 		<dependency>
 			<groupId>com.google.firebase</groupId>
