@@ -171,18 +171,18 @@
       }
     </div>
   </section>
+</div>
 
-  <!-- Image Modal -->
-  @if (selectedImageUrl()) {
-    <div class="image-modal-overlay" (click)="cerrarImagen()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <button class="close-modal-btn" (click)="cerrarImagen()">
-          <i class="ph ph-x"></i>
-        </button>
-        <div class="modal-image-container">
-          <img [src]="selectedImageUrl()" alt="Comprobante en tamaño completo">
-        </div>
+<!-- Image Modal (FUERA del div animado para que el centrado sea perfecto) -->
+@if (selectedImageUrl()) {
+  <div class="image-modal-overlay" (click)="cerrarImagen()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button class="close-modal-btn" (click)="cerrarImagen()">
+        <i class="ph ph-x"></i>
+      </button>
+      <div class="modal-image-container">
+        <img [src]="selectedImageUrl()" alt="Comprobante en tamaño completo">
       </div>
     </div>
-  }
-</div>
+  </div>
+}
