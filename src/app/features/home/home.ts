@@ -169,9 +169,11 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   verImagen(url: string) {
     this.selectedImageUrl.set(url);
+    document.body.classList.add('no-scroll');
   }
 
   cerrarImagen() {
     this.selectedImageUrl.set(null);
+    document.body.classList.remove('no-scroll');
   }
 }
