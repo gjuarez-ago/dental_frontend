@@ -58,14 +58,9 @@
                 <div class="section-title">
                     <i class="ph ph-calendar-check"></i> Horarios Disponibles
                 </div>
+
                 <p class="section-subtitle">Disponibilidad para <strong>{{ state().selectedDate ?
                         formatDate(state().selectedDate) : 'Selecciona un día' }}</strong></p>
-
-                @if (state().selectedDate && availableSlots().length === 0 && !isLoadingSlots()) {
-                <div class="no-slots-alert">
-                    No hay horarios disponibles para esta fecha.
-                </div>
-                }
 
                 <div class="slots-grid animate-fade-in">
                     @for (slot of filteredSlots(); track slot.horaInicio) {

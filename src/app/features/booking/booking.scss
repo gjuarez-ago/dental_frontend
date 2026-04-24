@@ -106,18 +106,47 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
 
     .month-label {
-      font-weight: 700;
+      font-weight: 850;
       color: var(--navy);
-      font-size: 1.125rem;
+      font-size: 1.25rem;
+      font-family: 'Manrope', sans-serif;
+      text-transform: capitalize;
     }
 
     .nav-arrows {
       display: flex;
-      gap: 1rem;
-      color: #64748b;
-      cursor: pointer;
+      gap: 0.5rem;
+      background: #F1F5F9;
+      padding: 0.35rem;
+      border-radius: 12px;
+
+      button {
+        background: white;
+        border: 1px solid #E2E8F0;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--navy);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 1.1rem;
+
+        &:hover {
+          background: var(--navy);
+          color: white;
+          border-color: var(--navy);
+        }
+
+        &:active {
+          transform: scale(0.9);
+        }
+      }
     }
   }
 
@@ -215,6 +244,29 @@
         border: 2.5px solid var(--navy);
         background: rgba(26, 43, 76, 0.02);
       }
+    }
+  }
+
+  .no-slots-alert {
+    grid-column: span 2;
+    background: #F8FAFC;
+    border: 1px dashed #CBD5E1;
+    border-radius: 1rem;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+
+    &::before {
+      content: '\f1c6'; // ph-calendar-x
+      font-family: 'Phosphor';
+      font-size: 2rem;
+      opacity: 0.5;
     }
   }
 }
