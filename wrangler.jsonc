@@ -3,8 +3,7 @@
   "name": "dental-frontend",
   "compatibility_date": "2026-04-24",
   "assets": {
-    "directory": "dist/crm-web/browser",
-    "binding": "ASSETS"
+    "directory": "dist/crm-web/browser"
   },
   "compatibility_flags": [
     "nodejs_compat"
