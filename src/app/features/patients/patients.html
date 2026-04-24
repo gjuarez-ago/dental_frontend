@@ -177,19 +177,22 @@
           </div>
 
           <div class="card-actions-mobile">
-            <div class="quick-contact">
-              <a href="tel:{{ patient.telefono }}" class="action-btn call">
+            <button class="mobile-action-btn primary" (click)="onNewAppointment(patient)">
+              <i class="ph ph-calendar-plus"></i>
+              <span>Agendar</span>
+            </button>
+            <button class="mobile-action-btn secondary" (click)="openEditDrawer(patient)">
+              <i class="ph ph-pencil-line"></i>
+              <span>Editar</span>
+            </button>
+            <div class="mobile-contact-group">
+              <a href="tel:{{ patient.telefono }}" class="contact-circle">
                 <i class="ph ph-phone"></i>
-                <span>Llamar</span>
               </a>
-              <a href="https://wa.me/{{ patient.telefono.replace(' ', '') }}" target="_blank" class="action-btn whatsapp">
+              <a href="https://wa.me/{{ patient.telefono.replace(' ', '') }}" target="_blank" class="contact-circle whatsapp">
                 <i class="ph ph-whatsapp-logo"></i>
-                <span>WhatsApp</span>
               </a>
             </div>
-            <button class="btn-view-more" title="Ver Expediente">
-              <i class="ph ph-folder-notch-open"></i>
-            </button>
           </div>
         </div>
       }
