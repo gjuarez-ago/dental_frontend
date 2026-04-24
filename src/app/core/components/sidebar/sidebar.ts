@@ -46,7 +46,7 @@ export class SidebarComponent {
   ];
 
   get filteredMenuItems() {
-    const userRole = this.auth.currentUser()?.rol;
+    const userRole = this.auth.getUserRole();
     return this.menuItems.filter(item => {
       if (item.onlyOwner) {
         return userRole === UserRole.OWNER || userRole === UserRole.SUPER_ADMIN;
