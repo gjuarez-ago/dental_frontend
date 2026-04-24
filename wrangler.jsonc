@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dental-frontend",
+  "compatibility_date": "2026-04-24",
+  "main": "src/server.ts",
+  "assets": {
+    "directory": "dist/crm-web/browser",
+    "binding": "ASSETS"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
