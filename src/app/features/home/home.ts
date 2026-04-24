@@ -44,6 +44,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   readonly comprobantesPendientes = signal<ComprobantePendiente[]>([]);
   readonly loading = signal<boolean>(false);
+  readonly selectedImageUrl = signal<string | null>(null);
   private readonly rawCitas = signal<Cita[]>([]);
 
   ngOnInit(): void {
@@ -164,5 +165,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (cita) {
       this.layout.openRejectionDrawer(cita);
     }
+  }
+
+  verImagen(url: string) {
+    this.selectedImageUrl.set(url);
+  }
+
+  cerrarImagen() {
+    this.selectedImageUrl.set(null);
   }
 }

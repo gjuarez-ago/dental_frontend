@@ -134,13 +134,19 @@
           </div>
         </div>
 
-        <div class="document-preview" *ngIf="item.comprobanteUrl; else noDoc">
+        <div class="document-preview" *ngIf="item.comprobanteUrl; else noDoc" (click)="verImagen(item.comprobanteUrl)">
           <img [src]="item.comprobanteUrl" alt="Vista previa del comprobante">
+          <div class="preview-overlay">
+            <i class="ph ph-eye"></i>
+            <span>Ver Comprobante</span>
+          </div>
         </div>
         <ng-template #noDoc>
           <div class="no-document">
-            <i class="ph ph-image-broken"></i>
-            <span>Esperando subida...</span>
+            <div class="no-doc-icon">
+              <i class="ph ph-image-broken"></i>
+            </div>
+            <span>Sin comprobante</span>
           </div>
         </ng-template>
 
@@ -166,4 +172,17 @@
     </div>
   </section>
 
+  <!-- Image Modal -->
+  @if (selectedImageUrl()) {
+    <div class="image-modal-overlay" (click)="cerrarImagen()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <button class="close-modal-btn" (click)="cerrarImagen()">
+          <i class="ph ph-x"></i>
+        </button>
+        <div class="modal-image-container">
+          <img [src]="selectedImageUrl()" alt="Comprobante en tamaño completo">
+        </div>
+      </div>
+    </div>
+  }
 </div>
