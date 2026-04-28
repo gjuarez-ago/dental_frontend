@@ -28,7 +28,7 @@ export const routes: Routes = [
   {
     path: 'login',
     component: LoginComponent,
-    title: 'Login - meyisoft POS',
+    title: 'Login - Dental Sonrisana',
     canActivate: [publicGuard]
   },
   {
@@ -65,7 +65,7 @@ export const routes: Routes = [
       {
         path: 'users',
         component: UsuariosComponent,
-        title: 'Gestión de Usuarios | meyisoft POS',
+        title: 'Gestión de Usuarios | Dental Sonrisana',
         canActivate: [roleGuard],
         data: { roles: [UserRole.OWNER, UserRole.SUPER_ADMIN] }
       }
