@@ -119,7 +119,7 @@
                 [class.selected]="selectedSlot()?.horaInicio === slot.horaInicio"
                 [disabled]="!slot.disponible"
                 (click)="selectSlot(slot)">
-                {{ slot.horaInicio }}
+                {{ slot.horaInicio.slice(0, 5) }}
               </button>
               <div *ngIf="slots().length === 0 && !bookingLoading()" class="empty-slots">
                 <i class="ph ph-calendar-x"></i>
@@ -208,7 +208,7 @@
         <div class="confirm-card">
           <div class="confirm-row"><span class="label">Servicio</span><span class="value">{{ selectedServicio()?.nombre }}</span></div>
           <div class="confirm-row"><span class="label">Fecha</span><span class="value">{{ formatDate(selectedDate()) | titlecase }}</span></div>
-          <div class="confirm-row"><span class="label">Hora</span><span class="value">{{ selectedSlot()?.horaInicio }} - {{ selectedSlot()?.horaFin }}</span></div>
+          <div class="confirm-row"><span class="label">Hora</span><span class="value">{{ selectedSlot()?.horaInicio?.slice(0, 5) }} - {{ selectedSlot()?.horaFin?.slice(0, 5) }}</span></div>
           <div class="confirm-row"><span class="label">Anticipo Requerido</span><span class="value highlight">${{ montoAnticipo() | number:'1.2-2' }}</span></div>
           <div class="confirm-row"><span class="label">Ticket adjunto</span><span class="value success">SÍ <i class="ph ph-check"></i></span></div>
         </div>

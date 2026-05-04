@@ -48,7 +48,7 @@
                     <div class="icon"><i class="ph-fill ph-clock"></i></div>
                     <div class="info">
                         <span class="label">Horario</span>
-                        <p>{{ state().selectedSlot?.horaInicio || 'Pendiente' }}</p>
+                        <p>{{ state().selectedSlot?.horaInicio?.slice(0, 5) || 'Pendiente' }}</p>
                     </div>
                 </div>
             </div>
@@ -100,7 +100,7 @@
                         [class.selected]="state().selectedSlot?.horaInicio === slot.horaInicio"
                         [disabled]="!slot.disponible" 
                         (click)="onSlotSelect(slot)">
-                        {{ slot.horaInicio }}
+                        {{ slot.horaInicio.slice(0, 5) }}
                     </button>
                     }
                     @empty {
@@ -115,7 +115,7 @@
             <div id="cta-booking" class="cta-section card">
                 <div class="cta-content">
                     <h3>Progreso: 33%</h3>
-                    <p>Horario: {{ state().selectedSlot?.horaInicio || '--:--' }}</p>
+                    <p>Horario: {{ state().selectedSlot?.horaInicio?.slice(0, 5) || '--:--' }}</p>
                 </div>
                 <button class="btn-primary-pill" [disabled]="!state().selectedDate || !state().selectedSlot"
                     (click)="nextStep()">
@@ -216,7 +216,7 @@
                         <div class="icon"><i class="ph ph-calendar"></i></div>
                         <div class="text">
                             <span class="label">Fecha y Hora</span>
-                            <p>{{ formatDate(state().selectedDate) }} - {{ state().selectedSlot?.horaInicio }}</p>
+                            <p>{{ formatDate(state().selectedDate) }} - {{ state().selectedSlot?.horaInicio?.slice(0, 5) }}</p>
                         </div>
                     </div>
                     <div class="detail-item">
@@ -379,7 +379,7 @@
                     </div>
                     <div class="info-row">
                         <span class="label">HORA</span>
-                        <p>{{ state().selectedSlot?.horaInicio }}</p>
+                        <p>{{ state().selectedSlot?.horaInicio?.slice(0, 5) }}</p>
                     </div>
                     <div class="info-row">
                         <span class="label">SERVICIO</span>

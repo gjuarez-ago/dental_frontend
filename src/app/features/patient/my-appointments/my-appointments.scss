@@ -130,7 +130,7 @@
 }
 
 // ─── Slots Grid ──────────────────────────────────────────────────
-.slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.5rem; }
+.slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; }
 .slot-btn { padding: 0.6rem; border-radius: 0.75rem; font-size: 0.85rem; font-weight: 700; border: 1px solid; cursor: pointer; transition: all 0.2s;
   &.available { background: #f0fdf4; border-color: #bbf7d0; color: #15803d;
     &:hover { background: #15803d; color: white; }
