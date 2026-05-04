@@ -24,38 +24,39 @@ export class PatientDrawerComponent implements OnChanges, OnDestroy {
   patientForm: FormGroup;
   isLoading = false;
 
+  errorMessage: string | null = null;
+
   constructor() {
     this.patientForm = this.fb.group({
       nombreCompleto: ['', [Validators.required, Validators.minLength(3)]],
       telefono: ['', [Validators.required, Validators.pattern(/^[0-9\s-]+$/)]],
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, Validators.email]], // Ahora requerido por tu petición
       fechaNacimiento: ['', [Validators.required]],
       genero: ['OTRO', [Validators.required]],
       curp: [''],
       direccion: [''],
       ocupacion: [''],
-      
-      alergias: ['', [Validators.required]], 
+
+      alergias: ['', [Validators.required]],
       enfermedadesCronicas: ['', [Validators.required]],
       antecedentesHeredofamiliares: [''],
       antecedentesNoPatologicos: [''],
       medicamentosActuales: [''],
       tipoSangre: ['O+'],
-      
+
       // Privacidad
       aceptacionPrivacidad: [false, [Validators.requiredTrue]],
       fechaAceptacionPrivacidad: [null],
-      
+
       // Emergencia
       emergenciaNombre: ['', [Validators.required]],
-      emergenciaTelefono: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      emergenciaTelefono: ['', [Validators.required, Validators.pattern(/^[0-9\s-]+$/)]],
       
-      // Notas
-      motivoVisita: ['', [Validators.required]],
+      // Notas clínicas
       notasClinicas: [''],
 
-      // Auditoría (Campos gestionados internamente)
-      saldoPendiente: [{ value: 0, disabled: true }, [Validators.min(0)]],
+      // Auditoría
+      saldoPendiente: [{ value: 0, disabled: true }],
       expedienteCompleto: [false]
     });
   }
@@ -64,15 +65,35 @@ export class PatientDrawerComponent implements OnChanges, OnDestroy {
     if (changes['isOpen']) {
       this.toggleBodyScroll(this.isOpen);
       if (this.isOpen) {
+        this.errorMessage = null;
         if (this.patientToEdit) {
-          this.patientForm.patchValue(this.patientToEdit);
+          const data = { ...this.patientToEdit };
+          
+          // Normalizar Fecha para input date
+          if (data.fechaNacimiento) {
+            data.fechaNacimiento = new Date(data.fechaNacimiento).toISOString().split('T')[0];
+          }
+          
+          // Normalizar Género
+          if (data.genero) {
+            data.genero = data.genero.toUpperCase();
+          }
+
+          // Asegurar que campos obligatorios no sean null para evitar invalidar el form
+          data.alergias = data.alergias || 'Ninguna';
+          data.enfermedadesCronicas = data.enfermedadesCronicas || 'Ninguna';
+          data.aceptacionPrivacidad = data.aceptacionPrivacidad || false;
+
+          this.patientForm.patchValue(data);
         } else {
           this.patientForm.reset({ 
             genero: 'OTRO', 
             tipoSangre: 'O+', 
             saldoPendiente: 0, 
             expedienteCompleto: false,
-            aceptacionPrivacidad: false
+            aceptacionPrivacidad: false,
+            alergias: 'Ninguna',
+            enfermedadesCronicas: 'Ninguna'
           });
         }
       }
@@ -96,15 +117,30 @@ export class PatientDrawerComponent implements OnChanges, OnDestroy {
   onSubmit() {
     if (this.patientForm.valid) {
       this.isLoading = true;
-      const formData = { ...this.patientForm.value };
+      const rawValue = this.patientForm.getRawValue();
       
-      // Set fechaAceptacionPrivacidad si se aceptó y no tenía fecha
+      // Limpiar y preparar datos
+      const formData: any = { ...rawValue };
+      
+      // Asegurar fecha de privacidad
       if (formData.aceptacionPrivacidad && !formData.fechaAceptacionPrivacidad) {
           formData.fechaAceptacionPrivacidad = new Date().toISOString();
       }
 
+      // Eliminar campos vacíos y metadatos que el backend no debe recibir en el body
+      const metadataToClean = ['createdAt', 'proximaCita', 'tenantId', 'id'];
+
+      Object.keys(formData).forEach(key => {
+        // Si el valor es una cadena vacía, null o undefined, lo eliminamos (excepto booleanos como aceptacionPrivacidad)
+        const value = formData[key];
+        if (value === '' || value === null || value === undefined || metadataToClean.includes(key)) {
+          delete formData[key];
+        }
+      });
+
+      console.log('Enviando datos de paciente:', formData);
+
       const patientId = this.patientToEdit?.id;
-      
       const request = patientId 
         ? this.patientService.updatePatient(patientId, formData)
         : this.patientService.createPatient(formData);
@@ -113,20 +149,45 @@ export class PatientDrawerComponent implements OnChanges, OnDestroy {
         .subscribe({
           next: (res) => {
             if (res) {
+              console.log('Paciente guardado con éxito:', res);
               this.saved.emit(res);
-              this.patientForm.reset({ genero: 'OTRO', tipoSangre: 'O+' });
-              this.closeDrawer();
+              // Pequeña pausa para que el usuario vea el cambio (opcional)
+              setTimeout(() => {
+                this.closeDrawer();
+              }, 300);
             }
           },
           error: (err) => {
             console.error('Error al guardar paciente:', err);
-            // Aquí se podría mostrar un toast de error
+            this.isLoading = false;
+            
+            // Extraer mensaje del backend sin usar alert()
+            if (err.error?.errorCode === 'DUPLICATE_PHONE') {
+              this.errorMessage = 'Este número de teléfono ya está registrado con otro paciente.';
+            } else if (err.error?.errorCode === 'DUPLICATE_EMAIL') {
+              this.errorMessage = 'Este correo electrónico ya pertenece a otro expediente.';
+            } else {
+              this.errorMessage = err.error?.userMessage || 'Error al guardar el expediente. Revisa los datos.';
+            }
+
+            this.patientForm.markAllAsTouched();
           }
         });
     } else {
-      Object.values(this.patientForm.controls).forEach(control => {
-        control.markAsTouched();
+      console.warn('El formulario es inválido. Campos con error:');
+      Object.keys(this.patientForm.controls).forEach(key => {
+        const controlErrors = this.patientForm.get(key)?.errors;
+        if (controlErrors) {
+          console.log(`- Campo "${key}":`, controlErrors);
+        }
       });
+
+      this.patientForm.markAllAsTouched();
+      // Scroll suave al primer error
+      const firstInvalidControl = document.querySelector('.input-group.error, .privacy-card.error');
+      if (firstInvalidControl) {
+        firstInvalidControl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   }
 

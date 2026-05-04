@@ -246,6 +246,11 @@
     color: #475569;
     line-height: 1.6;
     margin: 0;
+
+    &.pending {
+      font-style: italic;
+      color: #94a3b8;
+    }
   }
 }
 
@@ -284,6 +289,12 @@
     color: #1e3a8a;
     font-weight: 500;
     line-height: 1.6;
+
+    &.pending {
+      font-style: italic;
+      color: #64748b;
+      opacity: 0.8;
+    }
   }
 }
 

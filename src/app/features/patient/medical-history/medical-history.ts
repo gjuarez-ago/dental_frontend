@@ -73,6 +73,29 @@ export class MedicalHistoryComponent implements OnInit {
     }).format(date) + ' hs';
   }
 
+  isAppointmentPending(entry: TimelineEntry): boolean {
+    return ['POR_CONFIRMAR', 'CONFIRMADA', 'EN_CONSULTA'].includes(entry.estado);
+  }
+
+  getClinicalPlaceholder(field: 'diagnostico' | 'procedimiento' | 'recomendaciones', entry: TimelineEntry): string {
+    const isPending = this.isAppointmentPending(entry);
+    
+    if (isPending) {
+      switch (field) {
+        case 'diagnostico': return 'Se registrará durante tu valoración clínica.';
+        case 'procedimiento': return 'Se definirá según la necesidad del tratamiento.';
+        case 'recomendaciones': return 'Se te entregarán indicaciones personalizadas al finalizar tu cita.';
+      }
+    }
+
+    // Default fallbacks for completed appointments with empty fields
+    switch (field) {
+      case 'diagnostico': return 'Sin observaciones adicionales registradas.';
+      case 'procedimiento': return 'Tratamiento de rutina realizado.';
+      case 'recomendaciones': return 'Siga las indicaciones generales de cuidado dental y mantenga su higiene diaria.';
+    }
+  }
+
   logout(): void {
     this.authService.logout();
   }

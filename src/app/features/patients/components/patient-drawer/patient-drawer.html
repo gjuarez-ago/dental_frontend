@@ -203,51 +203,54 @@
           </div>
         </div>
 
-        <!-- Sección 5: Motivo y Observaciones -->
+        <!-- Sección 5: Notas Clínicas -->
         <div class="form-section clinical-notes">
-          <h3 class="section-title"><i class="ph-fill ph-notebook"></i> Consulta Inicial</h3>
+          <h3 class="section-title"><i class="ph-fill ph-notebook"></i> Notas y Observaciones</h3>
           
-          <div class="input-group" [class.error]="isInvalid('motivoVisita')">
-            <label for="motivoVisita">¿Cuál es el motivo de tu visita? *</label>
-            <div class="input-wrapper">
-              <i class="ph ph-question"></i>
-              <input id="motivoVisita" type="text" formControlName="motivoVisita" placeholder="Ej. Dolor de muela, limpieza, revisión...">
-            </div>
-            <span class="error-msg" *ngIf="isInvalid('motivoVisita')">Por favor indica el motivo de la consulta.</span>
-          </div>
-
           <div class="input-group">
-            <label for="notasClinicas">Observaciones del Especialista</label>
+            <label for="notasClinicas">Motivo de consulta y observaciones relevantes</label>
             <div class="input-wrapper textarea-wrapper">
               <i class="ph ph-note-pencil"></i>
-              <textarea id="notasClinicas" formControlName="notasClinicas" rows="6" 
-                        placeholder="Escribe aquí el diagnóstico inicial, recomendaciones clínicas o detalles relevantes del expediente..."></textarea>
+              <textarea id="notasClinicas" formControlName="notasClinicas" rows="5" 
+                        placeholder="Escribe aquí el motivo de visita, diagnóstico inicial o detalles del expediente..."></textarea>
             </div>
+          </div>
+        </div>
+
+        <!-- Privacidad (Obligatorio) -->
+        <div class="privacy-section" style="margin-top: 1.5rem;">
+          <div class="privacy-card" 
+               [style.background]="patientForm.get('aceptacionPrivacidad')?.value ? '#f0fdf4' : '#fff1f2'"
+               [style.border]="patientForm.get('aceptacionPrivacidad')?.value ? '1px solid #22c55e' : '1px solid #ef4444'"
+               style="padding: 1rem; border-radius: 8px; transition: all 0.3s ease;">
+            <label class="privacy-label" style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer;">
+              <input type="checkbox" formControlName="aceptacionPrivacidad" id="aceptacionPrivacidad"
+                     style="width: 20px; height: 20px; margin-top: 4px; cursor: pointer;">
+              <span class="privacy-text" style="font-size: 0.95rem; line-height: 1.4; color: #374151;">
+                Confirmo que el paciente ha leído y aceptado el <strong>Aviso de Privacidad</strong> (NOM-004-SSA3). *
+              </span>
+            </label>
+            <p class="error-msg" *ngIf="isInvalid('aceptacionPrivacidad')" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; font-weight: 500;">
+              <i class="ph ph-warning-circle"></i> Es obligatorio aceptar el aviso de privacidad para continuar.
+            </p>
           </div>
         </div>
       </form>
 
-      <!-- Banner de Privacidad -->
-      <div class="privacy-section">
-        <div class="input-group checkbox-group" [class.error]="isInvalid('aceptacionPrivacidad')">
-          <div class="toggle-container" style="border-color: #10b981; background: #ecfdf5;">
-            <div class="toggle-switch">
-              <input type="checkbox" id="aceptacionPrivacidad" formControlName="aceptacionPrivacidad">
-              <label for="aceptacionPrivacidad" class="slider"></label>
-            </div>
-            <span class="toggle-label" style="color: #065f46;">
-              Confirmo que el paciente ha leído y aceptado el <strong>Aviso de Privacidad</strong> (NOM-004-SSA3). *
-            </span>
-          </div>
-          <span class="error-msg" *ngIf="isInvalid('aceptacionPrivacidad')" style="margin-left: 1rem;">
-            Es obligatorio aceptar el aviso de privacidad para cumplir la normativa.
-          </span>
-        </div>
+      <!-- Banner de Error del Servidor (Reemplaza al alert nativo) -->
+      <div class="server-error-banner" *ngIf="errorMessage" style="margin: 1rem; padding: 0.75rem; background: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; display: flex; align-items: center; gap: 10px; color: #b91c1c; font-size: 0.9rem;">
+        <i class="ph-fill ph-warning-octagon" style="font-size: 1.2rem;"></i>
+        <span style="flex: 1;">{{ errorMessage }}</span>
+        <button type="button" (click)="errorMessage = null" style="background: none; border: none; color: #b91c1c; cursor: pointer; padding: 4px;">
+          <i class="ph ph-x"></i>
+        </button>
       </div>
     </div>
 
-    <!-- Footer Actions -->
     <footer class="drawer-footer">
+      <div class="form-status-info" *ngIf="patientForm.invalid && patientForm.touched">
+        <i class="ph ph-warning-circle"></i> Faltan campos obligatorios (*) por completar.
+      </div>
       <button class="btn-cancel" (click)="closeDrawer()" [disabled]="isLoading">Cancelar</button>
       <button class="btn-save" (click)="onSubmit()" [disabled]="patientForm.invalid || isLoading">
         <i class="ph ph-spinner animate-spin" *ngIf="isLoading"></i>

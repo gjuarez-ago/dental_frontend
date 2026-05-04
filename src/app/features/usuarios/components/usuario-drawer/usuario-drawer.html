@@ -26,7 +26,8 @@
                   sesión.' }}</p>
               </div>
             </div>
-            <button type="button" class="toggle-status-btn" (click)="toggleStatus()" *ngIf="user.rol !== UserRole.OWNER">
+            <button type="button" class="toggle-status-btn" (click)="toggleStatus()"
+              *ngIf="user.rol !== UserRole.OWNER">
               {{ user.activo ? 'Poner en Vacaciones' : 'Reactivar Ahora' }}
             </button>
           </div>
@@ -54,8 +55,8 @@
               <i class="ph ph-gender-intersex"></i>
               <select id="genero" formControlName="genero">
                 <option value="" disabled selected>Selecciona una opción</option>
-                <option value="MASCULINO">Masculino (Dr.)</option>
-                <option value="FEMENINO">Femenino (Dra.)</option>
+                <option value="MASCULINO">Masculino </option>
+                <option value="FEMENINO">Femenino</option>
                 <option value="OTRO">Otro / No especificar</option>
               </select>
             </div>
@@ -139,7 +140,7 @@
 
           <div class="input-group" *ngIf="userForm.get('rol')?.value === UserRole.DOCTOR">
             <label for="especialidades">Especialidades Médicas *</label>
-            
+
             <!-- Chips Container -->
             <div class="chips-container" *ngIf="userForm.get('especialidades')?.value?.length > 0">
               <div class="chip" *ngFor="let esp of userForm.get('especialidades')?.value">
@@ -152,18 +153,15 @@
 
             <div class="input-wrapper">
               <i class="ph ph-stethoscope"></i>
-              <input 
-                id="especialidades" 
-                list="specialtiesList" 
-                placeholder="Escribe y selecciona para agregar..."
-                (change)="addSpecialty($event)"
-              >
+              <input id="especialidades" list="specialtiesList" placeholder="Escribe y selecciona para agregar..."
+                (change)="addSpecialty($event)">
               <datalist id="specialtiesList">
                 <option *ngFor="let esp of availableSpecialties()" [value]="esp"></option>
               </datalist>
             </div>
             <p class="hint">Puedes agregar múltiples especialidades.</p>
-            <span class="error-msg" *ngIf="userForm.get('especialidades')?.touched && userForm.get('especialidades')?.invalid">
+            <span class="error-msg"
+              *ngIf="userForm.get('especialidades')?.touched && userForm.get('especialidades')?.invalid">
               Es obligatorio asignar al menos una especialidad al doctor.
             </span>
           </div>
@@ -186,13 +184,6 @@
 </div>
 
 <!-- Modal de Confirmación de Estado -->
-<app-confirm-modal
-  [show]="showStatusModal"
-  [title]="statusModalConfig.title"
-  [message]="statusModalConfig.message"
-  [confirmText]="statusModalConfig.confirmText"
-  [type]="statusModalConfig.type"
-  [icon]="statusModalConfig.icon"
-  (confirm)="confirmStatusChange()"
-  (cancel)="showStatusModal = false"
-></app-confirm-modal>
+<app-confirm-modal [show]="showStatusModal" [title]="statusModalConfig.title" [message]="statusModalConfig.message"
+  [confirmText]="statusModalConfig.confirmText" [type]="statusModalConfig.type" [icon]="statusModalConfig.icon"
+  (confirm)="confirmStatusChange()" (cancel)="showStatusModal = false"></app-confirm-modal>

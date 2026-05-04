@@ -97,7 +97,9 @@
                   <i class="ph ph-magnifying-glass"></i>
                   Diagnóstico Clínico
                 </div>
-                <p class="content">{{ entry.diagnostico || 'Sin observaciones registradas' }}</p>
+                <p class="content" [class.pending]="isAppointmentPending(entry) && !entry.diagnostico">
+                  {{ entry.diagnostico || getClinicalPlaceholder('diagnostico', entry) }}
+                </p>
               </div>
 
               <!-- Procedimiento -->
@@ -106,7 +108,9 @@
                   <i class="ph ph-syringe"></i>
                   Procedimiento Realizado
                 </div>
-                <p class="content">{{ entry.procedimiento || 'Tratamiento de rutina realizado' }}</p>
+                <p class="content" [class.pending]="isAppointmentPending(entry) && !entry.procedimiento">
+                  {{ entry.procedimiento || getClinicalPlaceholder('procedimiento', entry) }}
+                </p>
               </div>
             </div>
 
@@ -116,8 +120,8 @@
                 <i class="ph ph-info"></i>
                 Indicaciones y Recomendaciones
               </div>
-              <div class="box-content">
-                {{ entry.recomendaciones || 'Siga las indicaciones generales de cuidado dental y mantenga su higiene diaria.' }}
+              <div class="box-content" [class.pending]="isAppointmentPending(entry) && !entry.recomendaciones">
+                {{ entry.recomendaciones || getClinicalPlaceholder('recomendaciones', entry) }}
               </div>
             </div>
 
