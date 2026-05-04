@@ -1,9 +1,9 @@
-import { Component, signal, inject, effect } from '@angular/core';
+import { Component, signal, inject, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppointmentService } from '../../../../core/services/appointment.service';
 import { LayoutService } from '../../../../core/services/layout.service';
-import { Cita } from '../../../../core/models/appointment.model';
+import { AppointmentStatus, Cita } from '../../../../core/models/appointment.model';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -12,47 +12,65 @@ import { ToastrService } from 'ngx-toastr';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="drawer-overlay" [class.open]="layout.isCancellationOpen()" (click)="close()">
-      <div class="drawer-content" (click)="$event.stopPropagation()">
+      <div class="drawer-content" [class.reject-mode]="isRejectMode()" (click)="$event.stopPropagation()">
         <div class="drawer-header">
-          <h3>Cancelar Cita</h3>
+          <h3>{{ drawerTitle() }}</h3>
           <button class="close-btn" (click)="close()">×</button>
         </div>
 
         <div class="drawer-body">
-          <div class="appointment-summary" *ngIf="cita()">
+          <div class="appointment-summary" *ngIf="citaSignal()">
             <div class="summary-header">
               <div class="patient-avatar">
-                {{ cita()?.pacienteNombre ? cita()?.pacienteNombre!.substring(0,1) : 'P' }}{{
-                cita()?.pacienteNombre?.split(' ')?.length! > 1 ? cita()?.pacienteNombre?.split(' ')![1].substring(0,1) : '' }}
+                {{ (citaSignal()?.pacienteNombre || 'P').substring(0,1) }}{{
+                (citaSignal()?.pacienteNombre?.split(' ')?.length || 0) > 1 ? citaSignal()?.pacienteNombre?.split(' ')![1].substring(0,1) : '' }}
               </div>
               <div class="patient-info">
-                <span class="patient-name">{{ cita()?.pacienteNombre }}</span>
+                <span class="patient-name">{{ citaSignal()?.pacienteNombre }}</span>
                 <span class="appointment-time">
                   <i class="ph ph-calendar"></i>
-                  {{ cita()?.fechaHora | date:'EEEE d MMMM, h:mm a':'':'es-ES' }}
+                  {{ citaSignal()?.fechaHora | date:'EEEE d MMMM, h:mm a':'':'es-ES' }}
                 </span>
               </div>
             </div>
-            
-            <div class="finance-impact" *ngIf="(cita()?.montoPagado ?? 0) > 0">
-              <i class="ph ph-warning-circle"></i>
-              <div class="impact-text">
-                <strong>Impacto Financiero</strong>
-                <p>Se ha registrado un anticipo de <strong>\${{ cita()?.montoPagado | number:'1.2-2' }}</strong>. 
-                Al cancelar, el pago pasará a estado <strong>CANCELADO</strong> para cuadrar la caja.</p>
-              </div>
+                        <!-- Sugerencia de Reagendar: Solo para citaActivas confirmadas -->
+            <div class="reschedule-tip" *ngIf="!isRejectMode()">
+              <i class="ph ph-info"></i>
+              <p>¿Solo quieres cambiar la fecha? Te recomendamos usar <strong>Reagendar</strong> para conservar los anticipos intactos.</p>
             </div>
           </div>
 
           <div class="reason-section">
-            <label for="motivo">Motivo de Cancelación</label>
+            <label for="motivo">{{ reasonLabel() }}</label>
             <textarea 
               id="motivo" 
-              [(ngModel)]="motivo" 
-              placeholder="Ej: El paciente llamó para reprogramar por motivos personales..."
+              [ngModel]="motivo()" 
+              (ngModelChange)="motivo.set($event)"
+              [placeholder]="placeholderText()"
               rows="4"
             ></textarea>
-            <p class="helper-text">Este motivo quedará registrado en el historial de la cita.</p>
+            <p class="helper-text">Esta nota será enviada al paciente por correo electrónico.</p>
+          </div>
+
+          <!-- Switch de Reembolso Dinámico -->
+          <div class="refund-action-section" *ngIf="!isRejectMode()">
+            <div class="refund-card" [class.active]="reembolsar()">
+              <div class="refund-info">
+                <div class="refund-icon">
+                  <i class="ph-fill" [class]="reembolsar() ? 'ph-hand-coins' : 'ph-bank'"></i>
+                </div>
+                <div class="refund-text">
+                  <span class="refund-title">{{ reembolsar() ? 'Reembolsar Anticipo' : 'Retener Pago' }}</span>
+                  <span class="refund-desc">
+                    {{ reembolsar() ? 'El dinero se marcará como devuelto al paciente.' : 'El monto se quedará como ingreso para la clínica.' }}
+                  </span>
+                </div>
+              </div>
+              <label class="premium-switch">
+                <input type="checkbox" [ngModel]="reembolsar()" (ngModelChange)="reembolsar.set($event)">
+                <span class="premium-slider"></span>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -61,9 +79,9 @@ import { ToastrService } from 'ngx-toastr';
           <button 
             class="btn-confirm-cancel" 
             [disabled]="!motivo().trim() || submitting()"
-            (click)="confirmCancellation()"
+            (click)="confirmAction()"
           >
-            {{ submitting() ? 'Procesando...' : 'Confirmar Cancelación' }}
+            {{ submitting() ? 'Procesando...' : confirmButtonText() }}
           </button>
         </div>
       </div>
@@ -194,20 +212,130 @@ import { ToastrService } from 'ngx-toastr';
         }
       }
 
-      .finance-impact {
+      .reschedule-tip {
         display: flex;
-        gap: 1rem;
-        padding-top: 1rem;
-        border-top: 1px dashed #cbd5e1;
-        color: #b45309;
-
-        i { font-size: 1.5rem; }
+        gap: 0.75rem;
+        padding: 1rem;
+        background: #f0f9ff;
+        border-radius: 1rem;
+        border: 1px solid #e0f2fe;
+        color: #0369a1;
         
-        .impact-text {
-          strong { display: block; font-size: 0.875rem; margin-bottom: 0.25rem; }
-          p { font-size: 0.8125rem; margin: 0; line-height: 1.4; }
-        }
+        i { font-size: 1.25rem; }
+        p { font-size: 0.75rem; margin: 0; line-height: 1.4; }
       }
+    }
+
+    /* Estilos Premium para el Switch de Reembolso */
+    .refund-action-section {
+      margin-top: 1.5rem;
+    }
+
+    .refund-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem;
+      background: #f8fafc;
+      border: 2px solid #f1f5f9;
+      border-radius: 1.25rem;
+      transition: all 0.3s ease;
+      gap: 1rem;
+    }
+
+    .refund-card.active {
+      background: #fff5f5;
+      border-color: #fee2e2;
+    }
+
+    .refund-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .refund-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: #64748b;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.3s;
+    }
+
+    .refund-card.active .refund-icon {
+      background: #ef4444;
+      color: white;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+
+    .refund-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .refund-title {
+      font-size: 0.875rem;
+      font-weight: 850;
+      color: #1e293b;
+    }
+
+    .refund-desc {
+      font-size: 0.75rem;
+      color: #64748b;
+      line-height: 1.3;
+    }
+
+    .premium-switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .premium-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .premium-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #cbd5e1;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .premium-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    input:checked + .premium-slider {
+      background-color: #ef4444;
+    }
+
+    input:checked + .premium-slider:before {
+      transform: translateX(22px);
     }
 
     .reason-section {
@@ -293,38 +421,59 @@ export class CancellationDrawerComponent {
   protected readonly layout = inject(LayoutService);
   private readonly toastr = inject(ToastrService);
 
-  cita = signal<Cita | null>(null);
+  citaSignal = signal<Cita | null>(null);
   motivo = signal('');
+  reembolsar = signal(true);
   submitting = signal(false);
+
+  // Computeds inteligentes
+  readonly isRejectMode = computed(() => this.citaSignal()?.estado === AppointmentStatus.POR_CONFIRMAR);
+  
+  readonly drawerTitle = computed(() => this.isRejectMode() ? 'Rechazar Solicitud' : 'Cancelar Cita');
+  readonly confirmButtonText = computed(() => this.isRejectMode() ? 'Confirmar Rechazo' : 'Confirmar Cancelación');
+  readonly reasonLabel = computed(() => this.isRejectMode() ? 'Motivo del Rechazo' : 'Motivo de Cancelación');
+  
+  readonly placeholderText = computed(() => 
+    this.isRejectMode() 
+      ? 'Ej: El doctor no tiene disponibilidad en ese horario...' 
+      : 'Ej: El paciente llamó para cancelar por motivos personales...'
+  );
 
   constructor() {
     effect(() => {
       const selected = this.layout.selectedCitaForCancellation();
       if (selected) {
-        this.cita.set(selected);
-        this.motivo.set(''); // Reset
+        this.citaSignal.set(selected);
+        this.motivo.set(''); 
+        this.reembolsar.set(true); 
       }
     });
   }
 
-  confirmCancellation() {
-    const citaId = this.cita()?.id;
-    if (!citaId || !this.motivo().trim()) return;
+  confirmAction() {
+    const citaActivaId = this.citaSignal()?.id;
+    if (!citaActivaId || !this.motivo().trim()) return;
 
     this.submitting.set(true);
-    this.appointmentService.cancelarCita(citaId, this.motivo()).subscribe({
+    
+    const request = this.isRejectMode()
+      ? this.appointmentService.rechazarCita(citaActivaId, this.motivo())
+      : this.appointmentService.cancelarCita(citaActivaId, this.motivo(), this.reembolsar());
+
+    request.subscribe({
       next: (res) => {
         this.submitting.set(false);
         if (res.ok) {
-          this.toastr.success('Cita cancelada correctamente', 'Éxito');
+          const actionText = this.isRejectMode() ? 'rechazada' : 'cancelada';
+          this.toastr.success(`Cita ${actionText} correctamente`, 'Éxito');
           this.close();
-          // Notificar para recargar listas
           this.appointmentService.notificarCitaGuardada(res.result);
         }
       },
-      error: () => {
+      error: (err) => {
         this.submitting.set(false);
-        this.toastr.error('No se pudo cancelar la cita', 'Error');
+        const msg = err.error?.userMessage || `No se pudo procesar la acción`;
+        this.toastr.error(msg, 'Error');
       }
     });
   }

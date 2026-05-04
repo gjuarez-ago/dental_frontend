@@ -5,6 +5,11 @@
       <h1>Panel de Revisión Administrativa</h1>
       <p>Auditoría de comprobantes de pago y agenda diaria.</p>
     </div>
+    <div class="header-actions">
+      <button class="btn-bitacora" (click)="layout.openAuditDrawer()">
+        <i class="ph ph-list-magnifying-glass"></i> Bitácoras
+      </button>
+    </div>
   </header>
 
   <!-- Summary Section -->
@@ -36,23 +41,13 @@
         <span class="icon">
           @switch (stat.label) {
           @case ('Ingresos Hoy') {
-          <i class="ph ph-money" style="font-size: 1.5rem;"></i>
+          <i class="ph-fill ph-money" style="font-size: 1.5rem;"></i>
           }
           @case ('Citas Hoy') {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
+          <i class="ph-fill ph-calendar-star" style="font-size: 1.5rem;"></i>
           }
           @case ('Pacientes Nuevos') {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M22 21v-2a4 4 0 0 1-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
+          <i class="ph-fill ph-users-three" style="font-size: 1.5rem;"></i>
           }
           }
         </span>
@@ -60,7 +55,10 @@
       <div class="stat-info">
         <span class="label">{{ stat.label }}</span>
         <h4 class="value">{{ stat.value }}</h4>
-        <span class="trend" [class.up]="stat.up">{{ stat.trend }} hoy</span>
+        <span class="trend" [class.up]="stat.up">
+          <i [class]="stat.up ? 'ph ph-trend-up' : 'ph ph-trend-down'"></i>
+          {{ stat.trend }} hoy
+        </span>
       </div>
     </div>
     }
@@ -95,17 +93,30 @@
       } @else {
       @for (item of comprobantesPendientes(); track item.id) {
       <article class="card verification-card animate-card-entry" [style.--index]="$index">
-        <header class="card-header">
+        <header class="card-header" [class]="item.slaClass">
           <div class="patient-info">
-            <div class="avatar">
-              <div class="avatar-placeholder">{{ item.pacienteNombre.charAt(0) }}</div>
+            <div class="avatar-container">
+              <div class="avatar-premium">
+                {{ item.pacienteNombre.charAt(0) }}
+              </div>
+              <div class="sla-dot" [title]="item.waitingTimeLabel"></div>
             </div>
             <div class="names">
               <h4>{{ item.pacienteNombre }}</h4>
-              <span>Exp: {{ item.pacienteId }}</span>
+              <span class="patient-id">Exp: {{ item.pacienteId }}</span>
             </div>
           </div>
-          <span class="status-tag" [class]="item.prioridad.toLowerCase()">{{ item.prioridad }}</span>
+          <div class="header-status-group">
+            <span class="status-tag" [class]="item.prioridad.toLowerCase()">
+              <i class="ph-fill" [class]="{
+                'ph-fire-simple': item.prioridad === 'URGENTE',
+                'ph-clock': item.prioridad === 'ESTÁNDAR',
+                'ph-info': item.prioridad === 'NUEVO'
+              }"></i>
+              {{ item.prioridad }}
+            </span>
+            <span class="wait-time"><i class="ph ph-clock"></i> {{ item.waitingTimeLabel }}</span>
+          </div>
         </header>
 
         <div class="card-details">

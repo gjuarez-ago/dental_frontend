@@ -18,7 +18,7 @@ import { Cita } from '../../../../core/models/appointment.model';
         </div>
 
         <div class="drawer-body">
-          <p class="instruction">Valida el anticipo recibido y asigna al profesional para confirmar la cita.</p>
+          <p class="instruction">Asigna al profesional médico para confirmar la cita y liquidar saldos pendientes.</p>
           <div class="financial-summary">
             <div class="summary-item">
               <span class="summary-label">Anticipo Recibido</span>
@@ -83,6 +83,12 @@ import { Cita } from '../../../../core/models/appointment.model';
                   placeholder="0.00"
                 >
               </div>
+              @if (isCostInvalid()) {
+                <div class="field-error-hint danger" style="color: #ef4444; font-size: 0.75rem; font-weight: 700; margin-top: 0.5rem; display: flex; align-items: center; gap: 4px;">
+                  <i class="ph ph-warning-circle"></i>
+                  El costo total no puede ser menor al base ($ {{layout.selectedCitaForConfirmation()?.precioServicio}}).
+                </div>
+              }
             </div>
 
             <div class="financial-breakdown">
@@ -99,11 +105,11 @@ import { Cita } from '../../../../core/models/appointment.model';
         </div>
 
         <div class="drawer-footer">
-          <button class="btn-reject" (click)="rechazar()">Rechazar Pago</button>
+          <button class="btn-reject" (click)="rechazar()">Rechazar Cita</button>
           <button class="btn-cancel" (click)="close()">Cancelar</button>
           <button 
             class="btn-confirm" 
-            [disabled]="!selectedDoctorId() || submitting()"
+            [disabled]="!selectedDoctorId() || submitting() || isCostInvalid()"
             (click)="confirmar()"
           >
             {{ submitting() ? 'Procesando...' : 'Confirmar y Aplicar Pago' }}
@@ -116,8 +122,8 @@ import { Cita } from '../../../../core/models/appointment.model';
     .drawer-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.4);
-      backdrop-filter: blur(8px);
+      background: rgba(15, 23, 42, 0.2);
+      backdrop-filter: blur(4px);
       z-index: 1000;
       opacity: 0;
       visibility: hidden;
@@ -442,6 +448,12 @@ import { Cita } from '../../../../core/models/appointment.model';
         .input-field.primary-field {
           margin-bottom: 20px;
 
+          .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+          }
+
           label {
             font-size: 0.85rem;
             font-weight: 800;
@@ -452,13 +464,15 @@ import { Cita } from '../../../../core/models/appointment.model';
           }
 
           input {
+            width: 100%;
             background: #f8fafc;
             border: 2px solid #e2e8f0;
-            padding: 16px 16px 16px 36px;
+            padding: 16px 16px 16px 48px;
             font-size: 1.5rem;
             font-weight: 850;
             color: #0d213f;
             border-radius: 12px;
+            transition: all 0.2s;
             
             &:focus {
               background: #fff;
@@ -468,10 +482,15 @@ import { Cita } from '../../../../core/models/appointment.model';
           }
 
           .currency-prefix {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
             font-size: 1.25rem;
             font-weight: 800;
             color: #0d213f;
-            left: 16px;
+            pointer-events: none;
+            z-index: 1;
           }
         }
 
@@ -517,6 +536,7 @@ export class ConfirmationDrawerComponent implements OnInit {
       const cita = this.layout.selectedCitaForConfirmation();
       if (cita) {
         this.syncFromCita(cita);
+        this.loadDoctors(cita.servicioId);
       }
     });
   }
@@ -530,12 +550,19 @@ export class ConfirmationDrawerComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.loadDoctors();
+    // Ya no cargamos en OnInit, sino en el effect basado en la cita seleccionada
   }
 
-  private loadDoctors() {
-    this.appointmentService.getDoctores().subscribe(docs => {
+  private loadDoctors(servicioId?: string) {
+    this.appointmentService.getDoctores(servicioId).subscribe(docs => {
       this.doctors.set(docs || []);
+      
+      // Selección inteligente: Si solo hay un doctor (caso Plan SOLO o alta especialidad), lo preseleccionamos
+      if (docs && docs.length === 1) {
+        this.selectedDoctorId.set(docs[0].id);
+      } else {
+        this.selectedDoctorId.set(null);
+      }
     });
   }
 
@@ -548,9 +575,18 @@ export class ConfirmationDrawerComponent implements OnInit {
   }
 
   onRemainingChange(event: any) {
-    const val = parseFloat(event.target.value) || 0;
+    let val = parseFloat(event.target.value) || 0;
+    if (isNaN(val) || val < 0) val = 0;
     this.remainingPayment.set(val);
   }
+
+  isCostInvalid = computed(() => {
+    const cita = this.layout.selectedCitaForConfirmation();
+    const precioBaseOriginal = cita?.precioServicio || 0;
+    const totalConEsteAbono = this.paidAmount() + this.remainingPayment();
+
+    return precioBaseOriginal > 0 && totalConEsteAbono < precioBaseOriginal;
+  });
 
   confirmar() {
     const cita = this.layout.selectedCitaForConfirmation();

@@ -27,6 +27,12 @@ export class UserService {
       .pipe(map(res => res.result as UsuarioResponse));
   }
 
+  cambiarEstado(id: string, activo: boolean): Observable<UsuarioResponse> {
+    return this.http.patch<ApiResponse<UsuarioResponse>>(`${this.API_URL}/${id}/status`, null, {
+      params: { activo: activo.toString() }
+    }).pipe(map(res => res.result as UsuarioResponse));
+  }
+
   eliminar(id: string): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.API_URL}/${id}`)
       .pipe(map(() => void 0));

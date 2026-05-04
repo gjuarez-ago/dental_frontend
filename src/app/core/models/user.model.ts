@@ -10,6 +10,8 @@ export interface UsuarioRequest {
   fotografiaUrl?: string;
   esPersonalClinico?: boolean;
   sucursalId: string;
+  especialidades?: string[];
+  genero?: string;
 }
 
 export interface UsuarioResponse {
@@ -23,5 +25,8 @@ export interface UsuarioResponse {
   esPersonalClinico?: boolean;
   sucursalIdPrincipal: string;
   requiereCambioNip: boolean;
+  activo: boolean;
+  especialidades?: string[];
+  genero?: string;
   createdAt: string;
 }

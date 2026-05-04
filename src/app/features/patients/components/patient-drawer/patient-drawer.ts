@@ -28,28 +28,34 @@ export class PatientDrawerComponent implements OnChanges, OnDestroy {
     this.patientForm = this.fb.group({
       nombreCompleto: ['', [Validators.required, Validators.minLength(3)]],
       telefono: ['', [Validators.required, Validators.pattern(/^[0-9\s-]+$/)]],
-      email: ['', [Validators.email]],
+      email: ['', [Validators.required, Validators.email]],
       fechaNacimiento: ['', [Validators.required]],
       genero: ['OTRO', [Validators.required]],
       curp: [''],
       direccion: [''],
       ocupacion: [''],
       
-      // Salud (Alergias es obligatorio por sugerencia aprobada)
       alergias: ['', [Validators.required]], 
-      enfermedadesCronicas: [''],
+      enfermedadesCronicas: ['', [Validators.required]],
+      antecedentesHeredofamiliares: [''],
+      antecedentesNoPatologicos: [''],
       medicamentosActuales: [''],
       tipoSangre: ['O+'],
       
+      // Privacidad
+      aceptacionPrivacidad: [false, [Validators.requiredTrue]],
+      fechaAceptacionPrivacidad: [null],
+      
       // Emergencia
-      emergenciaNombre: [''],
-      emergenciaTelefono: [''],
+      emergenciaNombre: ['', [Validators.required]],
+      emergenciaTelefono: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       
       // Notas
+      motivoVisita: ['', [Validators.required]],
       notasClinicas: [''],
-      
-      // Auditoría (Nuevos campos del backend)
-      saldoPendiente: [0, [Validators.min(0)]],
+
+      // Auditoría (Campos gestionados internamente)
+      saldoPendiente: [{ value: 0, disabled: true }, [Validators.min(0)]],
       expedienteCompleto: [false]
     });
   }
@@ -61,7 +67,13 @@ export class PatientDrawerComponent implements OnChanges, OnDestroy {
         if (this.patientToEdit) {
           this.patientForm.patchValue(this.patientToEdit);
         } else {
-          this.patientForm.reset({ genero: 'OTRO', tipoSangre: 'O+', saldoPendiente: 0, expedienteCompleto: false });
+          this.patientForm.reset({ 
+            genero: 'OTRO', 
+            tipoSangre: 'O+', 
+            saldoPendiente: 0, 
+            expedienteCompleto: false,
+            aceptacionPrivacidad: false
+          });
         }
       }
     }
@@ -73,14 +85,24 @@ export class PatientDrawerComponent implements OnChanges, OnDestroy {
 
   private toggleBodyScroll(lock: boolean) {
     if (typeof document !== 'undefined') {
-      document.body.style.overflow = lock ? 'hidden' : '';
+      if (lock) {
+        document.body.classList.add('no-scroll');
+      } else {
+        document.body.classList.remove('no-scroll');
+      }
     }
   }
 
   onSubmit() {
     if (this.patientForm.valid) {
       this.isLoading = true;
-      const formData = this.patientForm.value;
+      const formData = { ...this.patientForm.value };
+      
+      // Set fechaAceptacionPrivacidad si se aceptó y no tenía fecha
+      if (formData.aceptacionPrivacidad && !formData.fechaAceptacionPrivacidad) {
+          formData.fechaAceptacionPrivacidad = new Date().toISOString();
+      }
+
       const patientId = this.patientToEdit?.id;
       
       const request = patientId 

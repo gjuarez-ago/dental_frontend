@@ -7,4 +7,7 @@ export interface ServicioDental {
   colorEtiqueta: string;
   imagenUrl?: string;
   requiereValoracion: boolean;
+  giro?: string;
+  especialidadRequerida?: string;
+  procedimientoQuirurgico: boolean;
 }

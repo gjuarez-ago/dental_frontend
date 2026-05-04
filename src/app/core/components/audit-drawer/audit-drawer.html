@@ -1,0 +1,61 @@
+<div class="drawer-overlay" [class.open]="isOpen" (click)="closeDrawer()">
+    <div class="drawer-container" [class.open]="isOpen" (click)="$event.stopPropagation()">
+        <header class="drawer-header">
+            <div class="header-content">
+                <div class="title-group">
+                    <i class="ph-fill ph-list-magnifying-glass"></i>
+                    <div>
+                        <h2>Bitácora de Actividad</h2>
+                        <p>Últimos 50 movimientos del sistema</p>
+                    </div>
+                </div>
+                <button class="btn-close" (click)="closeDrawer()">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="drawer-body">
+            @if (isLoading()) {
+                <div class="loading-state">
+                    <i class="ph ph-circle-notch animate-spin"></i>
+                    <p>Consultando registros...</p>
+                </div>
+            } @else {
+                <div class="logs-timeline">
+                    @for (log of logs(); track log.id) {
+                        <div class="log-item animate-slide-up" [class]="getModuleClass(log.modulo)">
+                            <div class="log-icon-wrapper">
+                                <i class="ph-fill" [ngClass]="getModuleIcon(log.modulo)"></i>
+                            </div>
+                            <div class="log-content">
+                                <div class="log-header">
+                                    <span class="log-module">{{ log.modulo }}</span>
+                                    <span class="log-time">{{ log.createdAt | date:'shortTime' }}</span>
+                                </div>
+                                <div class="log-action">
+                                    <span class="action-badge">{{ log.accion }}</span>
+                                    <span class="user-name">por <b>{{ log.usuarioNombre }}</b></span>
+                                </div>
+                                <p class="log-description">{{ log.descripcion }}</p>
+                                <span class="log-date">{{ log.createdAt | date:'dd MMM, yyyy' }}</span>
+                            </div>
+                        </div>
+                    } @empty {
+                        <div class="empty-state">
+                            <i class="ph ph-info"></i>
+                            <p>No se encontraron registros recientes.</p>
+                        </div>
+                    }
+                </div>
+            }
+        </main>
+
+        <footer class="drawer-footer">
+            <p>Solo personal administrativo con rol OWNER puede ver este panel.</p>
+            <button class="btn-primary-sm" (click)="loadLogs()">
+                <i class="ph ph-arrows-clockwise"></i> Actualizar
+            </button>
+        </footer>
+    </div>
+</div>

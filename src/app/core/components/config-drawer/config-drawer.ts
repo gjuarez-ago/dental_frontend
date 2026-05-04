@@ -28,14 +28,17 @@ export class ConfigDrawerComponent implements OnInit, OnChanges {
       professionalCedula: ['', [Validators.required]],
       cancellationWindow: [24, [Validators.required, Validators.min(1)]],
       banco: [''],
-      cuentaBancaria: ['', [Validators.minLength(10), Validators.maxLength(11)]],
+      cuentaBancaria: ['', [Validators.minLength(10), Validators.maxLength(20)]],
       clabeInterbancaria: ['', [Validators.minLength(18), Validators.maxLength(18)]],
+      // Nuevos campos globales
+      telefonoWhatsApp: ['', [Validators.pattern(/^\d+$/), Validators.minLength(10)]],
+      horasAnticipacionCancelacion: [24, [Validators.required, Validators.min(0)]],
+      direccionSucursal: [''],
       weeklySchedule: this.fb.array([])
     });
   }
 
   ngOnInit() {
-    // La carga inicial se maneja en ngOnChanges para asegurar que ocurre al abrir
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -48,9 +51,6 @@ export class ConfigDrawerComponent implements OnInit, OnChanges {
     return this.configForm.get('weeklySchedule') as FormArray;
   }
 
-  /**
-   * Obtiene los datos frescos del servidor
-   */
   refreshData() {
     this.isLoading.set(true);
     this.configService.loadConfig().subscribe({
@@ -62,9 +62,6 @@ export class ConfigDrawerComponent implements OnInit, OnChanges {
     });
   }
 
-  /**
-   * Mapea el estado del signal al formulario reactivo
-   */
   populateForm() {
     const cfg = this.configService.config();
     this.configForm.patchValue({
@@ -73,7 +70,10 @@ export class ConfigDrawerComponent implements OnInit, OnChanges {
       cancellationWindow: cfg.cancellationWindow,
       banco: cfg.banco,
       cuentaBancaria: cfg.cuentaBancaria,
-      clabeInterbancaria: cfg.clabeInterbancaria
+      clabeInterbancaria: cfg.clabeInterbancaria,
+      telefonoWhatsApp: cfg.telefonoWhatsApp,
+      horasAnticipacionCancelacion: cfg.horasAnticipacionCancelacion,
+      direccionSucursal: cfg.direccionSucursal
     });
 
     this.scheduleArray.clear();
@@ -97,6 +97,8 @@ export class ConfigDrawerComponent implements OnInit, OnChanges {
         },
         error: () => this.isSaving.set(false)
       });
+    } else {
+      this.configForm.markAllAsTouched();
     }
   }
 

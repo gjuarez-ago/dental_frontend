@@ -1,0 +1,188 @@
+<div class="drawer-overlay" [class.open]="isOpen" (click)="closeDrawer()"></div>
+
+<div class="drawer-panel" [class.open]="isOpen">
+  <!-- Cabecera -->
+  <div class="drawer-header">
+    <div class="header-info">
+      <h3>Expediente Clínico</h3>
+      <p class="patient-name">{{ patient?.nombreCompleto }}</p>
+    </div>
+    <div class="header-actions-group">
+      <button class="btn-new-appointment" (click)="agendarDesdeExpediente()" title="Agendar Cita">
+        <i class="ph ph-calendar-plus"></i>
+        <span>Nueva Cita</span>
+      </button>
+      <button class="close-btn" (click)="closeDrawer()">
+        <i class="ph ph-x"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenido Principal -->
+  <div class="drawer-content">
+    
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="ph ph-spinner animate-spin"></i>
+        <p>Cargando historial médico...</p>
+      </div>
+    } @else {
+      
+      <!-- Navegación de Tabs -->
+      <div class="drawer-tabs">
+        <button class="tab-btn" [class.active]="activeTab() === 'resumen'" (click)="setTab('resumen')" *ngIf="citaId">
+          <i class="ph ph-article"></i> Resumen de Cita
+        </button>
+        <button class="tab-btn" [class.active]="activeTab() === 'historial'" (click)="setTab('historial')">
+          <i class="ph ph-clock-counter-clockwise"></i> Historial Completo
+        </button>
+      </div>
+
+      <div class="tab-content">
+        <!-- TAB: RESUMEN DE CITA -->
+        @if (activeTab() === 'resumen') {
+          @if (selectedConsulta(); as item) {
+            <div class="summary-view animate-fade-in">
+              <div class="summary-header">
+                <div class="date-badge">
+                  <i class="ph ph-calendar"></i>
+                  {{ item.createdAt | date:'fullDate' }}
+                </div>
+                <div class="doctor-badge">
+                  <i class="ph ph-user-gear"></i>
+                  Dr. {{ item.doctorNombre }}
+                </div>
+              </div>
+
+              <div class="summary-sections">
+                <div class="summary-card">
+                  <div class="section-title">
+                    <i class="ph ph-stethoscope"></i>
+                    <h4>Diagnóstico Clínico</h4>
+                  </div>
+                  <p>{{ item.diagnostico }}</p>
+                </div>
+
+                <div class="summary-card">
+                  <div class="section-title">
+                    <i class="ph ph-needle"></i>
+                    <h4>Procedimiento Realizado</h4>
+                  </div>
+                  <p>{{ item.procedimientoRealizado }}</p>
+                </div>
+
+                @if (item.indicaciones) {
+                  <div class="summary-card highlight">
+                    <div class="section-title">
+                      <i class="ph ph-info"></i>
+                      <h4>Indicaciones</h4>
+                    </div>
+                    <p>{{ item.indicaciones }}</p>
+                  </div>
+                }
+
+                @if (item.prescripcionMedica && item.prescripcionMedica.length > 0) {
+                  <div class="summary-card prescription">
+                    <div class="section-title">
+                      <i class="ph ph-pill"></i>
+                      <h4>Receta Médica</h4>
+                    </div>
+                    <ul class="med-list">
+                      @for (med of item.prescripcionMedica; track $index) {
+                        <li>
+                          <div class="med-name">{{ med.nombre }}</div>
+                          <div class="med-dose">{{ med.dosis }} • {{ med.frecuencia }} • {{ med.duracion }}</div>
+                          @if (med.instrucciones) {
+                            <div class="med-inst">Nota: {{ med.instrucciones }}</div>
+                          }
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="empty-state animate-fade-in">
+              <div class="empty-icon-wrapper">
+                <i class="ph-duotone ph-file-search"></i>
+              </div>
+              <p>Sin registros para esta cita</p>
+              <span>El historial completo está disponible para consulta.</span>
+              <button class="btn-history-action" (click)="setTab('historial')">
+                Ver historial completo
+                <i class="ph ph-arrow-right"></i>
+              </button>
+            </div>
+          }
+        }
+
+        <!-- TAB: HISTORIAL COMPLETO -->
+        @if (activeTab() === 'historial') {
+          @if (history().length === 0) {
+            <div class="empty-state">
+              <i class="ph ph-folder-open"></i>
+              <p>Aún no hay registros clínicos para este paciente.</p>
+            </div>
+          } @else {
+            <div class="history-timeline animate-fade-in">
+                @for (item of history(); track item.id) {
+                    <div class="history-item" [class.highlight]="item.citaId === citaId">
+                        <div class="history-date">
+                            <span class="day">{{ item.createdAt | date:'dd' }}</span>
+                            <span class="month">{{ item.createdAt | date:'MMM' | uppercase }}</span>
+                            <span class="year">{{ item.createdAt | date:'yyyy' }}</span>
+                        </div>
+                        <div class="history-card">
+                            <div class="h-header">
+                                <span class="doctor-tag">Dr. {{ item.doctorNombre }}</span>
+                                <span class="h-time">
+                                  <i class="ph ph-clock-countdown"></i> 
+                                  @if (item.atencionInicio && item.atencionFin) {
+                                    {{ item.atencionInicio | date:'HH:mm' }} - {{ item.atencionFin | date:'HH:mm' }}
+                                    <small class="duration">({{ getDuration(item) }})</small>
+                                  } @else {
+                                    {{ item.createdAt | date:'HH:mm' }}
+                                  }
+                                </span>
+                                @if (item.citaId === citaId) {
+                                  <span class="current-label">CONSULTA ACTUAL</span>
+                                }
+                            </div>
+                            <div class="h-body">
+                                <div class="h-section">
+                                    <label>Diagnóstico:</label>
+                                    <p>{{ item.diagnostico }}</p>
+                                </div>
+                                <div class="h-section">
+                                    <label>Realizado:</label>
+                                    <p>{{ item.procedimientoRealizado }}</p>
+                                </div>
+                                @if (item.indicaciones) {
+                                    <div class="h-section">
+                                        <label>Indicaciones:</label>
+                                        <p class="indicaciones-text">{{ item.indicaciones }}</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+          }
+        }
+      </div>
+    }
+  <!-- Footer de Acciones -->
+  <div class="drawer-footer" *ngIf="!isLoading()">
+    <button class="btn-secondary" (click)="closeDrawer()">
+      <i class="ph ph-x"></i> Cerrar
+    </button>
+    
+    @if (activeTab() === 'resumen' && selectedConsulta()) {
+      <button class="btn-primary" (click)="printSummary()">
+        <i class="ph ph-printer"></i> Imprimir Resumen
+      </button>
+    }
+  </div>
+</div>

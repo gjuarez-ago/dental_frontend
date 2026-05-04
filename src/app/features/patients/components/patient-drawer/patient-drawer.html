@@ -30,12 +30,12 @@
 
           <div class="form-row">
             <div class="input-group" [class.error]="isInvalid('telefono')">
-              <label for="telefono">WhatsApp / Teléfono *</label>
+              <label for="telefono">WhatsApp de contacto *</label>
               <div class="input-wrapper">
                 <i class="ph ph-whatsapp-logo"></i>
-                <input id="telefono" type="tel" formControlName="telefono" placeholder="55 1234 5678">
+                <input id="telefono" type="tel" formControlName="telefono" placeholder="Ej. 9991557878">
               </div>
-              <span class="error-msg" *ngIf="isInvalid('telefono')">Teléfono válido requerido.</span>
+              <span class="error-msg" *ngIf="isInvalid('telefono')">Se requiere un número de 10 dígitos.</span>
             </div>
 
             <div class="input-group" [class.error]="isInvalid('fechaNacimiento')">
@@ -66,11 +66,12 @@
 
           <div class="form-row">
             <div class="input-group" [class.error]="isInvalid('email')">
-              <label for="email">Correo Electrónico</label>
+              <label for="email">Correo Electrónico *</label>
               <div class="input-wrapper">
                 <i class="ph ph-envelope"></i>
                 <input id="email" type="email" formControlName="email" placeholder="paciente@ejemplo.com">
               </div>
+              <span class="error-msg" *ngIf="isInvalid('email')">El correo electrónico es obligatorio y debe ser válido.</span>
             </div>
             <div class="input-group">
               <label for="genero">Género *</label>
@@ -89,6 +90,24 @@
         <!-- Sección 2: Historial Médico y Alergias (HIGHLIGHTED) -->
         <div class="form-section highlight">
           <h3 class="section-title"><i class="ph-fill ph-first-aid-kit"></i> Historial Médico y Alergias</h3>
+
+          <div class="form-row">
+            <div class="input-group">
+              <label for="antecedentesHeredofamiliares">Antecedentes Familiares</label>
+              <div class="input-wrapper">
+                <i class="ph ph-users-three"></i>
+                <input id="antecedentesHeredofamiliares" type="text" formControlName="antecedentesHeredofamiliares" placeholder="Ej. Diabetes en padres, hipertensión...">
+              </div>
+            </div>
+            
+            <div class="input-group">
+              <label for="antecedentesNoPatologicos">Hábitos / No Patológicos</label>
+              <div class="input-wrapper">
+                <i class="ph ph-coffee"></i>
+                <input id="antecedentesNoPatologicos" type="text" formControlName="antecedentesNoPatologicos" placeholder="Ej. Fuma, bebe alcohol, dieta...">
+              </div>
+            </div>
+          </div>
           
           <div class="input-group" [class.error]="isInvalid('alergias')">
             <label for="alergias">Alergias Conocidas *</label>
@@ -99,12 +118,13 @@
             <span class="error-msg" *ngIf="isInvalid('alergias')">Por seguridad clínica, especifique si tiene alergias o 'Ninguna'.</span>
           </div>
 
-          <div class="input-group">
-            <label for="enfermedadesCronicas">Enfermedades Crónicas</label>
+          <div class="input-group" [class.error]="isInvalid('enfermedadesCronicas')">
+            <label for="enfermedadesCronicas">Enfermedades Crónicas *</label>
             <div class="input-wrapper">
               <i class="ph ph-activity"></i>
-              <input id="enfermedadesCronicas" type="text" formControlName="enfermedadesCronicas" placeholder="Ej. Diabetes, Hipertensión">
+              <input id="enfermedadesCronicas" type="text" formControlName="enfermedadesCronicas" placeholder="Ej. Diabetes, Hipertensión o 'Ninguna'">
             </div>
+            <span class="error-msg" *ngIf="isInvalid('enfermedadesCronicas')">Este campo es obligatorio por seguridad clínica.</span>
           </div>
 
           <div class="form-row">
@@ -136,51 +156,68 @@
         <div class="form-section">
           <h3 class="section-title"><i class="ph-fill ph-phone-call"></i> En Caso de Emergencia</h3>
           <div class="form-row">
-            <div class="input-group">
-              <label for="emergenciaNombre">Nombre de contacto de emergencia</label>
+            <div class="input-group" [class.error]="isInvalid('emergenciaNombre')">
+              <label for="emergenciaNombre">Nombre de contacto de emergencia *</label>
               <div class="input-wrapper">
                 <i class="ph ph-user-focus"></i>
                 <input id="emergenciaNombre" type="text" formControlName="emergenciaNombre" placeholder="Nombre completo">
               </div>
+              <span class="error-msg" *ngIf="isInvalid('emergenciaNombre')">Nombre requerido.</span>
             </div>
-            <div class="input-group">
-              <label for="emergenciaTelefono">Teléfono emergencia</label>
+            <div class="input-group" [class.error]="isInvalid('emergenciaTelefono')">
+              <label for="emergenciaTelefono">Teléfono emergencia *</label>
               <div class="input-wrapper">
                 <i class="ph ph-phone"></i>
-                <input id="emergenciaTelefono" type="tel" formControlName="emergenciaTelefono" placeholder="55 0000 0000">
+                <input id="emergenciaTelefono" type="tel" formControlName="emergenciaTelefono" placeholder="10 dígitos">
               </div>
+              <span class="error-msg" *ngIf="isInvalid('emergenciaTelefono')">Teléfono de 10 dígitos requerido.</span>
             </div>
           </div>
         </div>
 
-        <!-- Sección 4: Auditoría y Control -->
-        <div class="form-section focus">
-          <h3 class="section-title"><i class="ph-fill ph-gear-six"></i> Auditoría y Control Administrativo</h3>
+        <!-- Sección 4: Control Administrativo -->
+        <div class="form-section focus" *ngIf="patientToEdit || patientForm.get('expedienteCompleto')?.value">
+          <h3 class="section-title"><i class="ph-fill ph-gear-six"></i> Control Administrativo</h3>
           <div class="form-row">
-            <div class="input-group">
-              <label for="saldoPendiente">Saldo Pendiente (Deuda)</label>
-              <div class="input-wrapper currency-wrapper">
-                <i class="ph ph-money"></i>
-                <input id="saldoPendiente" type="number" formControlName="saldoPendiente" placeholder="0.00">
+            <!-- Solo mostramos saldo si estamos editando (ya que al crear es siempre 0) -->
+            <div class="input-group" *ngIf="patientToEdit">
+              <label>Saldo Pendiente Global</label>
+              <div class="input-wrapper currency-wrapper disabled">
+                <span class="static-value">{{ (patientForm.get('saldoPendiente')?.value || 0) | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
               </div>
+              <small class="helper-text">Calculado automáticamente desde las citas</small>
             </div>
+
             <div class="input-group">
-              <label for="expedienteCompletoPrincipal">Estado del Expediente</label>
+              <label for="expedienteCompleto">Estado del Expediente</label>
               <div class="toggle-container">
                 <div class="toggle-switch">
-                  <input type="checkbox" id="expedienteCompletoPrincipal" formControlName="expedienteCompleto">
-                  <label for="expedienteCompletoPrincipal" class="slider"></label>
+                  <input type="checkbox" id="expedienteCompleto" formControlName="expedienteCompleto">
+                  <label for="expedienteCompleto" class="slider"></label>
                 </div>
-                <span class="toggle-label">{{ patientForm.get('expedienteCompleto')?.value ? 'Expediente Finalizado' : 'Pendiente de Completar' }}</span>
+                <span class="toggle-label" [class.completed]="patientForm.get('expedienteCompleto')?.value">
+                  {{ patientForm.get('expedienteCompleto')?.value ? 'Expediente Finalizado' : 'Pendiente de Validar' }}
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Sección 5: Observaciones Especializadas -->
+        <!-- Sección 5: Motivo y Observaciones -->
         <div class="form-section clinical-notes">
-          <h3 class="section-title"><i class="ph-fill ph-notebook"></i> Observaciones del Especialista</h3>
+          <h3 class="section-title"><i class="ph-fill ph-notebook"></i> Consulta Inicial</h3>
+          
+          <div class="input-group" [class.error]="isInvalid('motivoVisita')">
+            <label for="motivoVisita">¿Cuál es el motivo de tu visita? *</label>
+            <div class="input-wrapper">
+              <i class="ph ph-question"></i>
+              <input id="motivoVisita" type="text" formControlName="motivoVisita" placeholder="Ej. Dolor de muela, limpieza, revisión...">
+            </div>
+            <span class="error-msg" *ngIf="isInvalid('motivoVisita')">Por favor indica el motivo de la consulta.</span>
+          </div>
+
           <div class="input-group">
+            <label for="notasClinicas">Observaciones del Especialista</label>
             <div class="input-wrapper textarea-wrapper">
               <i class="ph ph-note-pencil"></i>
               <textarea id="notasClinicas" formControlName="notasClinicas" rows="6" 
@@ -189,6 +226,24 @@
           </div>
         </div>
       </form>
+
+      <!-- Banner de Privacidad -->
+      <div class="privacy-section">
+        <div class="input-group checkbox-group" [class.error]="isInvalid('aceptacionPrivacidad')">
+          <div class="toggle-container" style="border-color: #10b981; background: #ecfdf5;">
+            <div class="toggle-switch">
+              <input type="checkbox" id="aceptacionPrivacidad" formControlName="aceptacionPrivacidad">
+              <label for="aceptacionPrivacidad" class="slider"></label>
+            </div>
+            <span class="toggle-label" style="color: #065f46;">
+              Confirmo que el paciente ha leído y aceptado el <strong>Aviso de Privacidad</strong> (NOM-004-SSA3). *
+            </span>
+          </div>
+          <span class="error-msg" *ngIf="isInvalid('aceptacionPrivacidad')" style="margin-left: 1rem;">
+            Es obligatorio aceptar el aviso de privacidad para cumplir la normativa.
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- Footer Actions -->

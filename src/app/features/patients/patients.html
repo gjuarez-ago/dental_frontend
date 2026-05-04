@@ -117,10 +117,13 @@
                 <ng-template #noDate><span class="no-date">Sin cita</span></ng-template>
               </td>
               <td class="actions-cell">
-                <button class="icon-action-btn edit" (click)="openEditDrawer(patient)" title="Editar Expediente">
+                <button class="icon-action-btn edit" (click)="openEditDrawer(patient)" title="Editar Paciente">
                   <i class="ph ph-pencil-line"></i>
                 </button>
-                <button class="icon-action-btn" (click)="onNewAppointment(patient)" title="Nueva Cita">
+                <button class="icon-action-btn expediente" (click)="openExpediente(patient)" title="Ver Expediente Clínico">
+                  <i class="ph ph-folder-user"></i>
+                </button>
+                <button class="icon-action-btn appointment" (click)="onNewAppointment(patient)" title="Nueva Cita">
                   <i class="ph ph-calendar-plus"></i>
                 </button>
               </td>
@@ -167,23 +170,21 @@
                 <span class="date">{{ patient.proximaCita | date:'mediumDate' }}</span>
               </div>
               <ng-template #noDateMobile><span class="value no-date">Sin programar</span></ng-template>
-              <div class="info-row" *ngIf="patient.emergenciaNombre">
+            </div>
+            <div class="info-row" *ngIf="patient.emergenciaNombre">
               <span class="label">Emergencia:</span>
               <span class="value sos-value">
                 <i class="ph-fill ph-first-aid"></i> {{ patient.emergenciaNombre }}
               </span>
             </div>
           </div>
-          </div>
 
           <div class="card-actions-mobile">
             <button class="mobile-action-btn primary" (click)="onNewAppointment(patient)">
-              <i class="ph ph-calendar-plus"></i>
-              <span>Agendar</span>
+              <i class="ph ph-calendar-plus"></i> Agendar
             </button>
-            <button class="mobile-action-btn secondary" (click)="openEditDrawer(patient)">
-              <i class="ph ph-pencil-line"></i>
-              <span>Editar</span>
+            <button class="mobile-action-btn expediente" (click)="openExpediente(patient)">
+              <i class="ph ph-folder-user"></i> Expediente
             </button>
             <div class="mobile-contact-group">
               <a href="tel:{{ patient.telefono }}" class="contact-circle">
@@ -215,3 +216,9 @@
     (close)="closeDrawer()"
     (saved)="onPatientSaved($event)">
   </app-patient-drawer>
+
+  <app-expediente-drawer
+    [isOpen]="isExpedienteOpen()"
+    [patient]="selectedPatientForExpediente()"
+    (close)="closeExpediente()">
+  </app-expediente-drawer>

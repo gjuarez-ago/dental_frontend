@@ -14,7 +14,7 @@ import { CommonModule } from '@angular/common';
 })
 export class SidebarComponent {
   protected readonly layout = inject(LayoutService);
-  private readonly auth = inject(AuthService);
+  public readonly auth = inject(AuthService);
 
   readonly menuItems = [
     { 

@@ -5,8 +5,8 @@
   <header class="portal-header">
     <div class="header-content">
       <div class="user-info">
-        <h1>Mis Citas</h1>
-        <p>Gestiona tus citas en todas nuestras clínicas</p>
+        <h1>¡Hola, {{ (authService.currentUser()?.nombreCompleto?.split(' ') || [])[0] }}! 👋</h1>
+        <p>Qué bueno verte de nuevo. ¿En qué podemos ayudarte hoy?</p>
       </div>
       <div class="header-actions">
         <button class="btn-book" (click)="openBooking()" *ngIf="bookingStep() === 'CLOSED'">
@@ -17,6 +17,19 @@
         </button>
       </div>
     </div>
+    
+    <!-- Navegación de Pestañas -->
+    <nav class="portal-nav">
+      <a routerLink="/mis-citas" routerLinkActive="active" class="nav-link">
+        <i class="ph ph-calendar-check"></i>
+        <span>Mis Citas</span>
+      </a>
+      <a routerLink="/mi-expediente" routerLinkActive="active" class="nav-link">
+        <i class="ph ph-file-medical"></i>
+        <span>Mi Expediente</span>
+        <span class="new-badge">NUEVO</span>
+      </a>
+    </nav>
   </header>
 
   <main class="portal-main">
@@ -37,20 +50,16 @@
           <span class="step-num">1</span><span>Servicio</span>
         </div>
         <div class="step-line"></div>
-        <div class="step" [class.active]="bookingStep() === 'SELECT_DATE'" [class.done]="selectedDate()">
-          <span class="step-num">2</span><span>Fecha</span>
-        </div>
-        <div class="step-line"></div>
-        <div class="step" [class.active]="bookingStep() === 'SELECT_SLOT'" [class.done]="selectedSlot()">
-          <span class="step-num">3</span><span>Hora</span>
+        <div class="step" [class.active]="bookingStep() === 'SELECT_DATE'" [class.done]="selectedDate() && selectedSlot()">
+          <span class="step-num">2</span><span>Fecha y Hora</span>
         </div>
         <div class="step-line"></div>
         <div class="step" [class.active]="bookingStep() === 'PAYMENT'" [class.done]="referenciaPago()">
-          <span class="step-num">4</span><span>Pago</span>
+          <span class="step-num">3</span><span>Pago</span>
         </div>
         <div class="step-line"></div>
         <div class="step" [class.active]="bookingStep() === 'CONFIRM'">
-          <span class="step-num">5</span><span>Confirmar</span>
+          <span class="step-num">4</span><span>Confirmar</span>
         </div>
       </div>
 
@@ -70,53 +79,67 @@
         <p *ngIf="servicios().length === 0 && !bookingLoading()" class="empty-msg">No hay servicios disponibles.</p>
       </div>
 
-      <!-- PASO 2: Fecha -->
+      <!-- PASO 2: Fecha y Hora (Combinados) -->
       <div class="step-content" *ngIf="bookingStep() === 'SELECT_DATE'">
         <button class="back-btn" (click)="goBackTo('SELECT_SERVICE')"><i class="ph ph-arrow-left"></i> Cambiar servicio</button>
-        <p class="step-label">Selecciona una fecha</p>
-        <div class="mini-calendar">
-          <div class="cal-nav">
-            <button (click)="prevMonth()"><i class="ph ph-caret-left"></i></button>
-            <span class="cal-month">{{ monthLabel | titlecase }}</span>
-            <button (click)="nextMonth()"><i class="ph ph-caret-right"></i></button>
+        
+        <div class="schedule-dashboard animate-fade-in">
+          <div class="calendar-side">
+            <p class="step-label">1. Selecciona una fecha</p>
+            <div class="mini-calendar">
+              <div class="cal-nav">
+                <button (click)="prevMonth()"><i class="ph ph-caret-left"></i></button>
+                <span class="cal-month">{{ monthLabel | titlecase }}</span>
+                <button (click)="nextMonth()"><i class="ph ph-caret-right"></i></button>
+              </div>
+              <div class="cal-weekdays">
+                <span>Do</span><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span>
+              </div>
+              <div class="cal-grid">
+                <button *ngFor="let d of calendarDays()"
+                  class="cal-day"
+                  [class.empty]="!d.date"
+                  [class.disabled]="d.disabled || d.past"
+                  [class.selected]="d.date === selectedDate()"
+                  (click)="selectDate(d)"
+                  [disabled]="d.disabled || d.past || !d.date">
+                  {{ d.day || '' }}
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="cal-weekdays">
-            <span>Do</span><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span>
-          </div>
-          <div class="cal-grid">
-            <button *ngFor="let d of calendarDays()"
-              class="cal-day"
-              [class.empty]="!d.date"
-              [class.disabled]="d.disabled || d.past"
-              [class.selected]="d.date === selectedDate()"
-              (click)="selectDate(d)"
-              [disabled]="d.disabled || d.past || !d.date">
-              {{ d.day || '' }}
-            </button>
+
+          <div class="slots-side" *ngIf="selectedDate()">
+            <p class="step-label">2. Horarios para {{ formatDate(selectedDate()) }}</p>
+            <div class="slots-grid">
+              <button *ngFor="let slot of slots()"
+                class="slot-btn"
+                [class.available]="slot.disponible"
+                [class.taken]="!slot.disponible"
+                [class.selected]="selectedSlot()?.horaInicio === slot.horaInicio"
+                [disabled]="!slot.disponible"
+                (click)="selectSlot(slot)">
+                {{ slot.horaInicio }}
+              </button>
+              <div *ngIf="slots().length === 0 && !bookingLoading()" class="empty-slots">
+                <i class="ph ph-calendar-x"></i>
+                <p>No hay disponibilidad</p>
+              </div>
+            </div>
           </div>
         </div>
+
+        <button class="btn-continue-combined" 
+                *ngIf="selectedDate() && selectedSlot()" 
+                (click)="bookingStep.set('PAYMENT')"
+                [@fade]>
+          Continuar al Pago <i class="ph ph-arrow-right"></i>
+        </button>
       </div>
 
-      <!-- PASO 3: Hora -->
-      <div class="step-content" *ngIf="bookingStep() === 'SELECT_SLOT'">
-        <button class="back-btn" (click)="goBackTo('SELECT_DATE')"><i class="ph ph-arrow-left"></i> Cambiar fecha</button>
-        <p class="step-label">Horarios para {{ formatDate(selectedDate()) }}</p>
-        <div class="slots-grid">
-          <button *ngFor="let slot of slots()"
-            class="slot-btn"
-            [class.available]="slot.disponible"
-            [class.taken]="!slot.disponible"
-            [disabled]="!slot.disponible"
-            (click)="selectSlot(slot)">
-            {{ slot.horaInicio }}
-          </button>
-        </div>
-        <p *ngIf="slots().length === 0 && !bookingLoading()" class="empty-msg">No hay horarios disponibles para esta fecha.</p>
-      </div>
-
-      <!-- PASO 4: Información de Pago -->
+      <!-- PASO 3: Información de Pago -->
       <div class="step-content" *ngIf="bookingStep() === 'PAYMENT'">
-        <button class="back-btn" (click)="goBackTo('SELECT_SLOT')"><i class="ph ph-arrow-left"></i> Cambiar horario</button>
+        <button class="back-btn" (click)="goBackTo('SELECT_DATE')"><i class="ph ph-arrow-left"></i> Cambiar fecha u hora</button>
         <p class="step-label">Realiza tu transferencia</p>
         
         <div class="payment-instruction">
@@ -143,7 +166,7 @@
               </div>
               <div class="detail-row">
                 <span class="lbl">Concepto:</span>
-                <span class="val">{{ referenciaPago() || 'Ingresa tu folio abajo' }}</span>
+                <span class="val">{{ referenciaPago() || authService.currentUser()?.nombreCompleto || 'Tu Nombre Completo' }}</span>
               </div>
             </div>
           </div>
@@ -242,6 +265,9 @@
             <h3>{{ cita.servicioNombre }}</h3>
             <div class="sub-meta">
               <span><i class="ph ph-clock"></i> {{ cita.fechaHora | date:'HH:mm' }} hs</span>
+              <span *ngIf="cita.doctorNombre && cita.doctorNombre !== 'Por asignar'">
+                <i class="ph ph-user-md"></i> {{ getDoctorPrefix(cita.doctorGenero) }} {{ cita.doctorNombre }}
+              </span>
             </div>
           </div>
 
@@ -251,8 +277,17 @@
           </div>
 
           <div class="actions-inline">
-            <button class="btn-action-mini wa" (click)="contactWhatsApp(cita)" title="Contactar">
-              <i class="ph ph-whatsapp-logo"></i>
+            <ng-container *ngIf="cita.estado === 'CONFIRMADA'">
+              <button class="btn-action-text reschedule" (click)="requestRescheduleWA(cita)">
+                <i class="ph ph-calendar-arrow-right"></i> Reagendar
+              </button>
+              <button class="btn-action-text cancel" (click)="requestCancellationWA(cita)">
+                <i class="ph ph-calendar-x"></i> Cancelar
+              </button>
+            </ng-container>
+            
+            <button class="btn-action-mini wa" (click)="contactWhatsApp(cita)" title="Chat">
+              <i class="ph ph-chat-circle-dots"></i>
             </button>
             <span class="row-folio">#{{ cita.folio.split('-').pop() }}</span>
           </div>
@@ -285,3 +320,14 @@
     <img [src]="previewImageUrl()" alt="Vista previa completa" />
   </div>
 </div>
+
+<!-- Modal de Confirmación -->
+<app-confirm-modal
+  [show]="showModal()"
+  [title]="modalConfig().title"
+  [message]="modalConfig().message"
+  [type]="modalConfig().type"
+  [icon]="modalConfig().icon"
+  (confirm)="handleModalConfirm()"
+  (cancel)="showModal.set(false)"
+></app-confirm-modal>

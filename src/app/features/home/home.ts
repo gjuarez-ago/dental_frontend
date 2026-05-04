@@ -10,7 +10,7 @@ interface ComprobantePendiente {
   id: string;
   pacienteNombre: string;
   pacienteId: string;
-  prioridad: 'URGENTE' | 'ESTÁNDAR' | 'NUEVO';
+  prioridad: string;
   fecha: string;
   hora: string;
   tratamiento: string;
@@ -18,6 +18,8 @@ interface ComprobantePendiente {
   monto: string;
   anticipo: string;
   comprobanteUrl: string;
+  waitingTimeLabel: string;
+  slaClass: string;
 }
 
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
@@ -34,7 +36,7 @@ import { ToastrService } from 'ngx-toastr';
 export class HomeComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly citaService = inject(AppointmentService);
-  private readonly layout = inject(LayoutService);
+  protected readonly layout = inject(LayoutService);
   private readonly spinner = inject(NgxSpinnerService);
   private readonly toastr = inject(ToastrService);
   private readonly destroy$ = new Subject<void>();
@@ -118,18 +120,42 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   private mapCitaToComprobante(cita: Cita): ComprobantePendiente {
     const date = new Date(cita.fechaHora);
+    const created = cita.createdAt ? new Date(cita.createdAt) : new Date();
+    const diffMs = new Date().getTime() - created.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    let slaClass = 'sla-low';
+    let waitingLabel = 'Reciente';
+    let prioridad = cita.source === 'PUBLIC' ? 'NUEVO' : 'ESTÁNDAR';
+
+    if (diffMins >= 120) { // > 2h
+      slaClass = 'sla-critical';
+      waitingLabel = `Hace ${Math.floor(diffMins/60)}h ${diffMins%60}m`;
+      prioridad = 'URGENTE';
+    } else if (diffMins >= 60) { // 1-2h
+      slaClass = 'sla-high';
+      waitingLabel = `Hace ${Math.floor(diffMins/60)}h ${diffMins%60}m`;
+    } else if (diffMins >= 30) { // 30-60m
+      slaClass = 'sla-medium';
+      waitingLabel = `Hace ${diffMins}m`;
+    } else if (diffMins > 5) {
+      waitingLabel = `Hace ${diffMins}m`;
+    }
+
     return {
       id: cita.id!,
       pacienteNombre: cita.pacienteNombre || 'Paciente Nuevo',
       pacienteId: cita.pacienteId ? cita.pacienteId.substring(0, 8).toUpperCase() : 'NUEVO',
-      prioridad: cita.source === 'PUBLIC' ? 'NUEVO' : 'ESTÁNDAR',
+      prioridad: prioridad,
       fecha: date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }),
       hora: date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
       tratamiento: cita.servicioNombre || 'Consulta Dental',
       motivo: cita.motivoConsulta || '',
       monto: `$${cita.montoTotal || 0}.00`,
       anticipo: `$${cita.montoPagado || 0}.00`,
-      comprobanteUrl: (cita as any).comprobanteUrl || ''
+      comprobanteUrl: (cita as any).comprobanteUrl || '',
+      waitingTimeLabel: waitingLabel,
+      slaClass: slaClass
     };
   }
 

@@ -1,0 +1,508 @@
+<div class="drawer-overlay" [class.active]="isOpen" (click)="$event.stopPropagation(); closeDrawer()">
+    <div class="drawer-container" [class.active]="isOpen" (click)="$event.stopPropagation()">
+        
+        <!-- ========================================= -->
+        <!-- VISTA: FORMULARIO DE ATENCIÓN CLÍNICA     -->
+        <!-- ========================================= -->
+        @if (!showSummary()) {
+        <header class="drawer-header">
+            <div class="header-text">
+                <div class="patient-brief">
+                    <div class="avatar">{{ cita?.pacienteNombre?.substring(0,1) }}</div>
+                    <div>
+                        <h2>Atención Clínica</h2>
+                        <p>{{ cita?.pacienteNombre }} • {{ cita?.servicioNombre }}</p>
+                    </div>
+                </div>
+            </div>
+            <button class="close-btn" (click)="closeDrawer()">
+                <i class="ph ph-x"></i>
+            </button>
+        </header>
+
+        <nav class="drawer-tabs">
+            <button [class.active]="activeTab() === 'clinical'" (click)="activeTab.set('clinical')">
+                <i class="ph ph-stethoscope"></i> Ficha Clínica
+            </button>
+            <button [class.active]="activeTab() === 'prescription'" (click)="activeTab.set('prescription')">
+                <i class="ph ph-pill"></i> Receta @if(medicamentos.length > 0) { <span class="badge">{{medicamentos.length}}</span> }
+            </button>
+            <button [class.active]="activeTab() === 'history'" (click)="activeTab.set('history')">
+                <i class="ph ph-clock-counter-clockwise"></i> Historial @if(history().length > 0) { <span class="badge secondary">{{history().length}}</span> }
+            </button>
+        </nav>
+
+        <div class="drawer-body">
+            <form [formGroup]="clinicalForm" (ngSubmit)="onSubmit()">
+                
+                <!-- TAB: CLINICAL INFO -->
+                <div class="tab-content" [class.active]="activeTab() === 'clinical'">
+
+                    <!-- ALERTA QUIRÚRGICA (NOM-004-SSA3) -->
+                    @if (cita?.procedimientoQuirurgico) {
+                    <div class="surgical-alert animate-fade-in">
+                        <div class="alert-icon">
+                            <i class="ph-fill ph-warning-octagon"></i>
+                        </div>
+                        <div class="alert-text">
+                            <strong>Cumplimiento Normativo (NOM-004-SSA3)</strong>
+                            <p>Este es un procedimiento quirúrgico. Es obligatorio contar con el <b>Consentimiento Informado</b> firmado antes de finalizar la atención.</p>
+                        </div>
+                    </div>
+                    }
+
+                    <!-- NUEVO: Signos Vitales y Somatometría -->
+                    <div class="form-section vital-signs-section">
+                        <label class="group-label vital-signs-label"><i class="ph-fill ph-heartbeat"></i> Signos Vitales y Somatometría</label>
+                        <div class="vital-signs-grid">
+                            <div class="input-group">
+                                <label>Presión Arterial</label>
+                                <div class="input-wrapper">
+                                    <input type="text" formControlName="presionArterial" placeholder="Ej: 120/80">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Frec. Cardiaca (lpm)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" formControlName="frecuenciaCardiaca" placeholder="Ej: 72">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Frec. Respiratoria (rpm)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" formControlName="frecuenciaRespiratoria" placeholder="Ej: 16">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Temp (°C)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" step="0.1" formControlName="temperatura" placeholder="Ej: 36.5">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Peso (kg)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" step="0.1" formControlName="peso" placeholder="Ej: 70">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>Talla (m o cm)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" step="0.01" formControlName="talla" placeholder="Ej: 1.75">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>IMC</label>
+                                <div class="input-wrapper disabled">
+                                    <input type="text" formControlName="imc" placeholder="Auto" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="group-label">Diagnóstico CIE-10</label>
+                        <div class="cie10-search-container">
+                            <div class="input-wrapper">
+                                <i class="ph ph-magnifying-glass search-icon"></i>
+                                <input type="text" 
+                                       [value]="selectedCie10Nombre() || ''"
+                                       (input)="onSearchCie10($event)"
+                                       (focus)="showCie10Results.set(cie10Results().length > 0)"
+                                       placeholder="Buscar por código o nombre (ej. Caries, K02...)" 
+                                       class="cie10-input"
+                                       [class.has-value]="selectedCie10Nombre()">
+                                @if (selectedCie10Nombre()) {
+                                    <button type="button" class="clear-cie10" (click)="clearCie10()">
+                                        <i class="ph-fill ph-x-circle"></i>
+                                    </button>
+                                }
+                            </div>
+
+                            @if (showCie10Results()) {
+                            <div class="cie10-results-dropdown animate-fade-in">
+                                @for (item of cie10Results(); track item.id) {
+                                <div class="cie10-result-item" (click)="selectCie10(item)">
+                                    <div class="cie-info">
+                                        <span class="cie10-code">{{ item.codigo }}</span>
+                                        <span class="cie10-name">{{ item.nombre }}</span>
+                                    </div>
+                                    <i class="ph ph-plus"></i>
+                                </div>
+                                }
+                            </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="group-label">Hallazgos y Diagnóstico <span class="text-red-500">*</span></label>
+                        <div class="input-group">
+                            <textarea formControlName="diagnostico" rows="4" 
+                                      placeholder="Describa el diagnóstico clínico detallado... (mínimo 5 caracteres)"
+                                      [class.invalid]="clinicalForm.get('diagnostico')?.invalid && clinicalForm.get('diagnostico')?.touched"></textarea>
+                            @if (clinicalForm.get('diagnostico')?.invalid && clinicalForm.get('diagnostico')?.touched) {
+                                <div class="field-error">
+                                    @if (clinicalForm.get('diagnostico')?.errors?.['required']) {
+                                        <i class="ph-fill ph-warning-circle"></i> El diagnóstico es obligatorio.
+                                    } @else if (clinicalForm.get('diagnostico')?.errors?.['minlength']) {
+                                        <i class="ph-fill ph-warning-circle"></i> El diagnóstico debe tener al menos 5 caracteres.
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="group-label">Procedimiento Realizado <span class="text-red-500">*</span></label>
+                        <div class="input-group">
+                            <textarea formControlName="procedimientoRealizado" rows="3" 
+                                      placeholder="¿Qué se realizó en esta sesión?"
+                                      [class.invalid]="clinicalForm.get('procedimientoRealizado')?.invalid && clinicalForm.get('procedimientoRealizado')?.touched"></textarea>
+                            @if (clinicalForm.get('procedimientoRealizado')?.invalid && clinicalForm.get('procedimientoRealizado')?.touched) {
+                                <div class="field-error">
+                                    <i class="ph-fill ph-warning-circle"></i> El procedimiento es obligatorio.
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN QUIRÚRGICA: Consentimiento y Complicaciones -->
+                    @if (cita?.procedimientoQuirurgico) {
+                    <div class="form-section surgical-fields animate-fade-in">
+                        <label class="group-label">Seguridad Quirúrgica</label>
+                        
+                        <div class="consent-check" [class.invalid]="clinicalForm.get('consentimientoFirmado')?.invalid && clinicalForm.get('consentimientoFirmado')?.touched">
+                            <label class="checkbox-container">
+                                <input type="checkbox" formControlName="consentimientoFirmado">
+                                <span class="checkbox-text">Confirmo que el paciente ha firmado el <b>Consentimiento Informado</b> para este procedimiento.</span>
+                            </label>
+                            @if (clinicalForm.get('consentimientoFirmado')?.invalid && clinicalForm.get('consentimientoFirmado')?.touched) {
+                                <div class="field-error"><i class="ph-fill ph-warning-circle"></i> Debe confirmar el consentimiento legal.</div>
+                            }
+                        </div>
+
+                        <div class="input-group" style="margin-top: 1rem;">
+                            <label>Complicaciones Quirúrgicas (Opcional)</label>
+                            <textarea formControlName="complicaciones" rows="2" 
+                                      placeholder="Especifique si hubo hemorragia, lesiones nerviosas, etc."></textarea>
+                        </div>
+                    </div>
+                    }
+
+
+
+
+                    <div class="form-section">
+                        <label class="group-label">Indicaciones Generales y Cuidados</label>
+                        <div class="input-group">
+                            <textarea formControlName="indicaciones" rows="3" 
+                                      placeholder="Ej: No escupir, dieta blanda, aplicar compresas..."
+                                      style="background: #fffbeb; border-color: #fef3c7; color: #92400e;"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="group-label">Observaciones Internas (Privado)</label>
+                        <div class="input-group">
+                            <textarea formControlName="observacionesInternas" rows="2" 
+                                      placeholder="Notas solo para el equipo médico..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: PRESCRIPTION -->
+                <div class="tab-content" [class.active]="activeTab() === 'prescription'">
+                    <div class="prescription-header">
+                        <p>Añada los medicamentos para la receta digital del paciente.</p>
+                        <button type="button" class="btn-add-med" (click)="addMedicamento()">
+                            <i class="ph ph-plus-circle"></i> Agregar Medicamento
+                        </button>
+                    </div>
+
+                    <div class="prescription-cards" formArrayName="medicamentos">
+                        @for (med of medicamentos.controls; track $index) {
+                        <div class="med-form-card animate-slide-up" [formGroupName]="$index">
+                            <div class="med-card-header">
+                                <span class="med-number">
+                                    <i class="ph-fill ph-prescription"></i> Medicamento {{ $index + 1 }}
+                                </span>
+                                <button type="button" class="btn-remove-med" (click)="removeMedicamento($index)">
+                                    <i class="ph ph-trash"></i>
+                                </button>
+                            </div>
+                            <div class="med-card-body">
+                                <div class="med-field full">
+                                    <label>Nombre del medicamento <span class="text-red-500">*</span></label>
+                                    <input formControlName="nombre" placeholder="Ej: Amoxicilina 500mg"
+                                           [class.invalid]="med.get('nombre')?.invalid && med.get('nombre')?.touched">
+                                </div>
+                                <div class="med-field">
+                                    <label>Dosis <span class="text-red-500">*</span></label>
+                                    <input formControlName="dosis" placeholder="Ej: 1 tableta"
+                                           [class.invalid]="med.get('dosis')?.invalid && med.get('dosis')?.touched">
+                                </div>
+                                <div class="med-field">
+                                    <label>Frecuencia <span class="text-red-500">*</span></label>
+                                    <input formControlName="frecuencia" placeholder="Ej: Cada 8 hrs"
+                                           [class.invalid]="med.get('frecuencia')?.invalid && med.get('frecuencia')?.touched">
+                                </div>
+                                <div class="med-field">
+                                    <label>Duración <span class="text-red-500">*</span></label>
+                                    <input formControlName="duracion" placeholder="Ej: 7 días"
+                                           [class.invalid]="med.get('duracion')?.invalid && med.get('duracion')?.touched">
+                                </div>
+                                <div class="med-field">
+                                    <label>Instrucciones (Opcional)</label>
+                                    <input formControlName="instrucciones" placeholder="Ej: Después de comer">
+                                </div>
+                            </div>
+                        </div>
+                        } @empty {
+                        <div class="empty-prescription">
+                            <i class="ph ph-prescription"></i>
+                            <p>No hay medicamentos registrados en esta receta.</p>
+                            <span>Toca "Agregar Medicamento" para comenzar</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- TAB: HISTORY -->
+                <div class="tab-content" [class.active]="activeTab() === 'history'">
+                    <div class="history-timeline">
+                        @for (item of history(); track item.id) {
+                            <div class="history-item">
+                                <div class="history-date">
+                                    <span class="day">{{ item.createdAt | date:'dd' }}</span>
+                                    <span class="month">{{ item.createdAt | date:'MMM' | uppercase }}</span>
+                                    <span class="year">{{ item.createdAt | date:'yyyy' }}</span>
+                                </div>
+                                <div class="history-card">
+                                    <div class="h-header">
+                                        <span class="doctor-tag">Dr. {{ item.doctorNombre }}</span>
+                                        <span class="h-time"><i class="ph ph-clock"></i> {{ item.createdAt | date:'HH:mm' }}</span>
+                                    </div>
+                                    <div class="h-body">
+                                        <div class="h-section">
+                                            <label>Diagnóstico:</label>
+                                            <p>{{ item.diagnostico }}</p>
+                                        </div>
+                                        <div class="h-section">
+                                            <label>Realizado:</label>
+                                            <p>{{ item.procedimientoRealizado }}</p>
+                                        </div>
+                                        @if (item.prescripcionMedica && item.prescripcionMedica.length > 0) {
+                                            <div class="h-section prescription">
+                                                <label><i class="ph ph-pill"></i> Receta emitida:</label>
+                                                <ul>
+                                                    @for (med of item.prescripcionMedica; track $index) {
+                                                        <li>{{ med.nombre }} - {{ med.dosis }} ({{ med.frecuencia }})</li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        } @empty {
+                            <div class="empty-history">
+                                <i class="ph ph-calendar-blank"></i>
+                                <p>Este es el primer registro clínico del paciente.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+        <footer class="drawer-footer">
+            <div class="footer-actions">
+                @if (clinicalForm.errors?.['prescriptionRequired'] && clinicalForm.touched) {
+                    <div class="form-error-msg animate-fade-in">
+                        <i class="ph-fill ph-warning-circle"></i>
+                        <span>Debe agregar al menos un medicamento o indicar cuidados.</span>
+                    </div>
+                }
+                <div class="buttons-row">
+                    <button class="btn-cancel" (click)="closeDrawer()">Cancelar</button>
+                    <button class="btn-save" (click)="onSubmit()" [disabled]="isLoading()">
+                        @if (isLoading()) {
+                            <i class="ph ph-circle-notch spinning"></i> Guardando...
+                        } @else {
+                            <i class="ph ph-check-circle"></i> Finalizar y Generar Receta
+                        }
+                    </button>
+                </div>
+            </div>
+        </footer>
+        }
+
+        <!-- ========================================= -->
+        <!-- VISTA: RESUMEN DE LA CITA (POST-GUARDAR)  -->
+        <!-- ========================================= -->
+        @if (showSummary() && summaryData()) {
+        <header class="drawer-header summary-header">
+            <div class="header-text">
+                <div class="patient-brief">
+                    <div class="avatar success">
+                        <i class="ph-fill ph-check-circle"></i>
+                    </div>
+                    <div>
+                        <h2>Consulta Finalizada</h2>
+                        <p>{{ cita?.pacienteNombre }} • {{ cita?.servicioNombre }}</p>
+                    </div>
+                </div>
+            </div>
+            <button class="close-btn" (click)="closeSummary()">
+                <i class="ph ph-x"></i>
+            </button>
+        </header>
+
+        <div class="drawer-body summary-body">
+            <div class="summary-success-banner animate-slide-up">
+                <div class="success-icon">
+                    <i class="ph-fill ph-seal-check"></i>
+                </div>
+                <h3>Atención registrada exitosamente</h3>
+                <p>El resumen de la consulta ha sido guardado. Puede imprimir este documento o compartirlo con el paciente.</p>
+            </div>
+
+            <!-- Contenido imprimible -->
+            <div id="clinical-summary-print" class="summary-content animate-slide-up">
+
+                <!-- Información General -->
+                <div class="summary-meta">
+                    <div class="meta-item">
+                        <i class="ph ph-user"></i>
+                        <div>
+                            <span class="meta-label">Paciente</span>
+                            <span class="meta-value">{{ cita?.pacienteNombre }}</span>
+                        </div>
+                    </div>
+                    <div class="meta-item">
+                        <i class="ph ph-tooth"></i>
+                        <div>
+                            <span class="meta-label">Servicio</span>
+                            <span class="meta-value">{{ cita?.servicioNombre || 'Consulta General' }}</span>
+                        </div>
+                    </div>
+                    <div class="meta-item">
+                        <i class="ph ph-user-circle"></i>
+                        <div>
+                            <span class="meta-label">Doctor</span>
+                            <span class="meta-value">{{ summaryData()!.doctorNombre || cita?.doctorNombre }}</span>
+                        </div>
+                    </div>
+                    <div class="meta-item">
+                        <i class="ph ph-calendar"></i>
+                        <div>
+                            <span class="meta-label">Fecha</span>
+                            <span class="meta-value">{{ cita?.fechaHora | date:'dd/MM/yyyy • h:mm a' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diagnóstico -->
+                <div class="section">
+                    <div class="section-title">
+                        <i class="ph ph-magnifying-glass"></i> Diagnóstico
+                        @if (summaryData()!.cie10Nombre) {
+                            <span class="count-badge" style="margin-left: 0.5rem; background: #64748b;">{{ summaryData()!.cie10Nombre }}</span>
+                        }
+                    </div>
+                    <div class="section-content">{{ summaryData()!.diagnostico }}</div>
+                </div>
+
+                <!-- Signos Vitales (Solo si hay al menos uno) -->
+                @if (summaryData()!.presionArterial || summaryData()!.frecuenciaCardiaca || summaryData()!.peso || summaryData()!.talla) {
+                <div class="section" style="background: #f8fafc; margin: 0 1.5rem 1.5rem 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0; padding: 1rem;">
+                    <div class="section-title" style="border: none; margin-bottom: 0.5rem;">
+                        <i class="ph-fill ph-heartbeat"></i> Signos Vitales y Somatometría
+                    </div>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; font-weight: 500; color: #475569;">
+                        @if (summaryData()!.presionArterial) { <div><strong>P.A.:</strong> {{ summaryData()!.presionArterial }}</div> }
+                        @if (summaryData()!.frecuenciaCardiaca) { <div><strong>F.C.:</strong> {{ summaryData()!.frecuenciaCardiaca }} lpm</div> }
+                        @if (summaryData()!.frecuenciaRespiratoria) { <div><strong>F.R.:</strong> {{ summaryData()!.frecuenciaRespiratoria }} rpm</div> }
+                        @if (summaryData()!.temperatura) { <div><strong>Temp:</strong> {{ summaryData()!.temperatura }} °C</div> }
+                        @if (summaryData()!.peso) { <div><strong>Peso:</strong> {{ summaryData()!.peso }} kg</div> }
+                        @if (summaryData()!.talla) { <div><strong>Talla:</strong> {{ summaryData()!.talla }}</div> }
+                        @if (summaryData()!.imc) { <div><strong>IMC:</strong> {{ summaryData()!.imc }}</div> }
+                    </div>
+                </div>
+                }
+
+                <!-- Procedimiento Realizado -->
+                <div class="section">
+                    <div class="section-title">
+                        <i class="ph ph-wrench"></i> Procedimiento Realizado
+                    </div>
+                    <div class="section-content">{{ summaryData()!.procedimientoRealizado }}</div>
+                </div>
+
+                <!-- Complicaciones (Solo si aplica) -->
+                @if (summaryData()!.complicaciones) {
+                <div class="section">
+                    <div class="section-title" style="color: #ef4444;">
+                        <i class="ph-fill ph-warning-circle"></i> Incidencias / Complicaciones
+                    </div>
+                    <div class="section-content" style="color: #dc2626; background: #fff1f1; padding: 1rem; border-radius: 12px; border: 1px solid #fecdd3; font-weight: 600;">
+                        {{ summaryData()!.complicaciones }}
+                    </div>
+                </div>
+                }
+
+                <!-- Medicamentos Recetados -->
+                @if (summaryData()!.prescripcionMedica && summaryData()!.prescripcionMedica.length > 0) {
+                <div class="section">
+                    <div class="section-title">
+                        <i class="ph ph-pill"></i> Receta Médica
+                        <span class="count-badge">{{ summaryData()!.prescripcionMedica.length }}</span>
+                    </div>
+                    <div class="summary-meds-grid">
+                        @for (med of summaryData()!.prescripcionMedica; track $index) {
+                        <div class="med-card">
+                            <div class="med-name">
+                                <i class="ph-fill ph-prescription"></i>
+                                {{ med.nombre }}
+                            </div>
+                            <div class="med-details">
+                                <span class="med-detail"><strong>Dosis:</strong> {{ med.dosis }}</span>
+                                <span class="med-detail"><strong>Frecuencia:</strong> {{ med.frecuencia }}</span>
+                                <span class="med-detail"><strong>Duración:</strong> {{ med.duracion }}</span>
+                            </div>
+                            @if (med.instrucciones) {
+                            <div class="med-instructions">
+                                <i class="ph ph-info"></i> {{ med.instrucciones }}
+                            </div>
+                            }
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+
+                <!-- Indicaciones Post-operatorias -->
+                @if (summaryData()!.indicaciones) {
+                <div class="section">
+                    <div class="section-title">
+                        <i class="ph ph-heart-half"></i> Indicaciones y Cuidados
+                    </div>
+                    <div class="section-content indications">{{ summaryData()!.indicaciones }}</div>
+                </div>
+                }
+            </div>
+        </div>
+
+        <footer class="drawer-footer summary-footer">
+            <button class="btn-cancel" (click)="closeSummary()">
+                <i class="ph ph-x"></i> Cerrar
+            </button>
+            <button class="btn-print" (click)="printSummary()">
+                <i class="ph ph-printer"></i> Imprimir Resumen
+            </button>
+        </footer>
+        }
+    </div>
+</div>

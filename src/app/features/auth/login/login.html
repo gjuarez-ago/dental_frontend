@@ -46,7 +46,7 @@
 
         <div class="form-options">
           <label class="remember-me">
-            <input type="checkbox"> Recordarme
+            <input type="checkbox" formControlName="rememberMe"> Recordarme
           </label>
           <a href="#" class="forgot-password">¿Olvidaste tu NIP?</a>
         </div>
@@ -85,6 +85,12 @@
               <input type="tel" id="patient-phone" formControlName="telefono" placeholder="Ej. 9991234567"
                 maxlength="10" autocomplete="tel">
             </div>
+          </div>
+
+          <div class="form-options" style="margin-bottom: 1.5rem;">
+            <label class="remember-me">
+              <input type="checkbox" formControlName="rememberMe"> Recordarme
+            </label>
           </div>
 
           <button type="submit" class="login-btn" [disabled]="phoneForm.invalid || isLoading()">
@@ -289,7 +295,7 @@
     </ng-container>
 
     <footer class="login-footer">
-      © 2026 meyisoft Dental
+      © 2026 DentalTech Solutions
     </footer>
 
   </div>

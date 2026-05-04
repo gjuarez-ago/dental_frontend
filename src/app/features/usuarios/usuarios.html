@@ -7,12 +7,21 @@
     </div>
     
     <div class="header-actions">
+      <div class="plan-status-badge" [ngClass]="plan().toLowerCase()">
+        <i class="ph-fill ph-crown"></i>
+        <span>Plan {{ plan() }}</span>
+        <ng-container *ngIf="plan() !== 'SOLO'">
+          <div class="separator"></div>
+          <span class="limit-info">Staff Clínico: <strong>{{ clinicalStaffCount() }}</strong></span>
+        </ng-container>
+      </div>
+
       <div class="search-bar">
           <i class="ph ph-magnifying-glass"></i>
           <input 
             type="text" 
             [(ngModel)]="searchTerm" 
-            placeholder="Buscar por nombre, correo o rol..."
+            placeholder="Buscar por nombre..."
             class="glass-input"
           >
         </div>
@@ -28,6 +37,16 @@
     </div>
   </header>
 
+  <!-- Aviso de Límite Alcanzado -->
+  <div class="plan-warning-banner animate-slide-down" *ngIf="clinicalLimitReached()">
+    <i class="ph ph-warning-circle"></i>
+    <div class="warning-text">
+      <strong>Límite de staff médico alcanzado.</strong> 
+      Tu plan actual <strong>{{ plan() }}</strong> permite máximo {{ plan() === 'SOLO' ? '1' : '5' }} profesional clínico.
+    </div>
+    <button class="btn-upgrade-mini">🚀 Mejorar Plan</button>
+  </div>
+
   <!-- Estado de Carga -->
   <div *ngIf="isLoading()" class="loading-overlay">
     <div class="loader"></div>
@@ -36,8 +55,17 @@
 
   <!-- Listado de Usuarios -->
   <main class="users-grid" *ngIf="!isLoading()">
-    <div class="user-card glass-card" *ngFor="let user of filteredUsers() | paginate: config">
+    <div class="user-card glass-card" *ngFor="let user of filteredUsers() | paginate: config" [class.inactive]="!user.activo">
       <div class="card-options" *ngIf="canManage()">
+        <button 
+          class="icon-btn status" 
+          [class.active]="user.activo"
+          [class.disabled-action]="user.rol === 'OWNER'"
+          (click)="toggleUserStatus(user)" 
+          [title]="user.rol === 'OWNER' ? 'Perfil Maestro Inamovible' : (user.activo ? 'Poner en Vacaciones' : 'Reactivar')"
+        >
+          <i [class]="user.rol === 'OWNER' ? 'ph-fill ph-crown' : (user.activo ? 'ph-fill ph-check-circle' : 'ph ph-prohibit')"></i>
+        </button>
         <button class="icon-btn edit" (click)="openEditDrawer(user)" title="Editar">
           <i class="ph ph-pencil"></i>
         </button>
@@ -70,12 +98,23 @@
         </div>
       </div>
 
-      <div class="card-footer">
-        <div class="badge-status" [class.pending]="user.requiereCambioNip">
-          {{ user.requiereCambioNip ? 'NIP Pendiente' : 'Activo' }}
+        <div class="badge-status" 
+             [class.pending]="user.requiereCambioNip" 
+             [class.disabled]="!user.activo"
+             [class.owner-active]="user.rol === 'OWNER'">
+          @if (user.rol === 'OWNER') {
+            Colaborador Activo
+          } @else {
+            {{ !user.activo ? 'Desactivado' : (user.requiereCambioNip ? 'NIP Pendiente' : 'Activo') }}
+          }
         </div>
-        <span class="date">Desde: {{ user.createdAt | date:'shortDate' }}</span>
-      </div>
+        <span class="date">
+          @if (user.rol === 'OWNER') {
+            Disponible para citas y atención
+          } @else {
+            Desde: {{ user.createdAt | date:'shortDate' }}
+          }
+        </span>
     </div>
 
     <!-- Empty State -->
@@ -105,3 +144,27 @@
   (close)="closeDrawer()"
   (saved)="onUserSaved()"
 ></app-usuario-drawer>
+
+<!-- Modal de Confirmación Rápida -->
+<app-confirm-modal
+  [show]="showStatusModal()"
+  [title]="statusModalConfig.title"
+  [message]="statusModalConfig.message"
+  [confirmText]="statusModalConfig.confirmText"
+  [type]="statusModalConfig.type"
+  [icon]="statusModalConfig.icon"
+  (confirm)="confirmStatusChange()"
+  (cancel)="showStatusModal.set(false)"
+></app-confirm-modal>
+
+<!-- Modal de Confirmación de Eliminación -->
+<app-confirm-modal
+  [show]="showDeleteModal()"
+  [title]="statusModalConfig.title"
+  [message]="statusModalConfig.message"
+  [confirmText]="statusModalConfig.confirmText"
+  [type]="statusModalConfig.type"
+  [icon]="statusModalConfig.icon"
+  (confirm)="confirmDeleteChange()"
+  (cancel)="showDeleteModal.set(false)"
+></app-confirm-modal>

@@ -1,0 +1,170 @@
+<div class="history-container animate-fade-in">
+  <header class="portal-header">
+    <div class="header-content">
+      <div class="user-info">
+        <h1>¡Hola, {{ (authService.currentUser()?.nombreCompleto?.split(' ') || [])[0] }}! 👋</h1>
+        <p>Tu historial de sonrisas está seguro con nosotros.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-book-portal" routerLink="/mis-citas" [queryParams]="{openBooking: true}">
+          <i class="ph ph-calendar-plus"></i>
+          <span>Agendar Cita</span>
+        </button>
+        <button class="logout-btn" (click)="logout()">
+          <i class="ph ph-sign-out"></i><span>Salir</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Navegación de Pestañas -->
+    <nav class="portal-nav">
+      <a routerLink="/mis-citas" routerLinkActive="active" class="nav-link">
+        <i class="ph ph-calendar-check"></i>
+        <span>Mis Citas</span>
+      </a>
+      <a routerLink="/mi-expediente" routerLinkActive="active" class="nav-link">
+        <i class="ph ph-file-medical"></i>
+        <span>Mi Expediente</span>
+        <span class="new-badge">NUEVO</span>
+      </a>
+    </nav>
+  </header>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading-state">
+    <div class="loader"></div>
+    <p>Consultando tu expediente digital...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="error-state">
+    <i-lucide name="alert-circle"></i-lucide>
+    <p>{{ error() }}</p>
+    <button (click)="loadHistory()">Reintentar</button>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading() && history().length === 0" class="empty-state">
+    <div class="empty-icon">
+      <i-lucide name="clipboard-list"></i-lucide>
+    </div>
+    <h2>Aún no tienes consultas registradas</h2>
+    <p>Tu expediente se irá construyendo automáticamente después de cada visita a la clínica.</p>
+  </div>
+
+  <!-- Timeline Content -->
+  <div *ngIf="!isLoading() && history().length > 0" class="timeline-wrapper">
+    <div class="timeline-line"></div>
+
+    @for (entry of history(); track entry.citaId) {
+      <article class="timeline-item animate-slide-up" [style.--index]="$index">
+        <div class="timeline-dot" [class]="statusConfig[entry.estado]?.class || 'default'">
+          <i [class]="'ph-bold ph-' + (statusConfig[entry.estado]?.icon || 'circle')"></i>
+        </div>
+
+        <div class="timeline-card">
+          <header class="card-header">
+            <div class="header-main">
+              <span class="date">{{ formatDate(entry.fecha) }}</span>
+              <h3 class="service-name">{{ entry.servicioNombre }}</h3>
+            </div>
+            <span class="status-badge" [class]="statusConfig[entry.estado]?.class || 'default'">
+              {{ statusConfig[entry.estado]?.label || entry.estado }}
+            </span>
+          </header>
+
+          <div class="card-body">
+            <!-- Doctor Info -->
+            <div class="doctor-row">
+              <div class="doctor-avatar">
+                {{ getInitials(entry.doctorNombre) }}
+              </div>
+              <div class="doctor-info">
+                <span class="label">Atendido por:</span>
+                <span class="name">{{ getDoctorPrefix(entry.doctorGenero) }} {{ entry.doctorNombre }}</span>
+              </div>
+              <div class="duration" *ngIf="entry.duracionMinutos">
+                <i class="ph ph-clock"></i>
+                {{ entry.duracionMinutos }} min
+              </div>
+            </div>
+
+            <!-- Clinical Info -->
+            <div class="clinical-grid">
+              <!-- Diagnóstico -->
+              <div class="info-block">
+                <div class="block-title">
+                  <i class="ph ph-magnifying-glass"></i>
+                  Diagnóstico Clínico
+                </div>
+                <p class="content">{{ entry.diagnostico || 'Sin observaciones registradas' }}</p>
+              </div>
+
+              <!-- Procedimiento -->
+              <div class="info-block">
+                <div class="block-title">
+                  <i class="ph ph-syringe"></i>
+                  Procedimiento Realizado
+                </div>
+                <p class="content">{{ entry.procedimiento || 'Tratamiento de rutina realizado' }}</p>
+              </div>
+            </div>
+
+            <!-- Recommendations (Destacado) -->
+            <div class="recommendations-box">
+              <div class="box-title">
+                <i class="ph ph-info"></i>
+                Indicaciones y Recomendaciones
+              </div>
+              <div class="box-content">
+                {{ entry.recomendaciones || 'Siga las indicaciones generales de cuidado dental y mantenga su higiene diaria.' }}
+              </div>
+            </div>
+
+            <!-- Prescriptions -->
+            <div class="prescriptions-section" *ngIf="entry.medicamentos && entry.medicamentos.length > 0">
+              <div class="section-title">Prescripción Médica</div>
+              <div class="medication-list">
+                @for (med of entry.medicamentos; track $index) {
+                  <div class="medication-item">
+                    <div class="med-icon">
+                      <i class="ph ph-pill"></i>
+                    </div>
+                    <div class="med-details">
+                      <span class="med-name">{{ med.nombre }}</span>
+                      <span class="med-dose">{{ med.dosis }} - {{ med.frecuencia }}</span>
+                      <span class="med-duration">Durante {{ med.duracion }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Financial Summary (Footer) -->
+          <footer class="card-footer">
+            <div class="financial-summary">
+              <div class="summary-item">
+                <span class="label">Total</span>
+                <span class="value">{{ entry.montoTotal | currency:'MXN' }}</span>
+              </div>
+              <div class="summary-item paid">
+                <span class="label">Pagado</span>
+                <span class="value">{{ entry.montoPagado | currency:'MXN' }}</span>
+              </div>
+              <div class="summary-item pending" *ngIf="entry.saldoPendiente > 0">
+                <span class="label">Pendiente</span>
+                <span class="value">{{ entry.saldoPendiente | currency:'MXN' }}</span>
+              </div>
+            </div>
+            
+            <div class="balance-warning" *ngIf="entry.estado !== 'FINALIZADA'">
+              <i class="ph ph-info"></i>
+              <span>El total final puede variar según los hallazgos clínicos durante tu consulta.</span>
+            </div>
+          </footer>
+        </div>
+      </article>
+    }
+  </div>
+</div>

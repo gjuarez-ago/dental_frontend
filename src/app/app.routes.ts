@@ -13,12 +13,13 @@ import { roleGuard } from './core/guards/role.guard';
 import { UserRole } from './core/models/user-role.enum';
 import { UsuariosComponent } from './features/usuarios/usuarios';
 import { MyAppointmentsComponent } from './features/patient/my-appointments/my-appointments';
+import { MedicalHistoryComponent } from './features/patient/medical-history/medical-history';
 
 export const routes: Routes = [
   {
     path: '',
     component: LandingComponent,
-    title: 'Dental Sonrisana | Dra. Sarai Rios'
+    title: 'Dental Sonrisana'
   },
   {
     path: 'booking',
@@ -28,7 +29,7 @@ export const routes: Routes = [
   {
     path: 'login',
     component: LoginComponent,
-    title: 'Login - meyisoft POS',
+    title: 'Login - Dental Sonrisana',
     canActivate: [publicGuard]
   },
   {
@@ -36,6 +37,12 @@ export const routes: Routes = [
     component: MyAppointmentsComponent,
     canActivate: [authGuard],
     title: 'Mis Citas | Portal del Paciente'
+  },
+  {
+    path: 'mi-expediente',
+    component: MedicalHistoryComponent,
+    canActivate: [authGuard],
+    title: 'Mi Expediente | Portal del Paciente'
   },
   {
     path: 'dashboard',
@@ -65,7 +72,7 @@ export const routes: Routes = [
       {
         path: 'users',
         component: UsuariosComponent,
-        title: 'Gestión de Usuarios | meyisoft POS',
+        title: 'Gestión de Usuarios | Dental Sonrisana',
         canActivate: [roleGuard],
         data: { roles: [UserRole.OWNER, UserRole.SUPER_ADMIN] }
       }

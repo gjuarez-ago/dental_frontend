@@ -243,21 +243,29 @@
     gap: var(--gap-md);
   }
 
-  .legal-text {
-    .switch-title {
-      display: block;
-      font-size: 0.9rem;
-      font-weight: 800;
-      color: var(--app-navy);
-      margin-bottom: 2px;
+    .legal-text {
+      .switch-title {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: var(--app-navy);
+        margin-bottom: 2px;
+      }
+      p {
+        font-size: 0.75rem;
+        color: var(--app-slate);
+        line-height: 1.4;
+        margin: 0;
+      }
+      .immutable-hint {
+        display: block;
+        font-size: 0.65rem;
+        color: #f59e0b;
+        font-weight: 700;
+        margin-top: 0.5rem;
+        i { font-size: 0.8rem; }
+      }
     }
-    p {
-      font-size: 0.75rem;
-      color: var(--app-slate);
-      line-height: 1.4;
-      margin: 0;
-    }
-  }
 
   .legal-warning {
     display: flex;
@@ -323,4 +331,140 @@
       border-radius: 50%;
     }
   }
+}
+
+/* Status Banner & Vacations */
+.status-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+
+  .banner-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    
+    i { font-size: 1.75rem; color: #10b981; }
+    
+    .text {
+      label { display: block; font-size: 0.875rem; font-weight: 800; color: #166534; margin: 0; }
+      p { font-size: 0.75rem; color: #15803d; margin: 2px 0 0; font-weight: 500; }
+    }
+  }
+
+  .toggle-status-btn {
+    background: white;
+    border: 1.5px solid #10b981;
+    color: #10b981;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    &:hover { background: #10b981; color: white; }
+  }
+
+  &.owner-status {
+    background: #f0fdf4;
+    border: 1px solid #22c55e;
+    border-radius: 16px;
+    padding: 24px;
+    
+    .banner-info {
+      gap: 1.5rem;
+      i { 
+        color: #10b981; 
+        font-size: 2.2rem;
+      }
+      .text {
+        label { 
+          color: #064e3b;
+          font-weight: 800;
+          font-size: 1.1rem;
+        }
+        p { 
+          color: #065f46;
+          font-size: 0.95rem;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  &.inactive {
+    background: #fff7ed;
+    border-color: #ffedd5;
+    
+    .banner-info {
+      i { color: #f59e0b; }
+      .text {
+        label { color: #9a3412; }
+        p { color: #c2410c; }
+      }
+    }
+    
+    .toggle-status-btn {
+      border-color: #f59e0b;
+      color: #f59e0b;
+      &:hover { background: #f59e0b; color: white; }
+    }
+  }
+}
+
+// Estilos para los Chips de Especialidades (Multiselector)
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+
+  .chip {
+    background: #1e293b;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    animation: chipIn 0.2s ease-out;
+
+    button {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      transition: all 0.2s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.4);
+      }
+
+      i { font-size: 8px; }
+    }
+  }
+}
+
+@keyframes chipIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
 }

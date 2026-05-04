@@ -20,6 +20,38 @@
             <h1 class="page-title">Agenda tu próxima<br>consulta clínica.</h1>
             <p class="page-desc">Selecciona una fecha y hora para la revisión con tu especialista. La disponibilidad se
                 confirma al completar el depósito.</p>
+            
+            <!-- SUMMARY SELECTION BOX -->
+            <div class="selection-summary-box animate-slide-up">
+                <div class="summary-item main">
+                    <div class="icon"><i class="ph-fill ph-first-aid-kit"></i></div>
+                    <div class="info">
+                        <span class="label">Servicio ({{ state().duracionMinutos }} min)</span>
+                        <p>{{ state().serviceName }}</p>
+                        @if (state().requiereValoracion) {
+                            <span class="badge warning" style="background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; display: inline-block; margin-top: 4px; border: 1px solid #fde68a;">
+                                <i class="ph-fill ph-warning" style="font-size: 0.7rem;"></i> Requiere Valoración
+                            </span>
+                        }
+                    </div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item" [class.empty]="!state().selectedDate">
+                    <div class="icon"><i class="ph-fill ph-calendar-blank"></i></div>
+                    <div class="info">
+                        <span class="label">Fecha</span>
+                        <p>{{ state().selectedDate ? (state().selectedDate | date:'dd MMM, yyyy') : 'Pendiente' }}</p>
+                    </div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item" [class.empty]="!state().selectedSlot">
+                    <div class="icon"><i class="ph-fill ph-clock"></i></div>
+                    <div class="info">
+                        <span class="label">Horario</span>
+                        <p>{{ state().selectedSlot?.horaInicio || 'Pendiente' }}</p>
+                    </div>
+                </div>
+            </div>
 
             <!-- CALENDAR CARD -->
             <div class="card calendar-card" [class.loading-overlay]="isLoadingAvailability()">
@@ -80,7 +112,7 @@
             </div>
 
             <!-- CTA SECTION -->
-            <div class="cta-section card">
+            <div id="cta-booking" class="cta-section card">
                 <div class="cta-content">
                     <h3>Progreso: 33%</h3>
                     <p>Horario: {{ state().selectedSlot?.horaInicio || '--:--' }}</p>
@@ -119,23 +151,21 @@
                 contactarte si es necesario.</p>
 
             <div class="card form-card">
-                <div class="form-group">
-                    <label for="pName">Nombre Completo</label>
+                <div class="form-group" [class.error]="bookingName.length > 0 && !isNameValid()">
+                    <label for="pName">Nombre Completo *</label>
                     <div class="input-wrapper no-icon">
                         <input type="text" id="pName" [(ngModel)]="bookingName" placeholder="Tu nombre completo" required>
                     </div>
+                    <p class="error-msg" *ngIf="bookingName.length > 0 && !isNameValid()">El nombre debe tener al menos 3 caracteres.</p>
                 </div>
 
-                <div class="form-group">
-                    <label for="pPhone">WhatsApp de contacto</label>
+                <div class="form-group" [class.error]="bookingPhone.length > 0 && !isPhoneValid()">
+                    <label for="pPhone">WhatsApp de contacto *</label>
                     <div class="input-wrapper no-icon">
                         <input type="tel" id="pPhone" [ngModel]="bookingPhone" (input)="onPhoneInput($event)"
                             placeholder="Número de WhatsApp (10 dígitos)" maxlength="10" required>
                     </div>
-                    @if (bookingPhone && !isPhoneValid()) {
-                    <p class="error-msg" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem;">Deben ser
-                        exactamente 10 números.</p>
-                    }
+                    <p class="error-msg" *ngIf="bookingPhone.length > 0 && !isPhoneValid()">Deben ser exactamente 10 números.</p>
                 </div>
 
                 <div class="form-group">
@@ -234,11 +264,46 @@
                 </div>
             </div>
 
+            <!-- CONSENTIMIENTO (NUEVOS CAMPOS) -->
+            @if (state().requiereValoracion) {
+            <div class="consent-box animate-fade-in" style="background: #fffbeb; border: 1px solid #fde68a; padding: 1.25rem; border-radius: 16px; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: flex-start; cursor: pointer;" (click)="agreedToTerms = !agreedToTerms">
+                <div class="checkbox-wrapper" style="margin-top: 0.2rem;">
+                    <div class="custom-checkbox" [class.checked]="agreedToTerms" 
+                         [style.backgroundColor]="agreedToTerms ? '#f59e0b' : 'white'"
+                         style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid #f59e0b; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                        @if (agreedToTerms) { <i class="ph-bold ph-check" style="color: white; font-size: 0.9rem;"></i> }
+                    </div>
+                </div>
+                <div class="consent-text" style="font-size: 0.85rem; color: #92400e; font-weight: 500; line-height: 1.5; flex: 1;">
+                    <strong>Importante:</strong> He leído y acepto que esta cita es estrictamente de <strong>valoración inicial</strong>. El procedimiento definitivo dependerá del diagnóstico clínico del especialista.
+                </div>
+            </div>
+            }
+
+            <!-- CONSENTIMIENTO QUIRÚRGICO -->
+            @if (state().procedimientoQuirurgico) {
+            <div class="consent-box animate-fade-in" style="background: #fef2f2; border: 1px solid #fecaca; padding: 1.25rem; border-radius: 16px; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: flex-start; cursor: pointer;" (click)="agreedToSurgery = !agreedToSurgery">
+                <div class="checkbox-wrapper" style="margin-top: 0.2rem;">
+                    <div class="custom-checkbox" [class.checked]="agreedToSurgery" 
+                         [style.backgroundColor]="agreedToSurgery ? '#ef4444' : 'white'"
+                         style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid #ef4444; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                        @if (agreedToSurgery) { <i class="ph-bold ph-check" style="color: white; font-size: 0.9rem;"></i> }
+                    </div>
+                </div>
+                <div class="consent-text" style="font-size: 0.85rem; color: #991b1b; font-weight: 500; line-height: 1.5; flex: 1;">
+                    <strong>Procedimiento Quirúrgico:</strong> Entiendo que este es un procedimiento quirúrgico/invasivo y acepto firmar el consentimiento informado clínico el día de la cita.
+                </div>
+            </div>
+            }
+
             <!-- UPLOAD INTERACTION -->
             <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none"
                 accept="image/*,application/pdf">
 
-            <button class="upload-btn" [class.loading]="isSubmitting()" (click)="triggerFileInput(fileInput)">
+            <button class="upload-btn" [class.loading]="isSubmitting()" 
+                    [disabled]="(state().requiereValoracion && !agreedToTerms) || (state().procedimientoQuirurgico && !agreedToSurgery)"
+                    [style.opacity]="((state().requiereValoracion && !agreedToTerms) || (state().procedimientoQuirurgico && !agreedToSurgery)) ? '0.5' : '1'"
+                    (click)="triggerFileInput(fileInput)">
                 <ng-container *ngIf="!isSubmitting()">
                     <i class="ph ph-cloud-arrow-up"></i>
                     <span>Subir Comprobante y Agendar</span>
@@ -274,9 +339,33 @@
                 <p class="success-subtitle">Hemos recibido tu comprobante. Tu espacio ha sido reservado con éxito.</p>
             </div>
 
+            <!-- Acceso a Portal Premium Card -->
+            <div class="portal-access-card" style="background: linear-gradient(145deg, #ffffff, #f8fafc); border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px -3px rgba(0,0,0,0.05); text-align: left;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: #e0f2fe; display: flex; align-items: center; justify-content: center; color: #0284c7;">
+                        <i class="ph-fill ph-identification-card" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <h4 style="margin: 0; color: #0f172a; font-size: 1.1rem; font-weight: 600;">Acceso a tu Portal</h4>
+                </div>
+                <p style="margin: 0 0 1.25rem 0; font-size: 0.9rem; color: #475569; line-height: 1.4;">
+                    Ingresa tu correo para generar tu NIP de acceso. Con él podrás ver tus citas y descargar tus comprobantes al instante.
+                </p>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <div class="input-wrapper" style="position: relative;">
+                        <i class="ph ph-envelope-simple" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 1.2rem;"></i>
+                        <input type="email" [(ngModel)]="bookingEmail" placeholder="tu@correo.com" style="width: 100%; padding: 0.85rem 1rem 0.85rem 2.75rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 1rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
+                    </div>
+                </div>
+                <button class="btn-primary-pill full-width" [disabled]="!isEmailValid()" (click)="setupAccount()" style="margin-bottom: 0; padding: 0.85rem; border-radius: 12px; font-weight: 600; font-size: 1rem; display: flex; justify-content: center; align-items: center; gap: 0.5rem; background: #0f172a;">
+                    Recibir NIP y Entrar <i class="ph ph-arrow-right" style="font-size: 1.2rem;"></i>
+                </button>
+            </div>
+
             <div class="success-card card">
                 <div class="dr-profile">
-                    <img [src]="doctor.img" [alt]="doctor.name" class="dr-img">
+                    <div class="doctor-initials-avatar">
+                        {{ doctor.name.substring(0,1) }}{{ doctor.name.split(' ').length > 1 ? doctor.name.split(' ')[1].substring(0,1) : '' }}
+                    </div>
                     <div class="dr-text">
                         <h3>{{ doctor.name }}</h3>
                         <p>{{ doctor.title }}</p>
@@ -299,13 +388,8 @@
                 </div>
             </div>
 
-            <div class="next-steps">
-                <p>Te hemos enviado un recordatorio a tu WhatsApp.</p>
-                <p class="welcome-text">¡Te esperamos para transformar tu sonrisa!</p>
-            </div>
-
-            <button class="btn-success-finish" (click)="finish()">
-                Listo <i class="ph ph-check-circle"></i>
+            <button class="btn-ghost full-width" (click)="finish()" style="margin-top: 1rem; color: #64748b; font-size: 0.95rem;">
+                Omitir por ahora
             </button>
         </div>
         }
@@ -331,4 +415,16 @@
             Procesando...
         </p>
     </ngx-spinner>
+
+    <!-- Modal de Alerta Informativa -->
+    <app-confirm-modal
+      [show]="showModal()"
+      [title]="modalConfig().title"
+      [message]="modalConfig().message"
+      [type]="modalConfig().type"
+      [icon]="modalConfig().icon"
+      [showCancel]="false"
+      confirmText="Entendido"
+      (confirm)="onModalConfirm()"
+    ></app-confirm-modal>
 </div>

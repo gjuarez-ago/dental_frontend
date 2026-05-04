@@ -16,6 +16,8 @@ export class LayoutService {
 
   private readonly _isCancellationOpen = signal(false);
   private readonly _selectedCitaForCancellation = signal<any>(null);
+
+  private readonly _isAuditOpen = signal(false);
   
   private readonly _selectedDate = signal<Date>(new Date());
   private readonly _selectedCitaForEdit = signal<any | null>(null);
@@ -32,6 +34,7 @@ export class LayoutService {
   readonly selectedCitaForRejection = this._selectedCitaForRejection.asReadonly();
   readonly isCancellationOpen = this._isCancellationOpen.asReadonly();
   readonly selectedCitaForCancellation = this._selectedCitaForCancellation.asReadonly();
+  readonly isAuditOpen = this._isAuditOpen.asReadonly();
   readonly selectedDate = this._selectedDate.asReadonly();
   readonly selectedCitaForEdit = this._selectedCitaForEdit.asReadonly();
   readonly selectedPatientForAppointment = this._selectedPatientForAppointment.asReadonly();
@@ -54,6 +57,18 @@ export class LayoutService {
 
   closeNotificationDrawer(): void {
     this._isNotificationOpen.set(false);
+  }
+
+  toggleAuditDrawer(): void {
+    this._isAuditOpen.update(state => !state);
+  }
+
+  openAuditDrawer(): void {
+    this._isAuditOpen.set(true);
+  }
+
+  closeAuditDrawer(): void {
+    this._isAuditOpen.set(false);
   }
 
   toggleAppointmentDrawer(): void {

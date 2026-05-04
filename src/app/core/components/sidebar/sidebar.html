@@ -2,15 +2,17 @@
   <div class="sidebar-header">
     <div class="logo-container">
       <div class="logo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-          stroke-linejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-        </svg>
+        <img src="images/logo_erm.png" alt="Novatia Logo" class="brand-logo">
       </div>
       <div class="logo-text">
-        <span class="main-text">Curator</span>
+        <span class="main-text">Novatia</span>
         <span class="sub-text">Health</span>
       </div>
+      @if (auth.currentUser()?.planSuscripcion; as plan) {
+        <div class="plan-badge" [class]="plan.toLowerCase()">
+          {{ plan }}
+        </div>
+      }
     </div>
   </div>
 
@@ -31,6 +33,14 @@
       <span class="icon">+</span>
       <span class="label">Nueva Cita</span>
     </button>
+
+    @if (auth.getUserRole() === 'OWNER' && auth.currentUser()?.planSuscripcion !== 'RED') {
+      <a href="https://wa.me/529991234567?text=Hola,%20me%20gustaria%20mejorar%20mi%20plan%20en%20Novatia%20Health" 
+         target="_blank" class="upgrade-btn" title="Mejorar Plan">
+        <span class="icon">🚀</span>
+        <span class="label">Mejorar Plan</span>
+      </a>
+    }
     <button class="logout-btn" title="Cerrar Sesión" (click)="logout()">
       <span class="icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

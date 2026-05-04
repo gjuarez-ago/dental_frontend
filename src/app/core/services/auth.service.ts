@@ -17,12 +17,16 @@ export interface User {
   telefonoContacto?: string; // Para usuarios CRM
   pinCambiado?: boolean;
   emailVerificado?: boolean;
+  giro?: string;
+  planSuscripcion?: string;
 }
 
 export interface AuthResponse {
   token: string;
   type: string;
   user: User;
+  giro?: string;
+  plan?: string;
 }
 
 // Respuesta del endpoint /check
@@ -47,9 +51,15 @@ export class AuthService {
   constructor() {
     // Inicializar el estado inmediatamente si estamos en el navegador
     if (isPlatformBrowser(this.platformId)) {
-      const storedUser = this.getStoredUser();
-      if (storedUser) {
-        this.currentUser.set(storedUser);
+      const token = localStorage.getItem('token');
+      if (token && this.isTokenExpired(token)) {
+        console.warn('Sesión expirada detectada al inicio. Limpiando...');
+        this.logout();
+      } else {
+        const storedUser = this.getStoredUser();
+        if (storedUser) {
+          this.currentUser.set(storedUser);
+        }
       }
     }
   }
@@ -86,6 +96,12 @@ export class AuthService {
     );
   }
 
+  setupAccess(data: { telefono: string; email: string }): Observable<AuthResponse & { temporaryPin?: string }> {
+    return this.http.post<AuthResponse & { temporaryPin?: string }>(`${this.PATIENT_API}/setup-access`, data).pipe(
+      tap(response => this.saveSession(response))
+    );
+  }
+
   logout(): void {
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem('token');
@@ -96,7 +112,28 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    return !!token && !this.isTokenExpired(token);
+  }
+
+  isTokenExpired(token: string): boolean {
+    if (!token) return true;
+    try {
+      const payloadPart = token.split('.')[1];
+      if (!payloadPart) return true;
+      
+      const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
+      
+      if (!payload.exp) return false;
+      
+      const expirationDate = payload.exp * 1000;
+      // Añadir un margen de 10 segundos para evitar problemas de sincronización
+      return Date.now() >= (expirationDate - 10000);
+    } catch (e) {
+      console.error('Error al decodificar token:', e);
+      return true;
+    }
   }
 
   /**
@@ -134,6 +171,15 @@ export class AuthService {
   private saveSession(response: AuthResponse): void {
     // Enriquecer el user con el role del JWT si no viene en el objeto
     const user = { ...response.user };
+    
+    // Si viene el giro o el plan en la respuesta raíz, los inyectamos al usuario
+    if (response.giro) {
+      user.giro = response.giro;
+    }
+    if (response.plan) {
+      user.planSuscripcion = response.plan;
+    }
+
     if (!user.rol && !user.role) {
       const roleFromToken = this.extractRoleFromToken(response.token);
       if (roleFromToken) {

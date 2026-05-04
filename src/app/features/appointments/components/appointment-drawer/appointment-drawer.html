@@ -15,148 +15,199 @@
     <div class="drawer-body">
       <form [formGroup]="appointmentForm" (ngSubmit)="onSubmit()" class="registration-form">
         
-        <!-- Sección 1: Paciente y Servicio -->
+        <!-- Sección 1: Paciente -->
         <div class="form-section">
-          <h3 class="section-title"><i class="ph ph-identification-card"></i> Selección de Paciente y Especialista</h3>
-          
-          <div class="input-group" [class.error]="isInvalid('pacienteId')">
-            <label for="patientSearch">Buscar Paciente *</label>
-            <div class="input-wrapper" [class.disabled]="layout.selectedCitaForEdit()">
-              <i class="ph ph-user-search"></i>
-              <input id="patientSearch" type="text" 
-                     [value]="patientSearch()"
-                     (input)="onPatientSearch($event)"
-                     [readonly]="layout.selectedCitaForEdit()"
-                     placeholder="Nombre o ID del paciente...">
-              
-              @if (showPatientResults()) {
-                <div class="search-results card shadow-lg">
-                  @for (p of filteredPatients(); track p.id) {
-                    <div class="result-item" (click)="selectPatient(p)">
-                      <span class="p-name">{{ p.nombreCompleto }}</span>
-                      <span class="p-id">Exp: {{ p.id | slice:0:8 }}</span>
-                    </div>
-                  } @empty {
-                    <div class="no-results">No se encontraron pacientes</div>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="input-group" [class.error]="isInvalid('doctorId')">
-              <label for="doctorId">Doctor Asignado *</label>
-              <div class="input-wrapper select-wrapper">
-                <i class="ph ph-stethoscope"></i>
-                <select id="doctorId" formControlName="doctorId">
-                  <option value="">Selecciona un doctor</option>
-                  @for (doc of doctors(); track doc.id) {
-                    <option [value]="doc.id">{{ doc.nombreCompleto }}</option>
-                  }
-                </select>
+          @if (!selectedPatient()) {
+            <div class="input-group search-group" [class.error]="isInvalid('pacienteId')">
+              <label for="patientSearch">Paciente</label>
+              <div class="input-wrapper" [class.disabled]="layout.selectedCitaForEdit()">
+                <i class="ph-bold ph-magnifying-glass"></i>
+                <input id="patientSearch" type="text" 
+                       [value]="patientSearch()"
+                       (input)="onPatientSearch($event)"
+                       [readonly]="layout.selectedCitaForEdit()"
+                       placeholder="Buscar por nombre o expediente...">
+                
+                @if (showPatientResults()) {
+                  <div class="search-results card shadow-lg">
+                    @for (p of filteredPatients(); track p.id) {
+                      <div class="result-item" (click)="selectPatient(p)">
+                        <div class="p-avatar">{{ p.nombreCompleto.substring(0,1) }}</div>
+                        <div class="p-info">
+                          <span class="p-name">{{ p.nombreCompleto }}</span>
+                          <span class="p-id">ID: {{ p.id | slice:0:8 }}</span>
+                        </div>
+                      </div>
+                    } @empty {
+                      <div class="no-results">No se encontraron pacientes</div>
+                    }
+                  </div>
+                }
               </div>
             </div>
+          } @else {
+            <div class="selected-patient-card animate-fade-in">
+              <div class="card-left">
+                <div class="patient-icon">
+                  <i class="ph-fill ph-user-circle"></i>
+                </div>
+                <div class="patient-details">
+                  <span class="label">Paciente Seleccionado</span>
+                  <span class="name">{{ selectedPatient()?.nombreCompleto }}</span>
+                  @if (selectedServiceDuration()) {
+                    <span class="duration-tag">
+                      <i class="ph-fill ph-clock"></i>
+                      Duración: {{ selectedServiceDuration() }} min
+                    </span>
+                  }
+                </div>
+              </div>
+              @if (!layout.selectedCitaForEdit()) {
+                <button type="button" class="btn-change-patient" (click)="selectedPatient.set(null); appointmentForm.patchValue({pacienteId: ''})">
+                  Cambiar
+                </button>
+              }
+            </div>
+          }
+        </div>
 
-            <div class="input-group" [class.error]="isInvalid('servicioId')">
-              <label for="servicioId">Tratamiento / Servicio *</label>
+        <!-- Sección 2: Selección de Servicio (Solo si hay paciente) -->
+        @if (appointmentForm.get('pacienteId')?.value) {
+          <div class="form-section animate-slide-up">
+            <label class="group-label">Tratamiento o Servicio *</label>
+            <div class="input-group">
               <div class="input-wrapper select-wrapper">
-                <i class="ph ph-first-aid"></i>
-                <select id="servicioId" formControlName="servicioId">
-                  <option value="">Selecciona servicio</option>
+                <i class="ph-bold ph-first-aid-kit"></i>
+                <select formControlName="servicioId">
+                  <option value="" disabled selected>Selecciona el tipo de consulta...</option>
                   @for (s of services(); track s.id) {
-                    <option [value]="s.id">{{ s.nombre }}</option>
+                    <option [value]="s.id">{{ s.nombre }} — ({{ s.duracionMinutos }} min • ${{ s.precioBase }})</option>
                   }
                 </select>
-              </div>
-              @if (selectedServiceDuration()) {
-                <div class="service-meta-info animate-fade-in">
-                  <i class="ph ph-clock"></i>
-                  <span>Duración: <strong>{{ selectedServiceDuration() }} minutos</strong></span>
-                </div>
-              }
-            </div>
-
-            <div class="input-group cost-group" [class.error]="isInvalid('montoTotal')">
-              <label for="montoTotal">Costo Total ($) *</label>
-              <div class="input-wrapper">
-                <span class="currency-prefix">$</span>
-                <input id="montoTotal" type="number" formControlName="montoTotal" placeholder="0.00">
+                <i class="ph-bold ph-caret-down select-arrow"></i>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Sección 2: Horario y Agenda -->
-        <div class="form-section">
-          <h3 class="section-title"><i class="ph ph-calendar-check"></i> Horario de Cita</h3>
-
-          <div class="form-row">
-            <div class="input-group" [class.error]="isInvalid('date')">
-              <label for="date">Fecha *</label>
-              <div class="input-wrapper">
-                <i class="ph ph-calendar"></i>
-                <input id="date" type="date" formControlName="date" [min]="minDate()">
+          @if (appointmentForm.get('servicioId')?.value) {
+            <!-- Sección 3+: El resto del formulario (solo si hay servicio) -->
+            <div class="progressive-content animate-slide-up">
+              <div class="form-section">
+                <label class="group-label">Especialista</label>
+                <div class="doctors-chips">
+                  @for (doc of doctors(); track doc.id) {
+                    <div class="doctor-chip" 
+                         [class.selected]="appointmentForm.get('doctorId')?.value === doc.id"
+                         (click)="appointmentForm.get('doctorId')?.setValue(doc.id)">
+                      <div class="doc-avatar">
+                        {{ doc.nombreCompleto.substring(0,1) }}{{ doc.nombreCompleto.split(' ').length > 1 ? doc.nombreCompleto.split(' ')[1].substring(0,1) : '' }}
+                      </div>
+                      <span class="doc-name">{{ doc.nombreCompleto }}</span>
+                    </div>
+                  }
+                </div>
               </div>
-            </div>
 
-            <div class="input-group" [class.error]="isInvalid('time')">
-              <label for="hourSelect">Hora *</label>
-              <div class="time-picker-group">
-                <div class="input-wrapper select-wrapper">
-                  <select id="hourSelect" [value]="tempHour()" (change)="onTimePartChange('h', $event)">
-                    @for (h of hoursSelection(); track h) {
-                      <option [value]="h">{{ h }}</option>
+              <!-- Sección 4: Costo Inteligente -->
+              <div class="form-section cost-section">
+                <div class="cost-card" [class.error]="isCostInvalid()">
+                  <div class="cost-header">
+                    <label>Inversión del Tratamiento</label>
+                    <span class="currency-tag">MXN</span>
+                  </div>
+                  <div class="cost-input-wrapper">
+                    <span class="symbol">$</span>
+                    <input type="number" formControlName="montoTotal" placeholder="0.00">
+                  </div>
+                  @if (isCostInvalid()) {
+                    <div class="cost-error-msg">
+                      <i class="ph-bold ph-warning-circle"></i>
+                      No puede ser menor al precio base oficial
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Sección 5: Fecha y Hora -->
+              <div class="form-section">
+                <label class="group-label">Programación</label>
+                <div class="schedule-container">
+                  <div class="time-selector-modern">
+                    <div class="date-picker-integrated">
+                      <i class="ph-bold ph-calendar"></i>
+                      <input type="date" formControlName="date" [min]="minDate()">
+                    </div>
+
+                    <div class="time-header">Horarios Disponibles</div>
+                    
+                    @if (isLoadingSlots()) {
+                      <div class="slots-loading">
+                        <i class="ph ph-spinner animate-spin"></i>
+                        <span>Buscando espacios...</span>
+                      </div>
+                    } @else {
+                      <div class="slots-grid">
+                        @for (slot of availableSlots(); track slot.horaInicio) {
+                          <button type="button" class="slot-btn"
+                                  [class.selected]="appointmentForm.get('time')?.value === slot.horaInicio"
+                                  [disabled]="!slot.disponible"
+                                  (click)="selectSlot(slot.horaInicio)">
+                            {{ slot.horaInicio.slice(0, 5) }}
+                          </button>
+                        } @empty {
+                          <div class="no-slots animate-fade-in">
+                            <div class="no-slots-icon">
+                              <i class="ph-duotone ph-calendar-x"></i>
+                            </div>
+                            <p>Día sin disponibilidad</p>
+                            <span>Intenta seleccionar otra fecha o consulta con recepción.</span>
+                          </div>
+                        }
+                      </div>
                     }
-                  </select>
+                  </div>
                 </div>
-                <div class="time-separator">:</div>
-                <div class="input-wrapper select-wrapper">
-                  <select id="minuteSelect" [value]="tempMinute()" (change)="onTimePartChange('m', $event)">
-                    @for (m of minutesSelection(); track m) {
-                      <option [value]="m">{{ m }}</option>
-                    }
-                  </select>
+              </div>
+
+              <!-- Sección 6: Notas -->
+              <div class="form-section">
+                <div class="input-group">
+                  <label>Motivo de Consulta</label>
+                  <textarea formControlName="motivoConsulta" rows="2" placeholder="Describa el motivo..."></textarea>
                 </div>
-                <div class="input-wrapper select-wrapper period-select">
-                  <select id="periodSelect" [value]="tempPeriod()" (change)="onTimePartChange('p', $event)">
-                    @for (p of periodsSelection(); track p) {
-                      <option [value]="p">{{ p }}</option>
-                    }
-                  </select>
+                <div class="input-group">
+                  <label>Notas de Recepción</label>
+                  <textarea formControlName="notasRecepcion" rows="2" placeholder="Indicaciones adicionales..."></textarea>
                 </div>
               </div>
             </div>
-          </div>
-
-
-        </div>
-
-        <!-- Sección 3: Notas -->
-        <div class="form-section">
-          <h3 class="section-title"><i class="ph ph-note-pencils"></i> Motivo y Observaciones</h3>
-          <div class="input-group" [class.error]="isInvalid('motivoConsulta')">
-            <label for="motivoConsulta">Motivo de la consulta *</label>
-            <div class="input-wrapper textarea-wrapper">
-              <textarea id="motivoConsulta" formControlName="motivoConsulta" rows="2" 
-                        placeholder="Ej. Revisión trimestral, Dolor en molar superior..."></textarea>
+          } @else {
+            <!-- Si hay paciente pero no servicio -->
+            <div class="empty-state-premium animate-fade-in">
+              <div class="icon-orb">
+                <i class="ph-duotone ph-sparkle"></i>
+              </div>
+              <h3>Define el tratamiento</h3>
+              <p>Selecciona un servicio para cargar la duración y costos automáticamente.</p>
             </div>
-          </div>
-          <div class="input-group">
-            <label for="notasRecepcion">Notas para Recepción</label>
-            <div class="input-wrapper textarea-wrapper">
-              <textarea id="notasRecepcion" formControlName="notasRecepcion" rows="2" 
-                        placeholder="Indicaciones para pago, recordatorios de llamada..."></textarea>
+          }
+        } @else {
+          <!-- Si NO hay paciente seleccionado -->
+          <div class="empty-state-premium animate-fade-in">
+            <div class="icon-orb">
+              <i class="ph-duotone ph-user-plus"></i>
             </div>
+            <h3>Busca el paciente</h3>
+            <p>Escribe el nombre o número de expediente para comenzar a agendar.</p>
           </div>
-        </div>
+        }
       </form>
     </div>
 
     <!-- Footer Actions -->
     <footer class="drawer-footer">
       <button class="btn-cancel" (click)="closeDrawer()" [disabled]="isSaving()">Descartar</button>
-      <button class="btn-save" (click)="onSubmit()" [disabled]="appointmentForm.invalid || isSaving()">
+      <button class="btn-save" (click)="onSubmit()" [disabled]="appointmentForm.invalid || isSaving() || isCostInvalid()">
         @if (isSaving()) {
           <i class="ph ph-spinner-gap spinning"></i> {{ layout.selectedCitaForEdit() ? 'Reprogramando...' : 'Agendando...' }}
         } @else {

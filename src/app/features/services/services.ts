@@ -6,6 +6,7 @@ import { ServiceDrawerComponent } from './components/service-drawer/service-draw
 import { LayoutService } from '../../core/services/layout.service';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import { finalize } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-services',
@@ -19,6 +20,7 @@ export class ServicesComponent implements OnInit {
   private serviceDentalService = inject(ServiceDentalService);
   protected readonly layout = inject(LayoutService);
   private readonly spinner = inject(NgxSpinnerService);
+  private readonly toastr = inject(ToastrService);
   
   readonly services = signal<ServicioDental[]>([]);
   isDrawerOpen = signal(false);
@@ -58,11 +60,18 @@ export class ServicesComponent implements OnInit {
       .subscribe({
         next: (res) => {
           if (res) {
+            this.toastr.success(
+              data.id ? 'Servicio actualizado correctamente' : 'Nuevo servicio creado con éxito',
+              'Catálogo Dental'
+            );
             this.loadServices();
             this.isDrawerOpen.set(false);
           }
         },
-        error: (err) => console.error('Error al guardar servicio:', err)
+        error: (err) => {
+          console.error('Error al guardar servicio:', err);
+          this.toastr.error('No se pudo guardar el servicio. Por favor, intenta de nuevo.', 'Error de Catálogo');
+        }
       });
   }
 }

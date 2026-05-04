@@ -65,7 +65,10 @@ html, body {
   font-family: var(--font-body);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  
+  /* Evita que el contenido "salte" al abrir modales/drawers */
   scrollbar-gutter: stable;
+  overflow-x: hidden;
 }
 
 img, svg {

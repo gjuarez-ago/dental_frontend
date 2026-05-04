@@ -7,6 +7,7 @@ import { NgxSpinnerModule } from 'ngx-spinner';
 import { provideToastr } from 'ngx-toastr';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import localeEsMx from '@angular/common/locales/es-MX';
 
 import { routes } from './app.routes';
@@ -22,7 +23,7 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     provideAnimations(),
     provideHttpClient(
-      withInterceptors([authInterceptor, errorInterceptor]), 
+      withInterceptors([authInterceptor, errorInterceptor, loadingInterceptor]), 
       withFetch()
     ),
     provideToastr({

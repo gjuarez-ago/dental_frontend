@@ -12,3 +12,56 @@
   overflow: hidden !important;
   height: 100vh;
 }
+
+// =========================================
+// NOVATIA PREMIUM GLOBAL SPINNER
+// =========================================
+.novatia-spinner-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    z-index: 9999;
+
+    .spinner-logo {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.6));
+        animation: logo-pulse-global 2s infinite ease-in-out;
+    }
+
+    .spinner-text {
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+        letter-spacing: 0.8px;
+        margin: 0;
+        text-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .dot-anim::after {
+        content: '.';
+        display: inline-block;
+        animation: dots-global 1.5s infinite;
+        width: 15px;
+        text-align: left;
+    }
+}
+
+@keyframes logo-pulse-global {
+    0%, 100% { transform: scale(1); opacity: 0.85; }
+    50% { transform: scale(1.1); opacity: 1; }
+}
+
+@keyframes dots-global {
+    0% { content: '.'; }
+    33% { content: '..'; }
+    66% { content: '...'; }
+}
+
+::ng-deep .ngx-spinner-overlay {
+    background-color: rgba(26, 43, 76, 0.92) !important;
+}

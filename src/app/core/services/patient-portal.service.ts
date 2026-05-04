@@ -11,6 +11,8 @@ export interface CitaPatient {
   sucursalNombre: string;
   sucursalTelefono?: string;
   servicioNombre: string;
+  doctorNombre?: string;
+  doctorGenero?: string;
   fechaHora: string;
   estado: string;
   montoBase: number;
@@ -41,6 +43,24 @@ export interface DiaDisponibilidad {
   esLaboral: boolean;
 }
 
+export interface TimelineEntry {
+  citaId: string;
+  folio: string;
+  fecha: string;
+  servicioNombre: string;
+  doctorNombre: string;
+  doctorGenero?: string;
+  estado: string;
+  diagnostico?: string;
+  procedimiento?: string;
+  recomendaciones?: string;
+  medicamentos?: any[];
+  duracionMinutos?: number;
+  montoTotal: number;
+  montoPagado: number;
+  saldoPendiente: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -52,6 +72,10 @@ export class PatientPortalService {
   // ─── Endpoints protegidos (requieren token) ──────────────────────
   getMyAppointments(): Observable<ApiResponse<CitaPatient[]>> {
     return this.http.get<ApiResponse<CitaPatient[]>>(`${this.API_URL}/my-appointments`);
+  }
+
+  getMedicalHistory(): Observable<ApiResponse<TimelineEntry[]>> {
+    return this.http.get<ApiResponse<TimelineEntry[]>>(`${this.API_URL}/medical-history`);
   }
 
   cancelAppointment(id: string, motivo: string): Observable<ApiResponse<string>> {

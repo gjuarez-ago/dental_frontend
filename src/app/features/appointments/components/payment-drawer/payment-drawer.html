@@ -21,10 +21,10 @@
       } @else if (resumen()) {
 
         <!-- FICHA DE COBRO UNIFICADA -->
-        <div class="ficha-cobro card" [class.liquidada]="resumen()?.estadoTicket === TicketStatus.LIQUIDADO">
+        <div class="ficha-cobro card" [class.liquidada]="cita?.estado === 'FINALIZADA'">
           <div class="ficha-header">
             <h3>Ficha de Liquidación</h3>
-            @if (resumen()?.estadoTicket === TicketStatus.LIQUIDADO) {
+            @if (cita?.estado === 'FINALIZADA') {
               <span class="status-badge settled">
                 <i class="ph-fill ph-check-circle"></i> TICKET CERRADO
               </span>
@@ -37,10 +37,10 @@
             }
           </div>
 
-          @if (resumen()?.estadoTicket !== TicketStatus.LIQUIDADO) {
+          @if (cita?.estado !== 'FINALIZADA') {
             <div class="ficha-inputs">
               <!-- COSTO TOTAL -->
-              <div class="input-block" [class.readonly]="resumen()?.costoDefinido">
+              <div class="input-block" [class.readonly]="resumen()?.costoDefinido && montoTotalEditado()! > 0">
                 <label>Costo Total de la Cita</label>
                 <div class="input-container highlight">
                   <span class="prefix">$</span>
@@ -48,13 +48,15 @@
                          [ngModel]="montoTotalEditado()" 
                          (input)="validarMontoTotal($event)"
                          placeholder="0.00" 
-                         [readonly]="resumen()?.costoDefinido" min="0">
+                         [readonly]="resumen()?.costoDefinido && montoTotalEditado()! > 0" min="0">
                   <span class="suffix">MXN</span>
                 </div>
-                @if (resumen()?.costoDefinido) {
+                @if (isCostInvalid()) {
+                  <p class="hint danger"> <i class="ph ph-warning-circle"></i> El costo no puede ser menor al precio base ($ {{resumen()?.precioBase}}). Para descuentos, usa el método de pago "Cortesía".</p>
+                } @else if (resumen()?.costoDefinido && montoTotalEditado()! > 0) {
                   <p class="hint immutable"> <i class="ph ph-lock"></i> Costo establecido. No editable.</p>
                 } @else {
-                  <p class="hint">Ajusta el total si hubo cargos extra.</p>
+                  <p class="hint">Ajusta el total real de la cita para proceder.</p>
                 }
               </div>
 
@@ -110,21 +112,22 @@
         </div>
 
         <!-- OPCIONES DE PAGO -->
-        @if (resumen()?.estadoTicket !== TicketStatus.LIQUIDADO) {
+        @if (cita?.estado !== 'FINALIZADA') {
           <section class="payment-options">
             <div class="form-grid">
               <div class="input-group">
                 <label>Método de Pago</label>
-                <select [(ngModel)]="nuevoPago.metodoPago">
+                <div class="input-wrapper select-wrapper">
+                  <i class="ph ph-wallet"></i>
+                  <select [(ngModel)]="nuevoPago.metodoPago" [disabled]="nuevoPago.monto === 0">
                     <option value="EFECTIVO">💵 Efectivo</option>
-                    <option value="TRANSFERENCIA">🏦 Transferencia (Requiere Comprobante)</option>
+                    <option value="TRANSFERENCIA">🏦 Transferencia</option>
                     <option value="TARJETA_DEBITO">💳 Tarjeta Débito</option>
                     <option value="TARJETA_CREDITO">💳 Tarjeta Crédito</option>
                     <option value="SIN_COBRO">🎁 Cortesía</option>
-                </select>
-                @if (nuevoPago.metodoPago === 'TRANSFERENCIA') {
-                    <p class="method-hint">Este cobro se enviará a revisión para validar el comprobante.</p>
-                }
+                    <option value="OTRO">📝 Otro</option>
+                  </select>
+                </div>
               </div>
               
               <div class="input-group">
@@ -143,7 +146,7 @@
               <div class="mini-item" [class.rejected]="pago.status === PagoStatus.RECHAZADO">
                 <div class="item-main">
                     <span class="date">{{ pago.createdAt | date:'dd/MM' }}</span>
-                    <span class="method">{{ pago.metodoPago }}</span>
+                    <span class="method">{{ getPaymentMethodLabel(pago.metodoPago!) }}</span>
                     <span class="amount">{{ pago.monto | currency:'MXN':'symbol-narrow' }}</span>
                     <span class="status-dot" [class]="pago.status?.toLowerCase()" [title]="pago.status"></span>
                 </div>
@@ -181,18 +184,36 @@
 
     <!-- Footer -->
     <footer class="drawer-footer">
-      <button class="btn-cancel" (click)="close()">{{ resumen()?.estadoTicket === TicketStatus.LIQUIDADO ? 'Cerrar' : 'Cancelar' }}</button>
-      @if (resumen()?.estadoTicket !== TicketStatus.LIQUIDADO) {
+      <button class="btn-cancel" (click)="close()">{{ (cita?.estado === 'FINALIZADA') ? 'Cerrar' : 'Cancelar' }}</button>
+      @if (cita?.estado !== 'FINALIZADA') {
         <button class="btn-confirm" 
                 (click)="registrarPago()" 
-                [disabled]="submitting() || (nuevoPago.monto || 0) <= 0 || nuevoPago.monto! > saldoPendienteActual()">
+                [disabled]="submitting() || (nuevoPago.monto! <= 0 && nuevoPago.metodoPago !== 'SIN_COBRO') || nuevoPago.monto! > saldoPendienteActual() || isCostInvalid()">
           @if (submitting()) {
             <i class="ph ph-circle-notch spinning"></i> Guardando...
           } @else {
-            <i class="ph ph-check-circle"></i> Confirmar y Cobrar
+            <i class="ph" [class]="nuevoPago.metodoPago === 'SIN_COBRO' ? 'ph-gift' : 'ph-check-circle'"></i>
+            {{ nuevoPago.metodoPago === 'SIN_COBRO' ? 'Confirmar Cortesía' : 'Confirmar y Cobrar' }}
           }
         </button>
       }
     </footer>
   </div>
 </div>
+
+<!-- Modal Versátil (Alerta, Confirmación, Prompt) -->
+<app-confirm-modal
+  [show]="showModal()"
+  [title]="modalConfig().title"
+  [message]="modalConfig().message"
+  [type]="modalConfig().type"
+  [icon]="modalConfig().icon"
+  [showCancel]="modalConfig().showCancel"
+  [confirmText]="modalConfig().confirmText"
+  [isPrompt]="modalConfig().isPrompt"
+  [inputPlaceholder]="modalConfig().placeholder"
+  [isInputRequired]="true"
+  (confirm)="handleModalConfirm()"
+  (confirmWithInput)="handleModalConfirm($event)"
+  (cancel)="showModal.set(false)"
+></app-confirm-modal>

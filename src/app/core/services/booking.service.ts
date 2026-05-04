@@ -15,6 +15,9 @@ export interface BookingState {
   customerName: string;
   customerPhone: string;
   duracionMinutos: number;
+  requiereValoracion: boolean;
+  procedimientoQuirurgico: boolean;
+  giro: string;
   receiptUploaded: boolean;
   step: number;
 }
@@ -36,6 +39,9 @@ export class BookingService {
     customerName: '',
     customerPhone: '',
     duracionMinutos: 30,
+    requiereValoracion: false,
+    procedimientoQuirurgico: false,
+    giro: 'DENTAL',
     receiptUploaded: false,
     step: 1
   });
@@ -50,12 +56,16 @@ export class BookingService {
     );
   }
 
-  getMonthlyAvailability(tenantId: string, sucursalId: string, month: number, year: number): Observable<DisponibilidadDia[]> {
-    const params = new HttpParams()
+  getMonthlyAvailability(tenantId: string, sucursalId: string, month: number, year: number, serviceId?: string): Observable<DisponibilidadDia[]> {
+    let params = new HttpParams()
       .set('tenantId', tenantId)
       .set('sucursalId', sucursalId)
       .set('mes', month)
       .set('anio', year);
+    
+    if (serviceId) {
+      params = params.set('servicioId', serviceId);
+    }
 
     return this.http.get<ApiResponse<DisponibilidadDia[]>>(`${this.apiUrl}/agenda/disponibilidad-mes`, { params }).pipe(
       map(res => (res.ok && res.result) ? res.result : [] as DisponibilidadDia[])
@@ -106,9 +116,24 @@ export class BookingService {
       customerName: '',
       customerPhone: '',
       duracionMinutos: 30,
+      requiereValoracion: false,
+      procedimientoQuirurgico: false,
+      giro: 'DENTAL',
       receiptUploaded: false,
       step: 1
     });
+  }
+
+  clearSelection() {
+    this._state.update(s => ({
+      ...s,
+      selectedDate: null,
+      selectedSlot: null,
+      customerName: '',
+      customerPhone: '',
+      receiptUploaded: false,
+      step: 1
+    }));
   }
 
   // Datos Bancarios Dinámicos
@@ -148,6 +173,9 @@ export class BookingService {
       serviceId: service.id || '',
       serviceName: service.nombre,
       duracionMinutos: service.duracionMinutos || 30,
+      requiereValoracion: service.requiereValoracion || false,
+      procedimientoQuirurgico: service.procedimientoQuirurgico || false,
+      giro: service.giro || 'DENTAL',
       price: service.price || `$${service.precioBase || 0} MXN`,
       step: 1
     }));

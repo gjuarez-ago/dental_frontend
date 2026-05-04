@@ -130,12 +130,19 @@
                         </div>
                         }
                         <span class="price-tag">
-                            {{ service.requiereValoracion ? 'Valoración' : '~$' + service.precioBase + ' MXN' }}
+                            {{ service.requiereValoracion ? 'Valoración' : 'Desde $' + service.precioBase }}
                         </span>
                     </div>
                     <div class="card-body">
                         <h3>{{ service.nombre }}</h3>
                         <p>{{ service.descripcion }}</p>
+
+                        <div class="service-meta">
+                            <div class="meta-item">
+                                <i class="ph ph-clock"></i>
+                                <span>{{ service.duracionMinutos }} min aprox.</span>
+                            </div>
+                        </div>
                         @if (service.requiereValoracion) {
                         <button (click)="openBooking(service)" class="booking-btn secondary">
                             <i class="ph-fill ph-file-search"></i> Agendar Valoración

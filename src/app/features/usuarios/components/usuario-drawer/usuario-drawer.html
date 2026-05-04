@@ -15,6 +15,23 @@
     <div class="drawer-body">
       <form [formGroup]="userForm" (ngSubmit)="save()" class="user-form">
 
+        <!-- Sección: Estado Operativo (Solo en edición) -->
+        <div class="form-section vacations-section" *ngIf="user">
+          <div class="status-banner" [class.inactive]="!user.activo" [class.owner-status]="user.rol === UserRole.OWNER">
+            <div class="banner-info">
+              <i class="ph-fill" [class]="user.activo ? 'ph-check-circle' : 'ph-airplane-tilt'"></i>
+              <div class="text">
+                <label>{{ user.activo ? 'Colaborador Activo' : 'En Periodo de Vacaciones' }}</label>
+                <p>{{ user.activo ? 'Disponible para citas y atención.' : 'Suspendido temporalmente. No podrá iniciar
+                  sesión.' }}</p>
+              </div>
+            </div>
+            <button type="button" class="toggle-status-btn" (click)="toggleStatus()" *ngIf="user.rol !== UserRole.OWNER">
+              {{ user.activo ? 'Poner en Vacaciones' : 'Reactivar Ahora' }}
+            </button>
+          </div>
+        </div>
+
         <!-- Sección 1: Información Básica -->
         <div class="form-section">
           <h3 class="section-title"><i class="ph-fill ph-user-circle"></i> Información Personal</h3>
@@ -31,6 +48,22 @@
             </span>
           </div>
 
+          <div class="input-group">
+            <label for="genero">Género *</label>
+            <div class="input-wrapper select-wrapper">
+              <i class="ph ph-gender-intersex"></i>
+              <select id="genero" formControlName="genero">
+                <option value="" disabled selected>Selecciona una opción</option>
+                <option value="MASCULINO">Masculino (Dr.)</option>
+                <option value="FEMENINO">Femenino (Dra.)</option>
+                <option value="OTRO">Otro / No especificar</option>
+              </select>
+            </div>
+            <span class="error-msg" *ngIf="userForm.get('genero')?.touched && userForm.get('genero')?.invalid">
+              El género es obligatorio para el trato clínico.
+            </span>
+          </div>
+
           <div class="form-row">
             <div class="input-group">
               <label for="telefonoContacto">WhatsApp / Teléfono *</label>
@@ -40,12 +73,20 @@
               </div>
             </div>
 
-            <div class="input-group">
-              <label for="email">Correo Electrónico</label>
+            <div class="input-group" [class.error]="userForm.get('email')?.touched && userForm.get('email')?.invalid">
+              <label for="email">Correo Electrónico *</label>
               <div class="input-wrapper">
                 <i class="ph ph-envelope"></i>
                 <input id="email" type="email" formControlName="email" placeholder="usuario@ejemplo.com">
               </div>
+              <span class="error-msg"
+                *ngIf="userForm.get('email')?.touched && userForm.get('email')?.errors?.['required']">
+                El correo electrónico es obligatorio.
+              </span>
+              <span class="error-msg"
+                *ngIf="userForm.get('email')?.touched && userForm.get('email')?.errors?.['email']">
+                Formato de correo inválido.
+              </span>
             </div>
           </div>
         </div>
@@ -59,9 +100,10 @@
               <label for="rol">Rol en la Sucursal *</label>
               <div class="input-wrapper select-wrapper">
                 <i class="ph ph-identification-badge"></i>
-                <select id="rol" formControlName="rol">
+                <select id="rol" formControlName="rol" [attr.disabled]="user?.rol === UserRole.OWNER ? true : null">
                   <option [value]="UserRole.DOCTOR">Doctor</option>
                   <option [value]="UserRole.RECEPTIONIST">Recepción / Asistente</option>
+                  <option *ngIf="user?.rol === UserRole.OWNER" [value]="UserRole.OWNER">Propietario</option>
                 </select>
               </div>
             </div>
@@ -81,6 +123,8 @@
               <div class="legal-text">
                 <label class="switch-title">Validación Clínica Legal *</label>
                 <p>Certifico que este colaborador es personal médico real y capacitado para consultas.</p>
+                <span class="immutable-hint" *ngIf="user"> <i class="ph ph-lock"></i> Campo verificado (no
+                  editable)</span>
               </div>
               <label class="switch">
                 <input type="checkbox" formControlName="esPersonalClinico">
@@ -93,30 +137,38 @@
             </div>
           </div>
 
-          <div class="input-group warning" [class.error]="userForm.get('nip')?.touched && userForm.get('nip')?.invalid">
-            <label for="nip">{{ user ? 'Cambiar NIP (Opcional)' : 'Asignar NIP de acceso (6 dígitos) *' }}</label>
-            <div class="input-wrapper">
-              <i class="ph ph-key"></i>
-              <input id="nip" type="password" formControlName="nip" placeholder="------" maxlength="6">
+          <div class="input-group" *ngIf="userForm.get('rol')?.value === UserRole.DOCTOR">
+            <label for="especialidades">Especialidades Médicas *</label>
+            
+            <!-- Chips Container -->
+            <div class="chips-container" *ngIf="userForm.get('especialidades')?.value?.length > 0">
+              <div class="chip" *ngFor="let esp of userForm.get('especialidades')?.value">
+                <span>{{ esp }}</span>
+                <button type="button" (click)="removeSpecialty(esp)">
+                  <i class="ph ph-x"></i>
+                </button>
+              </div>
             </div>
-            <p class="hint">El usuario deberá cambiar este NIP en su primer inicio de sesión.</p>
-            <span class="error-msg" *ngIf="userForm.get('nip')?.touched && userForm.get('nip')?.invalid">
-              El NIP debe ser de exactamente 6 dígitos numéricos.
+
+            <div class="input-wrapper">
+              <i class="ph ph-stethoscope"></i>
+              <input 
+                id="especialidades" 
+                list="specialtiesList" 
+                placeholder="Escribe y selecciona para agregar..."
+                (change)="addSpecialty($event)"
+              >
+              <datalist id="specialtiesList">
+                <option *ngFor="let esp of availableSpecialties()" [value]="esp"></option>
+              </datalist>
+            </div>
+            <p class="hint">Puedes agregar múltiples especialidades.</p>
+            <span class="error-msg" *ngIf="userForm.get('especialidades')?.touched && userForm.get('especialidades')?.invalid">
+              Es obligatorio asignar al menos una especialidad al doctor.
             </span>
           </div>
         </div>
 
-        <!-- Sección 3: Perfil Visual -->
-        <div class="form-section">
-          <h3 class="section-title"><i class="ph-fill ph-image"></i> Fotografía de Perfil</h3>
-          <div class="input-group">
-            <label for="foto">URL de la imagen</label>
-            <div class="input-wrapper">
-              <i class="ph ph-link"></i>
-              <input id="foto" type="text" formControlName="fotografiaUrl" placeholder="https://...">
-            </div>
-          </div>
-        </div>
 
       </form>
     </div>
@@ -132,3 +184,15 @@
     </footer>
   </div>
 </div>
+
+<!-- Modal de Confirmación de Estado -->
+<app-confirm-modal
+  [show]="showStatusModal"
+  [title]="statusModalConfig.title"
+  [message]="statusModalConfig.message"
+  [confirmText]="statusModalConfig.confirmText"
+  [type]="statusModalConfig.type"
+  [icon]="statusModalConfig.icon"
+  (confirm)="confirmStatusChange()"
+  (cancel)="showStatusModal = false"
+></app-confirm-modal>

@@ -2,8 +2,8 @@
 
     <header class="page-header">
         <div class="header-info">
-            <h1>Calendario de Citas</h1>
-            <p>Seguimiento de tratamientos y programación diaria.</p>
+            <h1>Hola, {{ authService.currentUser()?.nombreCompleto || 'Doctor' }} 👋</h1>
+            <p>Bienvenido de nuevo. Aquí tienes el control de tu agenda para hoy.</p>
         </div>
         <div class="header-actions">
             <div class="month-controls">
@@ -12,7 +12,7 @@
                 <button class="nav-btn" (click)="changeMonth(1)"><i class="ph ph-caret-right"></i></button>
             </div>
             <button class="btn-today-minimal" (click)="setToday()">Hoy</button>
-            <button class="btn-primary" (click)="layout.toggleAppointmentDrawer()">
+            <button class="btn-primary" (click)="openNewAppointmentDrawer()">
                 <i class="ph ph-calendar-plus"></i> Agendar Cita
             </button>
         </div>
@@ -64,10 +64,16 @@
             @for (appointment of appointments(); track appointment.id) {
             <div class="appointment-card" [attr.data-status]="appointment.estado.toLowerCase()">
 
-                <div class="card-time"
-                    [class.is-pm]="appointment.fechaHora.includes('T12:') || appointment.fechaHora.includes('T13:') || appointment.fechaHora.includes('T14:') || appointment.fechaHora.includes('T15:') || appointment.fechaHora.includes('T16:') || appointment.fechaHora.includes('T17:') || appointment.fechaHora.includes('T18:') || appointment.fechaHora.includes('T19:') || appointment.fechaHora.includes('T20:') || appointment.fechaHora.includes('T21:') || appointment.fechaHora.includes('T22:') || appointment.fechaHora.includes('T23:')">
-                    <span class="hour">{{ appointment.fechaHora | date:'h:mm' }}</span>
-                    <span class="period">{{ appointment.fechaHora | date:'a' | lowercase }}</span>
+                <div class="card-time">
+                    <div class="time-range">
+                        <span class="start-time">{{ appointment.fechaHora | date:'h:mm a' | lowercase }}</span>
+                        <i class="ph ph-arrow-down separator-icon"></i>
+                        <span class="end-time">{{ getEndTime(appointment.fechaHora, appointment.duracionMinutos) }}</span>
+                    </div>
+                    <div class="duration-badge">
+                        <i class="ph ph-hourglass"></i>
+                        {{ getDurationLabel(appointment.duracionMinutos) }}
+                    </div>
                 </div>
 
                 <div class="card-content-wrapper">
@@ -101,15 +107,17 @@
                         </div>
 
                         <div class="info-footer">
-                            <span class="status-badge-minimal" [class]="appointment.estado.toLowerCase()" [title]="getStatusData(appointment.estado).description">
-                                <i class="ph" [class]="getStatusData(appointment.estado).icon"></i>
-                                {{ getStatusData(appointment.estado).label }}
-                            </span>
+                            @if (!(appointment.estado === 'POR_LIQUIDAR' && (appointment.ticketStatus === 'LIQUIDADO' || appointment.ticketStatus === 'CORTESIA'))) {
+                                <span class="status-badge-minimal" [class]="appointment.estado.toLowerCase()" [title]="getStatusData(appointment.estado).description">
+                                    <i class="ph" [class]="getStatusData(appointment.estado).icon"></i>
+                                    {{ getStatusData(appointment.estado).label }}
+                                </span>
+                            }
 
                             @if (appointment.ticketStatus && (appointment.estado === 'POR_LIQUIDAR' ||
                             appointment.estado === 'FINALIZADA')) {
                             <span class="finance-badge" [class]="appointment.ticketStatus.toLowerCase()">
-                                <i class="ph-fill ph-check-circle"></i> {{ appointment.ticketStatus.replace('_', ' ') }}
+                                <i class="ph-fill ph-check-circle"></i> {{ getTicketStatusLabel(appointment.ticketStatus) }}
                             </span>
                             }
                         </div>
@@ -119,9 +127,9 @@
                 <div class="card-actions">
                     @if (appointment.estado === 'POR_CONFIRMAR') {
                     <button class="action-btn next-step highlight" (click)="openConfirmationDrawer(appointment)"
-                        title="Confirmar Pago y Cita">
-                        <i class="ph ph-currency-dollar"></i>
-                        <span class="btn-label">Confirmar Pago</span>
+                        [title]="appointment.montoPagado ? 'Confirmar Pago y Cita' : 'Confirmar Cita'">
+                        <i class="ph" [class]="appointment.montoPagado ? 'ph-currency-dollar' : 'ph-calendar-check'"></i>
+                        <span class="btn-label">{{ appointment.montoPagado ? 'Confirmar Pago' : 'Confirmar Cita' }}</span>
                     </button>
                     }
                     @if (appointment.estado === 'CONFIRMADA') {
@@ -139,34 +147,40 @@
                     </button>
                     }
                     @if (appointment.estado === 'EN_CONSULTA') {
-                    <button class="action-btn next-step success"
-                        (click)="updateStatus(appointment.id!, StatusEnum.POR_LIQUIDAR)" [title]="getStatusData(StatusEnum.POR_LIQUIDAR).actionLabel">
-                        <i class="ph" [class]="getStatusData(StatusEnum.POR_LIQUIDAR).icon"></i>
-                        <span class="btn-label">{{ getStatusData(StatusEnum.POR_LIQUIDAR).actionLabel }}</span>
+                    <button class="action-btn next-step clinical-btn"
+                        (click)="openClinicalDrawer(appointment)" title="Completar Ficha Clínica">
+                        <i class="ph ph-stethoscope"></i>
+                        <span class="btn-label">Ficha Clínica</span>
                     </button>
                     }
                     @if (appointment.estado === 'POR_LIQUIDAR') {
-                    <button class="action-btn next-step highlight" (click)="openPaymentDrawer(appointment)"
-                        [title]="getStatusData(StatusEnum.POR_LIQUIDAR).actionLabel">
-                        <i class="ph" [class]="getStatusData(StatusEnum.POR_LIQUIDAR).icon"></i>
-                        <span class="btn-label">{{ getStatusData(StatusEnum.POR_LIQUIDAR).actionLabel }}</span>
+                    <button class="action-btn next-step highlight" 
+                            [class.courtesy-btn]="appointment.ticketStatus === 'CORTESIA'"
+                            (click)="appointment.ticketStatus === 'CORTESIA' ? finalizarCortesia(appointment) : openPaymentDrawer(appointment)"
+                            [title]="appointment.ticketStatus === 'CORTESIA' ? 'Confirmar Cortesía' : getStatusData(StatusEnum.POR_LIQUIDAR).actionLabel">
+                        <i class="ph" [class]="appointment.ticketStatus === 'CORTESIA' ? 'ph-gift' : getStatusData(StatusEnum.POR_LIQUIDAR).icon"></i>
+                        <span class="btn-label">{{ appointment.ticketStatus === 'CORTESIA' ? 'Confirmar Cortesía' : getStatusData(StatusEnum.POR_LIQUIDAR).actionLabel }}</span>
                     </button>
                     }
                     @if (appointment.estado === 'FINALIZADA') {
+                    <button class="action-btn next-step clinical-btn" (click)="openExpediente(appointment)" title="Ver Resumen de Cita">
+                        <i class="ph ph-article"></i>
+                        <span class="btn-label">Ver Resumen</span>
+                    </button>
                     <button class="action-btn history-btn" (click)="openPaymentDrawer(appointment)" title="Ver Historial de Pagos">
                         <i class="ph ph-receipt"></i>
-                        <span class="btn-label">Ver Historial</span>
+                        <span class="btn-label">Pagos</span>
                     </button>
                     }
                     
-                    @if ((appointment.estado === 'POR_CONFIRMAR' || appointment.estado === 'CONFIRMADA' || appointment.estado === 'LLEGADA') && isAllowedToCancel()) {
+                    @if ((appointment.estado === 'CONFIRMADA' || appointment.estado === 'LLEGADA') && isAllowedToCancel()) {
                     <button class="action-btn danger-minimal" (click)="openCancellationDrawer(appointment)" title="Cancelar Cita">
                         <i class="ph ph-calendar-x"></i>
                         <span class="btn-label">Cancelar</span>
                     </button>
                     }
-
-                    @if (appointment.estado === 'POR_CONFIRMAR' || appointment.estado === 'CONFIRMADA' || appointment.estado === 'LLEGADA') {
+ 
+                    @if (appointment.estado === 'CONFIRMADA' || appointment.estado === 'LLEGADA') {
                     <button class="action-btn next-step" (click)="openRescheduleDrawer(appointment)" title="Reprogramar Cita">
                         <i class="ph ph-calendar-plus"></i>
                     </button>
@@ -177,7 +191,7 @@
             <div class="empty-feed">
                 <i class="ph ph-calendar-blank"></i>
                 <p>No hay citas registradas para este día.</p>
-                <button class="btn-text" (click)="layout.toggleAppointmentDrawer()">Agendar la primera cita</button>
+                <button class="btn-text" (click)="openNewAppointmentDrawer()">Agendar la primera cita</button>
             </div>
             }
         </div>
@@ -188,3 +202,24 @@
 <app-payment-drawer [isOpen]="isPaymentDrawerOpen()" [cita]="selectedAppointmentForPayment()"
     (closed)="isPaymentDrawerOpen.set(false)" (paymentRecorded)="onPaymentReceived()">
 </app-payment-drawer>
+
+<app-clinical-drawer [isOpen]="isClinicalDrawerOpen()" [cita]="selectedAppointmentForClinical()"
+    (closed)="isClinicalDrawerOpen.set(false)" (consultationFinished)="onPaymentReceived()">
+</app-clinical-drawer>
+
+<app-expediente-drawer [isOpen]="isExpedienteOpen()" 
+    [patient]="selectedPatientForExpediente()"
+    [citaId]="selectedAppointmentForExpediente()?.id || null"
+    (close)="isExpedienteOpen.set(false)">
+</app-expediente-drawer>
+
+<!-- Modal de Confirmación -->
+<app-confirm-modal
+  [show]="showModal()"
+  [title]="modalConfig().title"
+  [message]="modalConfig().message"
+  [type]="modalConfig().type"
+  [icon]="modalConfig().icon"
+  (confirm)="handleModalConfirm()"
+  (cancel)="showModal.set(false)"
+></app-confirm-modal>

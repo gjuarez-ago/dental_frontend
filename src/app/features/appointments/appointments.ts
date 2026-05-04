@@ -1,7 +1,9 @@
 import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import { AppointmentService } from '../../core/services/appointment.service';
+import { PaymentService } from '../../core/services/payment.service';
 import { LayoutService } from '../../core/services/layout.service';
 import { signal, computed } from '@angular/core';
 import { Cita, AppointmentStatus } from '../../core/models/appointment.model';
@@ -21,12 +23,16 @@ import { ToastrService } from 'ngx-toastr';
 import { ActivatedRoute } from '@angular/router';
 
 import { PaymentDrawerComponent } from './components/payment-drawer/payment-drawer';
+import { ClinicalDrawerComponent } from './components/clinical-drawer/clinical-drawer';
+import { ClinicalService } from '../../core/services/clinical.service';
+import { ExpedienteDrawerComponent } from '../patients/components/expediente-drawer/expediente-drawer';
+import { PatientService } from '../../core/services/patient.service';
 
 
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, PaymentDrawerComponent, NgxSpinnerModule],
+  imports: [CommonModule, PaymentDrawerComponent, ClinicalDrawerComponent, ExpedienteDrawerComponent, NgxSpinnerModule, ConfirmModalComponent],
   templateUrl: './appointments.html',
   styleUrl: './appointments.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -34,11 +40,40 @@ import { PaymentDrawerComponent } from './components/payment-drawer/payment-draw
 export class AppointmentsComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private readonly appointmentService = inject(AppointmentService);
+  private readonly paymentService = inject(PaymentService);
   protected readonly layout = inject(LayoutService);
   private readonly spinner = inject(NgxSpinnerService);
   protected readonly authService = inject(AuthService);
   private readonly toastr = inject(ToastrService);
   private readonly route = inject(ActivatedRoute);
+  private readonly patientService = inject(PatientService);
+
+  // Modal State
+  readonly showModal = signal(false);
+  readonly modalConfig = signal({
+    title: 'Confirmar',
+    message: '',
+    type: 'warning' as 'info' | 'danger' | 'warning' | 'success',
+    icon: 'ph ph-warning'
+  });
+
+  private modalCallback: (() => void) | null = null;
+
+  showConfirm(message: string, callback: () => void, type: 'info' | 'danger' | 'warning' | 'success' = 'warning', title = 'Confirmar') {
+    this.modalConfig.set({
+      title, message, type,
+      icon: 'ph ph-question'
+    });
+    this.showModal.set(true);
+    this.modalCallback = callback;
+  }
+
+  handleModalConfirm() {
+    if (this.modalCallback) {
+      this.modalCallback();
+    }
+    this.showModal.set(false);
+  }
 
   // Exponer enum y metadatos al template
   public readonly StatusEnum = AppointmentStatus;
@@ -47,12 +82,17 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
   // Estados del Calendario
   readonly viewDate = signal(new Date());   // Mes que se está viendo
   readonly selectedDate = signal(new Date()); // Día seleccionado
-  readonly monthAppointments = signal<Cita[]>([]); // Citas de todo el mes (para el grid)
-  readonly appointments = signal<Cita[]>([]); // Citas del día seleccionado (sidebar)
+  readonly monthAppointments = signal<Cita[]>([]); // Citas del mes
+  readonly appointments = signal<Cita[]>([]); // Citas del día seleccionado
 
-  // Estados de Pago
+  // Estados de Cajones (Drawers)
   readonly isPaymentDrawerOpen = signal(false);
   readonly selectedAppointmentForPayment = signal<Cita | null>(null);
+  readonly isClinicalDrawerOpen = signal(false);
+  readonly selectedAppointmentForClinical = signal<Cita | null>(null);
+  readonly isExpedienteOpen = signal(false);
+  readonly selectedAppointmentForExpediente = signal<Cita | null>(null);
+  readonly selectedPatientForExpediente = signal<any | null>(null);
 
   // Computados
   readonly currentMonth = computed(() => {
@@ -301,6 +341,12 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     this.appointmentService.actualizarEstado(citaId, status).subscribe(res => {
       if (res) {
         this.appointments.update(prev => prev.map(c => c.id === citaId ? res : c));
+        
+        // Si empezamos la atención, abrimos el expediente clínico automáticamente
+        if (status === AppointmentStatus.EN_CONSULTA) {
+          this.openClinicalDrawer(res);
+        }
+
         // Si el estado es POR_LIQUIDAR, abrimos el drawer de pagos automáticamente
         if (status === AppointmentStatus.POR_LIQUIDAR) {
           this.openPaymentDrawer(res);
@@ -311,14 +357,62 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     });
   }
 
+  openClinicalDrawer(cita: Cita) {
+    this.selectedAppointmentForClinical.set(cita);
+    this.isClinicalDrawerOpen.set(true);
+  }
+
   openPaymentDrawer(cita: Cita) {
     this.selectedAppointmentForPayment.set(cita);
     this.isPaymentDrawerOpen.set(true);
   }
 
+  openExpediente(cita: Cita) {
+    this.spinner.show();
+    this.patientService.getPatientById(cita.pacienteId).pipe(
+      finalize(() => this.spinner.hide())
+    ).subscribe(patient => {
+      if (patient) {
+        this.selectedPatientForExpediente.set(patient);
+        this.selectedAppointmentForExpediente.set(cita);
+        this.isExpedienteOpen.set(true);
+      }
+    });
+  }
+
+  openNewAppointmentDrawer() {
+    this.layout.openAppointmentDrawer(this.selectedDate());
+  }
+
   onPaymentReceived() {
     this.refreshDailyAppointments();
     this.loadMonthData();
+  }
+
+  finalizarCortesia(cita: Cita) {
+    this.showConfirm(`¿Deseas finalizar la cita de ${cita.pacienteNombre} como cortesía (sin costo)?`, () => {
+      this.spinner.show();
+      const payload = {
+        citaId: cita.id,
+        pacienteId: cita.pacienteId,
+        monto: 0,
+        metodoPago: 'SIN_COBRO',
+        notas: 'Finalizado como cortesía desde agenda.'
+      };
+      
+      this.paymentService.registrarPago(payload as any).subscribe({
+        next: () => {
+          this.spinner.hide();
+          this.toastr.success('Cita finalizada como cortesía.', '¡Éxito!');
+          this.onPaymentReceived();
+        },
+        error: (err) => {
+          this.spinner.hide();
+          this.toastr.error('No se pudo finalizar la cortesía.', 'Error');
+          console.error(err);
+        }
+      });
+    }, 'info', 'Finalizar Cortesía');
   }
 
   openConfirmationDrawer(cita: Cita) {
@@ -394,6 +488,18 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
     return this.StatusMetadata[status];
   }
 
+  getTicketStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      'POR_DEFINIR': '⏳ Por Definir',
+      'EN_REVISION': '🔍 En Revisión',
+      'PENDIENTE': '💳 Pendiente',
+      'ABONADO': '💰 Abonado',
+      'LIQUIDADO': '✅ Liquidado',
+      'CORTESIA': '🎁 Cortesía'
+    };
+    return labels[status] || status.replace('_', ' ');
+  }
+
   getIconForType(type: string): string {
     const icons: any = {
       limpieza: 'ph-sparkle',
@@ -403,5 +509,22 @@ export class AppointmentsComponent implements OnInit, OnDestroy {
       valoracion: 'ph-clipboard-text'
     };
     return icons[type] || 'ph-calendar';
+  }
+
+  getEndTime(startTime: string, durationMinutes: number): string {
+    if (!startTime) return '';
+    const date = new Date(startTime);
+    date.setMinutes(date.getMinutes() + (durationMinutes || 30));
+    return date.toLocaleTimeString('es-ES', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+  }
+
+  getDurationLabel(duration: number): string {
+    if (!duration) return '30 min';
+    if (duration >= 60) {
+      const hours = Math.floor(duration / 60);
+      const mins = duration % 60;
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    }
+    return `${duration} min`;
   }
 }

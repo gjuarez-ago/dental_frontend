@@ -5,6 +5,16 @@
 }
 
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
   .header-info {
     h1 {
       font-size: 2.25rem;
@@ -24,6 +34,33 @@
           font-size: 1rem;
       }
     }
+  }
+}
+
+.btn-bitacora {
+  background: linear-gradient(135deg, var(--primary) 0%, #2a4b7a 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(29, 53, 87, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  i { font-size: 1.25rem; }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(29, 53, 87, 0.3);
+    filter: brightness(1.1);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
@@ -264,19 +301,108 @@
     justify-content: space-between;
     align-items: flex-start;
   }
+
+  .patient-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .names {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+    h4 {
+      margin: 0;
+      font-size: 1.15rem;
+      color: var(--primary);
+      line-height: 1.2;
+    }
+  }
 }
 
-.avatar-placeholder {
+.avatar-container {
+  position: relative;
+  width: 52px;
+  height: 52px;
+}
+
+.avatar-premium {
   width: 100%;
   height: 100%;
-  background: var(--mint);
-  color: var(--navy);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.5rem;
   font-weight: 800;
-  font-size: 1.25rem;
+  color: var(--primary);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
+
+.sla-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid var(--bg-secondary);
+  background: #10b981; // default low
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  &.sla-medium .sla-dot { background: #f59e0b; }
+  &.sla-high .sla-dot { 
+    background: #f97316;
+    animation: sla-pulse 2s infinite;
+  }
+  &.sla-critical .sla-dot { 
+    background: #ef4444; 
+    animation: sla-pulse 1s infinite;
+  }
+}
+
+@keyframes sla-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.header-status-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.patient-id {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.wait-time {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 4px;
+  
+  i { font-size: 0.85rem; }
+}
+
+.sla-high .wait-time { color: #f97316; background: #fff7ed; }
+.sla-critical .wait-time { color: #ef4444; background: #fef2f2; }
 
 .card-details {
   padding: 0 20px 16px;
@@ -366,24 +492,38 @@
 
 .status-tag {
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 800;
   padding: 4px 10px;
-  border-radius: 4px;
+  border-radius: 6px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  i {
+    font-size: 0.9rem;
+  }
 
   &.urgente {
     background: #fee2e2;
     color: #ef4444;
+    i { animation: pulse-red 2s infinite; }
   }
   &.estándar {
-    background: #f1f5f9;
-    color: #64748b;
+    background: #fef3c7;
+    color: #d97706;
   }
   &.nuevo {
     background: #dcfce7;
     color: #10b981;
   }
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .document-preview {
@@ -561,8 +701,8 @@
   bottom: 0 !important;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.95);
-  backdrop-filter: blur(15px);
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(5px);
   z-index: 9999999 !important;
   display: grid;
   place-items: center;

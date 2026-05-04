@@ -6,6 +6,7 @@ export enum AppointmentStatus {
   POR_LIQUIDAR = 'POR_LIQUIDAR',
   FINALIZADA = 'FINALIZADA',
   CANCELADA = 'CANCELADA',
+  RECHAZADA = 'RECHAZADA',
   AUSENTE = 'AUSENTE'
 }
 
@@ -39,6 +40,20 @@ export interface Cita {
   ticketStatus?: TicketStatus;
   source?: string; // CRM, APP, PUBLIC
   comprobanteUrl?: string;
+  procedimientoQuirurgico?: boolean;
+  createdAt?: string;
+  
+  // Info Clínica y Branding (NOM-004)
+  doctorCedula?: string;
+  doctorEspecialidad?: string;
+  pacienteEdad?: number;
+  pacienteSexo?: string;
+  empresaNombre?: string;
+  empresaLogoUrl?: string;
+  empresaSitioWeb?: string;
+  sucursalDireccion?: string;
+  sucursalTelefono?: string;
+  folio?: string;
 }
 
 export interface DisponibilidadDia {

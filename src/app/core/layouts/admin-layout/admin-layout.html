@@ -20,7 +20,7 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-      <p>&copy; 2026 meyisoft POS. V 1.0.0</p>
+      <p>&copy; 2026 Dental Sonrisana V 1.0.0</p>
     </footer>
   </div>
 
@@ -33,6 +33,9 @@
   <app-confirmation-drawer></app-confirmation-drawer>
   <app-rejection-drawer></app-rejection-drawer>
   <app-cancellation-drawer></app-cancellation-drawer>
+
+  <app-audit-drawer [isOpen]="layout.isAuditOpen()" (close)="layout.closeAuditDrawer()">
+  </app-audit-drawer>
 
   <ngx-spinner bdColor="rgba(255,255,255,0.7)" size="medium" color="#1A2B4C" type="ball-scale-multiple"
     [fullScreen]="true">

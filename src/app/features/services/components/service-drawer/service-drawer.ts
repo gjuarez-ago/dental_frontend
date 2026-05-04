@@ -1,14 +1,16 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnChanges, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnChanges, SimpleChanges, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ServicioDental } from '../../../../core/models/service-dental.model';
 import { ServiceDentalService } from '../../../../core/services/service-dental.service';
+import { HEALTH_CATALOGS } from '../../../../core/constants/catalogs.constants';
 import { finalize } from 'rxjs';
+import { ConfirmModalComponent } from '../../../../shared/components/confirm-modal/confirm-modal.component';
 
 @Component({
   selector: 'app-service-drawer',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmModalComponent],
   templateUrl: './service-drawer.html',
   styleUrl: './service-drawer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -22,6 +24,35 @@ export class ServiceDrawerComponent implements OnChanges {
   private readonly fb = inject(FormBuilder);
   private readonly serviceDentalService = inject(ServiceDentalService);
   
+  // Modal State
+  readonly showModal = signal(false);
+  readonly modalConfig = signal({
+    title: 'Aviso',
+    message: '',
+    type: 'info' as 'info' | 'danger' | 'warning' | 'success',
+    icon: 'ph ph-info'
+  });
+
+  showAlert(message: string, type: 'info' | 'danger' | 'warning' | 'success' = 'info', title = 'Aviso') {
+    this.modalConfig.set({
+      title,
+      message,
+      type,
+      icon: type === 'danger' ? 'ph ph-warning-circle' : (type === 'warning' ? 'ph ph-warning' : 'ph ph-info')
+    });
+    this.showModal.set(true);
+  }
+  
+  readonly catalogs = HEALTH_CATALOGS;
+
+  get todasEspecialidades(): string[] {
+    return [
+      ...this.catalogs.specialtiesByGiro['DENTAL'],
+      ...this.catalogs.specialtiesByGiro['PSICOLOGIA'],
+      ...this.catalogs.specialtiesByGiro['GENERAL']
+    ].sort();
+  }
+  
   readonly serviceForm: FormGroup = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(3)]],
     descripcion: ['', [Validators.required]],
@@ -29,12 +60,17 @@ export class ServiceDrawerComponent implements OnChanges {
     duracionMinutos: [30, [Validators.required, Validators.min(5)]],
     colorEtiqueta: ['#1A2B4C', [Validators.required]],
     imagenUrl: [null],
-    requiereValoracion: [false]
+    requiereValoracion: [false],
+    procedimientoQuirurgico: [false],
+    giro: ['DENTAL'],
+    especialidadRequerida: ['']
   });
 
   readonly imagePreview = signal<string | null>(null);
   readonly isUploading = signal<boolean>(false);
   private selectedFile: File | null = null;
+
+
 
   get isValoracion(): boolean {
     return this.serviceForm.get('requiereValoracion')?.value || false;
@@ -49,7 +85,10 @@ export class ServiceDrawerComponent implements OnChanges {
         duracionMinutos: this.serviceData.duracionMinutos,
         colorEtiqueta: this.serviceData.colorEtiqueta,
         imagenUrl: this.serviceData.imagenUrl,
-        requiereValoracion: this.serviceData.requiereValoracion || false
+        requiereValoracion: this.serviceData.requiereValoracion || false,
+        procedimientoQuirurgico: this.serviceData.procedimientoQuirurgico || false,
+        giro: this.serviceData.giro || 'DENTAL',
+        especialidadRequerida: this.serviceData.especialidadRequerida || ''
       });
       this.imagePreview.set(this.serviceData.imagenUrl || null);
     } 
@@ -64,7 +103,10 @@ export class ServiceDrawerComponent implements OnChanges {
       precioBase: 0, 
       duracionMinutos: 30, 
       colorEtiqueta: '#1A2B4C', 
-      requiereValoracion: false 
+      requiereValoracion: false,
+      procedimientoQuirurgico: false,
+      giro: 'DENTAL',
+      especialidadRequerida: ''
     });
     this.imagePreview.set(null);
     this.selectedFile = null;
@@ -74,33 +116,23 @@ export class ServiceDrawerComponent implements OnChanges {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (file) {
-      // 1. Validar que sea solo imagen
       if (!file.type.startsWith('image/')) {
-        alert('Por favor selecciona solo archivos de imagen (JPG, PNG). Los PDF no están permitidos.');
+        this.showAlert('Por favor selecciona solo archivos de imagen (JPG, PNG).', 'warning', 'Archivo no permitido');
         input.value = '';
         return;
       }
 
       try {
         this.isUploading.set(true);
-        // 2. Comprimir imagen (Máximo 500KB)
         const compressedFile = await this.compressImage(file, 0.7, 1000);
-        
-        // Si sigue siendo muy grande, comprimir más
-        if (compressedFile.size > 500 * 1024) {
-          this.selectedFile = await this.compressImage(compressedFile, 0.5, 800);
-        } else {
-          this.selectedFile = compressedFile;
-        }
+        this.selectedFile = compressedFile.size > 500 * 1024 ? await this.compressImage(compressedFile, 0.5, 800) : compressedFile;
 
-        // Previsualización local
         const reader = new FileReader();
         reader.onload = () => this.imagePreview.set(reader.result as string);
         reader.readAsDataURL(this.selectedFile);
       } catch (error) {
         console.error('Error al procesar la imagen:', error);
       } finally {
-        // 3. Reset del input para permitir seleccionar el mismo archivo
         input.value = '';
         this.isUploading.set(false);
       }
@@ -118,32 +150,21 @@ export class ServiceDrawerComponent implements OnChanges {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-
           if (width > maxWidth) {
             height = (height * maxWidth) / width;
             width = maxWidth;
           }
-
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                const compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
-                  lastModified: Date.now(),
-                });
-                resolve(compressedFile);
-              } else {
-                reject(new Error('Error al comprimir imagen'));
-              }
-            },
-            'image/jpeg',
-            quality
-          );
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+            } else {
+              reject(new Error('Error al comprimir imagen'));
+            }
+          }, 'image/jpeg', quality);
         };
         img.onerror = (err) => reject(err);
       };
@@ -160,10 +181,7 @@ export class ServiceDrawerComponent implements OnChanges {
         .pipe(finalize(() => this.isUploading.set(false)))
         .subscribe({
           next: (url) => resolve(url),
-          error: (err) => {
-            console.error('Error al subir a Cloudflare:', err);
-            reject(err);
-          }
+          error: (err) => reject(err)
         });
     });
   }
@@ -172,7 +190,6 @@ export class ServiceDrawerComponent implements OnChanges {
     if (this.serviceForm.valid) {
       try {
         const finalImageUrl = await this.handleImageUpload();
-        
         const formValue = this.serviceForm.value;
         const result: ServicioDental = {
           id: this.serviceData?.id,
@@ -182,17 +199,17 @@ export class ServiceDrawerComponent implements OnChanges {
           duracionMinutos: formValue.duracionMinutos,
           colorEtiqueta: formValue.colorEtiqueta,
           imagenUrl: finalImageUrl || undefined,
-          requiereValoracion: formValue.requiereValoracion
+          requiereValoracion: formValue.requiereValoracion,
+          procedimientoQuirurgico: formValue.procedimientoQuirurgico,
+          giro: formValue.giro,
+          especialidadRequerida: formValue.especialidadRequerida
         };
         this.saved.emit(result);
       } catch (error) {
-        // El error ya fue logueado en handleImageUpload
+        console.error('Error al guardar servicio:', error);
       }
     } else {
-      Object.keys(this.serviceForm.controls).forEach(key => {
-        const control = this.serviceForm.get(key);
-        control?.markAsTouched();
-      });
+      Object.keys(this.serviceForm.controls).forEach(key => this.serviceForm.get(key)?.markAsTouched());
     }
   }
 

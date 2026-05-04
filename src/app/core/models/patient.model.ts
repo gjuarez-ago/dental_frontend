@@ -14,6 +14,7 @@ export interface Patient {
   emergenciaNombre: string;
   emergenciaTelefono: string;
   tipoSangre: string;
+  motivoVisita: string;
   notasClinicas: string;
   
   // Auditoría

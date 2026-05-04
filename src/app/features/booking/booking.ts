@@ -3,21 +3,43 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { BookingService } from '../../core/services/booking.service';
+import { AuthService } from '../../core/services/auth.service';
 import { SlotDisponibilidad, DisponibilidadDia } from '../../core/models/appointment.model';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
+import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
 
 @Component({
   selector: 'app-booking',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, NgxSpinnerModule],
+  imports: [CommonModule, FormsModule, RouterModule, NgxSpinnerModule, ConfirmModalComponent],
   templateUrl: './booking.html',
   styleUrl: './booking.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BookingComponent implements OnInit {
   protected readonly fb = inject(BookingService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly spinner = inject(NgxSpinnerService);
+
+  // Modal State
+  readonly showModal = signal(false);
+  readonly modalConfig = signal({
+    title: 'Aviso',
+    message: '',
+    type: 'info' as 'info' | 'danger' | 'warning' | 'success',
+    icon: 'ph ph-info'
+  });
+
+  showAlert(message: string, type: 'info' | 'danger' | 'warning' | 'success' = 'info', title = 'Aviso') {
+    this.modalConfig.set({
+      title,
+      message,
+      type,
+      icon: type === 'danger' ? 'ph ph-warning-circle' : (type === 'warning' ? 'ph ph-warning' : 'ph ph-info')
+    });
+    this.showModal.set(true);
+  }
 
   // Tenant y Sucursal Fijos
   private readonly tenantId = '550e8400-e29b-41d4-a716-446655440000';
@@ -80,10 +102,12 @@ export class BookingComponent implements OnInit {
     img: 'https://images.unsplash.com/photo-1629470948467-313620719067?auto=format&fit=crop&q=80&w=400'
   };
 
-  // Form fields para el Paso 2
   bookingName = '';
   bookingPhone = '';
   bookingNotes = '';
+  bookingEmail = '';
+  agreedToTerms = false;
+  agreedToSurgery = false;
 
   // Estados de carga
   isLoadingAvailability = signal(false);
@@ -91,14 +115,21 @@ export class BookingComponent implements OnInit {
   isSubmitting = signal(false);
 
   ngOnInit(): void {
+    // 1. Validar que haya un servicio seleccionado
     if (!this.state().serviceName) {
       this.router.navigate(['/']);
       return;
     }
     
-    this.bookingName = this.state().customerName;
-    this.bookingPhone = this.state().customerPhone;
+    // 2. Limpiar selecciones previas para una nueva experiencia fresca
+    this.fb.clearSelection();
+    this.bookingName = '';
+    this.bookingPhone = '';
+    this.bookingEmail = '';
+    this.bookingNotes = '';
+    this.availableSlots.set([]);
     
+    // 3. Cargar información inicial
     this.loadMonthlyAvailability();
     this.fb.getClinicInfo(this.tenantId, this.sucursalId);
     this.scrollToTop();
@@ -112,7 +143,8 @@ export class BookingComponent implements OnInit {
       this.tenantId, 
       this.sucursalId, 
       date.getMonth() + 1, 
-      date.getFullYear()
+      date.getFullYear(),
+      this.state().serviceId
     ).subscribe({
       next: (days) => {
         this.monthlyDays.set(days);
@@ -185,21 +217,18 @@ export class BookingComponent implements OnInit {
 
   private scrollToBottom(): void {
     setTimeout(() => {
-      const scrollOptions: ScrollToOptions = { 
-        top: document.documentElement.scrollHeight, 
-        left: 0, 
-        behavior: 'smooth' 
-      };
-      window.scrollTo(scrollOptions);
-      
-      const container = document.querySelector('.booking-container');
-      if (container) {
-        container.scrollTo({ 
-          top: container.scrollHeight, 
+      const ctaElement = document.getElementById('cta-booking');
+      if (ctaElement) {
+        ctaElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        // Fallback al comportamiento anterior si el ID no existe por alguna razón
+        const scrollOptions: ScrollToOptions = { 
+          top: document.documentElement.scrollHeight, 
           behavior: 'smooth' 
-        });
+        };
+        window.scrollTo(scrollOptions);
       }
-    }, 150); // Incrementar ligeramente para no interrumpir el registro del clic
+    }, 150);
   }
 
   private scrollToTop(): void {
@@ -239,7 +268,7 @@ export class BookingComponent implements OnInit {
     if (file) {
       // 1. Validar que sea solo imagen
       if (!file.type.startsWith('image/')) {
-        alert('Por favor selecciona solo archivos de imagen (JPG, PNG). Los PDF no están permitidos.');
+        this.showAlert('Por favor selecciona solo archivos de imagen (JPG, PNG). Los PDF no están permitidos.', 'warning', 'Archivo no permitido');
         input.value = '';
         return;
       }
@@ -258,7 +287,7 @@ export class BookingComponent implements OnInit {
         }
       } catch (error) {
         console.error('Error al procesar la imagen:', error);
-        alert('No se pudo procesar la imagen. Intenta con otra.');
+        this.showAlert('No se pudo procesar la imagen. Intenta con otra.', 'danger', 'Error de Procesamiento');
         this.spinner.hide(); // Solo ocultamos si hay error en la compresión
       } finally {
         // 3. Reset del input para permitir seleccionar el mismo archivo
@@ -389,7 +418,7 @@ export class BookingComponent implements OnInit {
       error: () => {
         this.isSubmitting.set(false);
         this.spinner.hide();
-        alert('Hubo un error al procesar tu cita. Por favor intenta de nuevo.');
+        this.showAlert('Hubo un error al procesar tu cita. Por favor intenta de nuevo.', 'danger', 'Error al Agendar');
       }
     });
   }
@@ -397,6 +426,65 @@ export class BookingComponent implements OnInit {
   finish(): void {
     this.fb.resetBooking();
     this.router.navigate(['/']);
+  }
+
+  redirectOnModalClose = false;
+
+  onModalConfirm(): void {
+    this.showModal.set(false);
+    if (this.redirectOnModalClose) {
+      this.redirectOnModalClose = false;
+      this.fb.resetBooking();
+      this.router.navigate(['/mis-citas']);
+    }
+  }
+
+  isEmailValid(): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.bookingEmail);
+  }
+
+  setupAccount(): void {
+    if (!this.isEmailValid() || !this.bookingPhone) {
+      this.showAlert('Ingresa un correo electrónico válido.', 'warning', 'Correo Inválido');
+      return;
+    }
+
+    this.isSubmitting.set(true);
+    this.spinner.show();
+
+    this.authService.setupAccess({ telefono: this.bookingPhone, email: this.bookingEmail }).subscribe({
+      next: (res) => {
+        this.isSubmitting.set(false);
+        this.spinner.hide();
+        if (res.token) {
+          if (res.temporaryPin === 'YA_TIENES_CUENTA') {
+            this.modalConfig.set({
+              title: '¡Ya tienes cuenta!',
+              message: 'Identificamos que ya habías generado tu acceso antes. Te redirigiremos a tu portal para que ingreses con tu número y NIP de siempre.',
+              type: 'info',
+              icon: 'ph ph-user-check'
+            });
+          } else {
+            const pinMsg = res.temporaryPin ? `<br><br><b>Tu NIP de acceso es: <span style="font-size:1.5rem; color:#0d9488">${res.temporaryPin}</span></b><br><br>Úsalo para iniciar sesión.` : '';
+            this.modalConfig.set({
+              title: '¡Acceso Creado!',
+              message: `Hemos vinculado tu correo exitosamente.${pinMsg}`,
+              type: 'success',
+              icon: 'ph ph-check-circle'
+            });
+          }
+          this.redirectOnModalClose = true;
+          this.showModal.set(true);
+        }
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        this.spinner.hide();
+        // Extraer el mensaje de error del backend (campo userMessage o message)
+        const msg = err?.error?.userMessage || err?.error?.message || 'Hubo un error al crear tu acceso. Por favor intenta de nuevo.';
+        this.showAlert(msg, 'danger', 'Error de Acceso');
+      }
+    });
   }
 
   prevStep(): void {

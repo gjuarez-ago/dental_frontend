@@ -15,15 +15,15 @@ import { finalize } from 'rxjs';
       <div class="drawer-content" (click)="$event.stopPropagation()">
         <header class="drawer-header">
           <div class="header-info">
-            <h3>Registrar Rechazo</h3>
-            <p>Indica el motivo por el cual no se pudo validar el pago.</p>
+            <h3>Rechazar Solicitud</h3>
+            <p>Indica el motivo por el cual no se puede aceptar esta cita.</p>
           </div>
           <button class="close-btn" (click)="close()">×</button>
         </header>
 
         <div class="drawer-body">
           <div class="rejection-target">
-            <span class="label">Rechazando pago de:</span>
+            <span class="label">Rechazando cita de:</span>
             <span class="patient-name">{{ layout.selectedCitaForRejection()?.pacienteNombre }}</span>
           </div>
 
@@ -42,16 +42,17 @@ import { finalize } from 'rxjs';
             </div>
             
             <textarea 
-              [(ngModel)]="motivo" 
+              [ngModel]="motivo()" 
+              (ngModelChange)="motivo.set($event)"
               placeholder="Escribe aquí los detalles del rechazo o selecciona una opción rápida..."
               rows="5"
               class="premium-textarea"
             ></textarea>
           </div>
 
-          <div class="notice-box">
-            <i class="ph-fill ph-info"></i>
-            <p>Al rechazar, la cita permanecerá en "Por Confirmar" para que el paciente pueda subir un nuevo comprobante.</p>
+          <div class="notice-box danger">
+            <i class="ph-fill ph-warning-circle"></i>
+            <p>Al rechazar, la cita será <strong>anulada permanentemente</strong> y el horario quedará libre. El paciente deberá agendar una nueva si desea reintentarlo.</p>
           </div>
         </div>
 

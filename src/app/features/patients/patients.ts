@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 import { PatientDrawerComponent } from './components/patient-drawer/patient-drawer';
+import { ExpedienteDrawerComponent } from './components/expediente-drawer/expediente-drawer';
 import { PatientService } from '../../core/services/patient.service';
 import { Patient } from '../../core/models/patient.model';
 import { finalize } from 'rxjs';
@@ -12,7 +13,7 @@ import { LayoutService } from '../../core/services/layout.service';
 @Component({
   selector: 'app-patients',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgxPaginationModule, PatientDrawerComponent, NgxSpinnerModule],
+  imports: [CommonModule, FormsModule, NgxPaginationModule, PatientDrawerComponent, ExpedienteDrawerComponent, NgxSpinnerModule],
   templateUrl: './patients.html',
   styleUrl: './patients.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -29,6 +30,10 @@ export class PatientsComponent implements OnInit {
   // Edición dinámica
   selectedPatient = signal<Patient | null>(null);
   isFetchingPatient = signal(false);
+
+  // Expediente
+  isExpedienteOpen = signal(false);
+  selectedPatientForExpediente = signal<Patient | null>(null);
 
   // Lista real de pacientes desde el backend
   private readonly ALL_PATIENTS = signal<Patient[]>([]);
@@ -108,6 +113,16 @@ export class PatientsComponent implements OnInit {
   closeDrawer() {
     this.isDrawerOpen.set(false);
     this.selectedPatient.set(null);
+  }
+
+  openExpediente(patient: Patient) {
+    this.selectedPatientForExpediente.set(patient);
+    this.isExpedienteOpen.set(true);
+  }
+
+  closeExpediente() {
+    this.isExpedienteOpen.set(false);
+    this.selectedPatientForExpediente.set(null);
   }
 
   onNewAppointment(patient: Patient) {

@@ -27,17 +27,26 @@
       <section class="form-section">
         <label class="section-label">Identidad Profesional</label>
         <div class="form-grid">
-          <div class="form-group full-width">
+          <div class="form-group">
             <label>Nombre Completo / Clínica</label>
-            <input type="text" formControlName="professionalName" placeholder="Ej: Dra. Elena Ruiz">
+            <div class="input-with-icon">
+              <i class="ph ph-identification-card ph-bold"></i>
+              <input type="text" formControlName="professionalName" placeholder="Ej: Dra. Elena Ruiz">
+            </div>
           </div>
-          <div class="form-group full-width">
+          <div class="form-group">
             <label>Cédula Profesional</label>
-            <input type="text" formControlName="professionalCedula" placeholder="Ej: 12345678">
+            <div class="input-with-icon">
+              <i class="ph ph-briefcase-metal ph-bold"></i>
+              <input type="text" formControlName="professionalCedula" placeholder="Ej: 12345678">
+            </div>
           </div>
           <div class="form-group full-width">
-            <label>Límite de Cambio (Horas antes)</label>
-            <input type="number" formControlName="cancellationWindow" placeholder="24">
+            <label>Dirección de la Sucursal</label>
+            <div class="input-with-icon">
+              <i class="ph ph-map-pin ph-bold"></i>
+              <input type="text" formControlName="direccionSucursal" placeholder="Ej: Av. Reforma 222, Piso 4, CDMX">
+            </div>
           </div>
         </div>
       </section>
@@ -46,17 +55,48 @@
       <section class="form-section">
         <label class="section-label">Datos para Depósito del Anticipo</label>
         <div class="form-grid">
-          <div class="form-group full-width">
+          <div class="form-group">
             <label>Institución Bancaria</label>
-            <input type="text" formControlName="banco" placeholder="Ej. BBVA, Santander...">
+            <div class="input-with-icon">
+              <i class="ph ph-bank ph-bold"></i>
+              <input type="text" formControlName="banco" placeholder="Ej. BBVA, Santander...">
+            </div>
           </div>
           <div class="form-group">
             <label>Número de Cuenta</label>
-            <input type="text" formControlName="cuentaBancaria" placeholder="10-11 dígitos" maxlength="11">
+            <div class="input-with-icon">
+              <i class="ph ph-hash ph-bold"></i>
+              <input type="text" formControlName="cuentaBancaria" placeholder="10-11 dígitos" maxlength="11">
+            </div>
           </div>
           <div class="form-group">
             <label>CLABE Interbancaria</label>
-            <input type="text" formControlName="clabeInterbancaria" placeholder="18 dígitos" maxlength="18">
+            <div class="input-with-icon">
+              <i class="ph ph-credit-card ph-bold"></i>
+              <input type="text" formControlName="clabeInterbancaria" placeholder="18 dígitos" maxlength="18">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTACTO Y POLÍTICAS -->
+      <section class="form-section">
+        <label class="section-label">Contacto y Políticas de Citas</label>
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>WhatsApp de la Clínica (Botón de Citas)</label>
+            <div class="input-with-icon">
+              <i class="ph ph-whatsapp-logo ph-bold" style="color: #25D366;"></i>
+              <input type="text" formControlName="telefonoWhatsApp" placeholder="Ej: 5512345678">
+            </div>
+          </div>
+          <div class="form-group full-width">
+            <label>Límite para Cancelar Citas (Horas de anticipación)</label>
+            <div class="input-with-icon">
+              <i class="ph ph-clock ph-bold"></i>
+              <input type="number" formControlName="horasAnticipacionCancelacion" placeholder="24">
+            </div>
+            <p class="field-hint">Aplica para cancelaciones desde el portal del paciente.</p>
           </div>
         </div>
       </section>

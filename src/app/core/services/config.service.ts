@@ -14,14 +14,17 @@ export interface DaySchedule {
 export interface UserConfig {
   professionalName: string;
   professionalCedula: string;
-  cancellationWindow: number;
+  cancellationWindow: number; // Sucursal específica
   weeklySchedule: DaySchedule[];
   banco: string;
   cuentaBancaria: string;
   clabeInterbancaria: string;
+  // Nuevos campos de Empresa (Global)
+  telefonoWhatsApp: string;
+  horasAnticipacionCancelacion: number;
+  direccionSucursal: string;
 }
 
-// Mapeo entre frontend (español) y backend (inglés)
 const DAY_MAP: Record<string, string> = {
   'Lunes': 'monday',
   'Martes': 'tuesday',
@@ -31,10 +34,6 @@ const DAY_MAP: Record<string, string> = {
   'Sábado': 'saturday',
   'Domingo': 'sunday'
 };
-
-const REV_DAY_MAP: Record<string, string> = Object.fromEntries(
-  Object.entries(DAY_MAP).map(([k, v]) => [v, k])
-);
 
 @Injectable({
   providedIn: 'root'
@@ -59,7 +58,10 @@ export class ConfigService {
     ],
     banco: '',
     cuentaBancaria: '',
-    clabeInterbancaria: ''
+    clabeInterbancaria: '',
+    telefonoWhatsApp: '',
+    horasAnticipacionCancelacion: 24,
+    direccionSucursal: ''
   });
 
   readonly config = this._config.asReadonly();
@@ -69,9 +71,6 @@ export class ConfigService {
     return cfg.professionalName?.trim().length > 0 && cfg.professionalCedula?.trim().length > 0;
   });
 
-  /**
-   * Carga la configuración desde el servidor
-   */
   loadConfig(sucursalId?: string) {
     const sid = sucursalId || this.authService.currentUser()?.sucursalIdPrincipal;
     const url = sid ? `${this.API_URL}?sucursalId=${sid}` : this.API_URL;
@@ -89,9 +88,6 @@ export class ConfigService {
     );
   }
 
-  /**
-   * Persiste la configuración en el servidor
-   */
   updateConfig(newConfig: UserConfig, sucursalId?: string) {
     const sid = sucursalId || this.authService.currentUser()?.sucursalIdPrincipal;
     const url = sid ? `${this.API_URL}?sucursalId=${sid}` : this.API_URL;
@@ -127,7 +123,10 @@ export class ConfigService {
       weeklySchedule: schedule,
       banco: res.banco ?? '',
       cuentaBancaria: res.cuentaBancaria ?? '',
-      clabeInterbancaria: res.clabeInterbancaria ?? ''
+      clabeInterbancaria: res.clabeInterbancaria ?? '',
+      telefonoWhatsApp: res.telefonoWhatsApp ?? '',
+      horasAnticipacionCancelacion: res.horasAnticipacionCancelacion ?? 24,
+      direccionSucursal: res.direccionSucursal ?? ''
     });
   }
 
@@ -149,7 +148,10 @@ export class ConfigService {
       horarios: horarios,
       banco: config.banco,
       cuentaBancaria: config.cuentaBancaria,
-      clabeInterbancaria: config.clabeInterbancaria
+      clabeInterbancaria: config.clabeInterbancaria,
+      telefonoWhatsApp: config.telefonoWhatsApp,
+      horasAnticipacionCancelacion: config.horasAnticipacionCancelacion,
+      direccionSucursal: config.direccionSucursal
     };
   }
 }

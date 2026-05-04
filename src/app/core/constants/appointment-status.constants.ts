@@ -64,6 +64,13 @@ export const APPOINTMENT_STATUS_METADATA: Record<AppointmentStatus, StatusMetada
     icon: 'ph-x-circle',
     order: 8
   },
+  [AppointmentStatus.RECHAZADA]: {
+    label: 'Rechazada',
+    description: 'La solicitud de cita no fue aceptada por la clínica.',
+    color: '#991B1B', // Red 800
+    icon: 'ph-prohibit',
+    order: 9
+  },
   [AppointmentStatus.AUSENTE]: {
     label: 'No se Presentó',
     description: 'El paciente faltó a su cita sin previo aviso.',

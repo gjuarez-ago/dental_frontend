@@ -47,8 +47,12 @@ export class AppointmentService {
     );
   }
 
-  getDoctores(): Observable<any[]> {
-    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/doctores`).pipe(
+  getDoctores(servicioId?: string): Observable<any[]> {
+    let params = new HttpParams();
+    if (servicioId) {
+      params = params.set('servicioId', servicioId);
+    }
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/doctores`, { params }).pipe(
       map(res => res.ok ? res.result : [])
     );
   }
@@ -101,15 +105,22 @@ export class AppointmentService {
     return this.http.patch<ApiResponse<Cita>>(`${this.apiUrl}/${id}/rechazar`, {}, { params });
   }
 
-  cancelarCita(id: string, motivo: string): Observable<ApiResponse<Cita>> {
-    const params = new HttpParams().set('motivo', motivo);
+  cancelarCita(id: string, motivo: string, reembolsar: boolean = true): Observable<ApiResponse<Cita>> {
+    const params = new HttpParams()
+      .set('motivo', motivo)
+      .set('reembolsar', reembolsar.toString());
     return this.http.patch<ApiResponse<Cita>>(`${this.apiUrl}/${id}/cancelar`, {}, { params });
   }
 
-  reprogramarCita(id: string, fechaHora: string, duracionMinutos: number): Observable<ApiResponse<Cita>> {
-    const params = new HttpParams()
+  reprogramarCita(id: string, fechaHora: string, duracionMinutos: number, montoTotal?: number): Observable<ApiResponse<Cita>> {
+    let params = new HttpParams()
       .set('nuevaFechaHora', fechaHora)
       .set('nuevaDuracion', duracionMinutos.toString());
+    
+    if (montoTotal !== undefined && montoTotal !== null) {
+      params = params.set('montoTotal', montoTotal.toString());
+    }
+    
     return this.http.put<ApiResponse<Cita>>(`${this.apiUrl}/${id}/reprogramar`, {}, { params });
   }
 }

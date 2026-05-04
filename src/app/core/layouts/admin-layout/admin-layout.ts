@@ -10,6 +10,7 @@ import { CancellationDrawerComponent } from '../../../features/appointments/comp
 import { RejectionDrawerComponent } from '../../../features/appointments/components/rejection-drawer/rejection-drawer';
 import { AppointmentService } from '../../services/appointment.service';
 import { ConfigDrawerComponent } from '../../components/config-drawer/config-drawer';
+import { AuditDrawerComponent } from '../../components/audit-drawer/audit-drawer';
 import { NgxSpinnerModule } from 'ngx-spinner';
 
 import { Router } from '@angular/router';
@@ -27,6 +28,7 @@ import { Router } from '@angular/router';
     CancellationDrawerComponent,
     RejectionDrawerComponent,
     ConfigDrawerComponent,
+    AuditDrawerComponent,
     NgxSpinnerModule
   ],
   templateUrl: './admin-layout.html',

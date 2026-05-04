@@ -1,17 +1,10 @@
-import { Component, inject, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, OnInit, PLATFORM_ID } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
 
-/**
- * Estados posibles del flujo de pacientes:
- * - PHONE_INPUT:      Paso 1 → Solo ingresa su teléfono.
- * - LOGIN:            Existe y verificado → Pide NIP.
- * - COMPLETE_PROFILE: Existe pero no verificado → Pide email, NIP, género.
- * - REGISTER:         No existe → Formulario completo de registro.
- */
 type PatientStep = 'PHONE_INPUT' | 'LOGIN' | 'COMPLETE_PROFILE' | 'REGISTER';
 
 @Component({
@@ -22,43 +15,40 @@ type PatientStep = 'PHONE_INPUT' | 'LOGIN' | 'COMPLETE_PROFILE' | 'REGISTER';
   styleUrl: './login.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly spinner = inject(NgxSpinnerService);
+  private readonly platformId = inject(PLATFORM_ID);
 
-  // ─── Signals reactivos ──────────────────────────────────────────────────
   readonly errorMessage = signal<string | null>(null);
   readonly isLoading = signal(false);
   readonly loginMode = signal<'STAFF' | 'PACIENTE'>('PACIENTE');
   readonly patientStep = signal<PatientStep>('PHONE_INPUT');
   readonly patientPhone = signal('');
 
-  // ─── Formulario Staff (teléfono + NIP) ──────────────────────────────────
   readonly loginForm = this.fb.nonNullable.group({
     user: ['', [Validators.required]],
-    nip: ['', [Validators.required, Validators.minLength(4)]]
+    nip: ['', [Validators.required, Validators.minLength(4)]],
+    rememberMe: [false]
   });
 
-  // ─── Formulario Paciente: Paso 1 (solo teléfono) ───────────────────────
   readonly phoneForm = this.fb.nonNullable.group({
-    telefono: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10)]]
+    telefono: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10)]],
+    rememberMe: [false]
   });
 
-  // ─── Formulario Paciente: Login (NIP) ──────────────────────────────────
   readonly patientLoginForm = this.fb.nonNullable.group({
     nip: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]]
   });
 
-  // ─── Formulario Paciente: Completar perfil ─────────────────────────────
   readonly completeForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     nip: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
     genero: ['', [Validators.required]]
   });
 
-  // ─── Formulario Paciente: Registro completo ────────────────────────────
   readonly registerForm = this.fb.nonNullable.group({
     nombreCompleto: ['', [Validators.required]],
     telefono: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10)]],
@@ -67,35 +57,54 @@ export class LoginComponent {
     genero: ['', [Validators.required]]
   });
 
-  // ─── Cambiar modo Staff / Paciente ──────────────────────────────────────
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadRememberedData();
+    }
+  }
+
+  private loadRememberedData(): void {
+    const savedUser = localStorage.getItem('staff_user');
+    if (savedUser) {
+      this.loginForm.patchValue({ user: savedUser, rememberMe: true });
+    }
+
+    const savedPhone = localStorage.getItem('patient_phone');
+    if (savedPhone) {
+      this.phoneForm.patchValue({ telefono: savedPhone, rememberMe: true });
+    }
+  }
+
   setLoginMode(mode: 'STAFF' | 'PACIENTE'): void {
     this.loginMode.set(mode);
     this.patientStep.set('PHONE_INPUT');
     this.patientPhone.set('');
-    this.loginForm.reset();
-    this.phoneForm.reset();
-    this.patientLoginForm.reset();
-    this.completeForm.reset();
-    this.registerForm.reset();
     this.errorMessage.set(null);
+    // Reset sin borrar rememberMe si es posible, o re-cargando
+    this.loginForm.controls.user.reset();
+    this.loginForm.controls.nip.reset();
+    this.phoneForm.controls.telefono.reset();
   }
 
-  // ─── Volver al paso del teléfono ────────────────────────────────────────
   goBackToPhone(): void {
     this.patientStep.set('PHONE_INPUT');
     this.patientPhone.set('');
-    this.phoneForm.reset();
-    this.patientLoginForm.reset();
-    this.completeForm.reset();
-    this.registerForm.reset();
     this.errorMessage.set(null);
   }
 
-  // ─── PASO 1: Verificar teléfono ─────────────────────────────────────────
   onCheckPhone(): void {
     if (this.phoneForm.invalid || this.isLoading()) return;
 
-    const telefono = this.phoneForm.getRawValue().telefono;
+    const { telefono, rememberMe } = this.phoneForm.getRawValue();
+    
+    if (isPlatformBrowser(this.platformId)) {
+      if (rememberMe) {
+        localStorage.setItem('patient_phone', telefono);
+      } else {
+        localStorage.removeItem('patient_phone');
+      }
+    }
+
     this.isLoading.set(true);
     this.errorMessage.set(null);
     this.spinner.show();
@@ -107,12 +116,8 @@ export class LoginComponent {
         this.patientPhone.set(telefono);
 
         switch (res.status) {
-          case 'EXISTS_VERIFIED':
-            this.patientStep.set('LOGIN');
-            break;
-          case 'EXISTS_UNVERIFIED':
-            this.patientStep.set('COMPLETE_PROFILE');
-            break;
+          case 'EXISTS_VERIFIED': this.patientStep.set('LOGIN'); break;
+          case 'EXISTS_UNVERIFIED': this.patientStep.set('COMPLETE_PROFILE'); break;
           case 'NOT_FOUND':
             this.patientStep.set('REGISTER');
             this.registerForm.patchValue({ telefono });
@@ -122,22 +127,17 @@ export class LoginComponent {
       error: () => {
         this.spinner.hide();
         this.isLoading.set(false);
-        this.errorMessage.set('Error al verificar el teléfono. Intente de nuevo.');
+        this.errorMessage.set('Error al verificar el teléfono.');
       }
     });
   }
 
-  // ─── PASO 2A: Login paciente verificado ─────────────────────────────────
   onPatientLogin(): void {
     if (this.patientLoginForm.invalid || this.isLoading()) return;
-
     this.isLoading.set(true);
     this.errorMessage.set(null);
     this.spinner.show();
-
-    const nip = this.patientLoginForm.getRawValue().nip;
-
-    this.authService.patientLogin(this.patientPhone(), nip).subscribe({
+    this.authService.patientLogin(this.patientPhone(), this.patientLoginForm.getRawValue().nip).subscribe({
       next: () => {
         this.spinner.hide();
         this.router.navigate(['/mis-citas']);
@@ -145,21 +145,17 @@ export class LoginComponent {
       error: () => {
         this.spinner.hide();
         this.isLoading.set(false);
-        this.errorMessage.set('NIP incorrecto. Verifique e intente de nuevo.');
+        this.errorMessage.set('NIP incorrecto.');
       }
     });
   }
 
-  // ─── PASO 2B: Completar perfil de paciente no verificado ────────────────
   onCompleteProfile(): void {
     if (this.completeForm.invalid || this.isLoading()) return;
-
     this.isLoading.set(true);
     this.errorMessage.set(null);
     this.spinner.show();
-
     const formData = this.completeForm.getRawValue();
-
     this.authService.completePatientProfile({
       telefono: this.patientPhone(),
       email: formData.email,
@@ -178,17 +174,12 @@ export class LoginComponent {
     });
   }
 
-  // ─── PASO 2C: Registro de paciente nuevo ────────────────────────────────
   onRegisterPatient(): void {
     if (this.registerForm.invalid || this.isLoading()) return;
-
     this.isLoading.set(true);
     this.errorMessage.set(null);
     this.spinner.show();
-
-    const formData = this.registerForm.getRawValue();
-
-    this.authService.registerPatient(formData).subscribe({
+    this.authService.registerPatient(this.registerForm.getRawValue()).subscribe({
       next: () => {
         this.spinner.hide();
         this.router.navigate(['/mis-citas']);
@@ -196,22 +187,25 @@ export class LoginComponent {
       error: (err) => {
         this.spinner.hide();
         this.isLoading.set(false);
-        this.errorMessage.set(err?.error?.userMessage || 'Error al registrar. Intente de nuevo.');
+        this.errorMessage.set(err?.error?.userMessage || 'Error al registrar.');
       }
     });
   }
 
-  // ─── Login Staff (Personal Clínico) ─────────────────────────────────────
   onLogin(): void {
     if (this.loginForm.invalid || this.isLoading()) return;
-
+    const { user, nip, rememberMe } = this.loginForm.getRawValue();
+    if (isPlatformBrowser(this.platformId)) {
+      if (rememberMe) {
+        localStorage.setItem('staff_user', user);
+      } else {
+        localStorage.removeItem('staff_user');
+      }
+    }
     this.isLoading.set(true);
     this.errorMessage.set(null);
     this.spinner.show();
-
-    const credentials = this.loginForm.getRawValue();
-
-    this.authService.login(credentials).subscribe({
+    this.authService.login({ user, nip }).subscribe({
       next: () => {
         this.spinner.hide();
         this.router.navigate(['/dashboard']);
@@ -219,7 +213,7 @@ export class LoginComponent {
       error: () => {
         this.spinner.hide();
         this.isLoading.set(false);
-        this.errorMessage.set('Credenciales incorrectas. Verifica tu usuario y NIP.');
+        this.errorMessage.set('Credenciales incorrectas.');
       }
     });
   }
