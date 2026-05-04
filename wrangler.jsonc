@@ -5,7 +5,8 @@
   "main": "src/entry.ts",
   "assets": {
     "directory": "dist/crm-web/browser",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
   },
   "compatibility_flags": [
     "nodejs_compat"
