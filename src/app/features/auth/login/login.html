@@ -26,14 +26,14 @@
           </div>
         </div>
 
-        <form class="login-form" [formGroup]="phoneForm" (ngSubmit)="onCheckPhone()">
+        <form class="login-form" [formGroup]="phoneForm" (ngSubmit)="onCheckPhone()" autocomplete="off">
           <div class="form-group">
             <label for="patient-phone">Teléfono o Usuario</label>
             <div class="input-wrapper"
               [class.error]="phoneForm.get('telefono')?.invalid && phoneForm.get('telefono')?.touched">
               <i class="ph ph-identification-badge"></i>
               <input type="text" id="patient-phone" formControlName="telefono" placeholder="Ej. 7581082962"
-                autocomplete="username">
+                autocomplete="off">
             </div>
           </div>
 
@@ -72,14 +72,14 @@
           <button type="button" class="change-link" (click)="goBackToPhone()">Cambiar</button>
         </div>
 
-        <form class="login-form" [formGroup]="patientLoginForm" (ngSubmit)="onPatientLogin()">
+        <form class="login-form" [formGroup]="patientLoginForm" (ngSubmit)="onPatientLogin()" autocomplete="off">
           <div class="form-group">
             <label for="patient-nip">NIP / PIN</label>
             <div class="input-wrapper"
               [class.error]="patientLoginForm.get('nip')?.invalid && patientLoginForm.get('nip')?.touched">
               <i class="ph ph-key"></i>
               <input type="password" id="patient-nip" formControlName="nip" placeholder="••••••" [maxlength]="loginMode() === 'STAFF' ? 10 : 6"
-                autocomplete="current-password">
+                autocomplete="off">
             </div>
           </div>
 
@@ -114,14 +114,14 @@
           <button type="button" class="change-link" (click)="goBackToPhone()">Cambiar</button>
         </div>
 
-        <form class="login-form" [formGroup]="completeForm" (ngSubmit)="onCompleteProfile()">
+        <form class="login-form" [formGroup]="completeForm" (ngSubmit)="onCompleteProfile()" autocomplete="off">
           <div class="form-group">
             <label for="complete-email">Correo electrónico</label>
             <div class="input-wrapper"
               [class.error]="completeForm.get('email')?.invalid && completeForm.get('email')?.touched">
               <i class="ph ph-envelope"></i>
               <input type="email" id="complete-email" formControlName="email" placeholder="correo@ejemplo.com"
-                autocomplete="email">
+                autocomplete="off">
             </div>
           </div>
 
@@ -130,7 +130,7 @@
             <div class="input-wrapper"
               [class.error]="completeForm.get('nip')?.invalid && completeForm.get('nip')?.touched">
               <i class="ph ph-key"></i>
-              <input type="password" id="complete-nip" formControlName="nip" placeholder="••••••" maxlength="6">
+              <input type="password" id="complete-nip" formControlName="nip" placeholder="••••••" maxlength="6" autocomplete="off">
             </div>
           </div>
 
@@ -174,14 +174,14 @@
           </div>
         </div>
 
-        <form class="login-form" [formGroup]="registerForm" (ngSubmit)="onRegisterPatient()">
+        <form class="login-form" [formGroup]="registerForm" (ngSubmit)="onRegisterPatient()" autocomplete="off">
           <div class="form-group">
             <label for="reg-name">Nombre completo</label>
             <div class="input-wrapper"
               [class.error]="registerForm.get('nombreCompleto')?.invalid && registerForm.get('nombreCompleto')?.touched">
               <i class="ph ph-user"></i>
               <input type="text" id="reg-name" formControlName="nombreCompleto" placeholder="Juan Pérez García"
-                autocomplete="name">
+                autocomplete="off">
             </div>
           </div>
 
@@ -191,7 +191,7 @@
               [class.error]="registerForm.get('telefono')?.invalid && registerForm.get('telefono')?.touched">
               <i class="ph ph-phone"></i>
               <input type="tel" id="reg-phone" formControlName="telefono" placeholder="9991234567" maxlength="10"
-                autocomplete="tel">
+                autocomplete="off">
             </div>
           </div>
 
@@ -201,7 +201,7 @@
               [class.error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
               <i class="ph ph-envelope"></i>
               <input type="email" id="reg-email" formControlName="email" placeholder="correo@ejemplo.com"
-                autocomplete="email">
+                autocomplete="off">
             </div>
           </div>
 
@@ -210,7 +210,7 @@
             <div class="input-wrapper"
               [class.error]="registerForm.get('nip')?.invalid && registerForm.get('nip')?.touched">
               <i class="ph ph-key"></i>
-              <input type="password" id="reg-nip" formControlName="nip" placeholder="••••••" maxlength="6">
+              <input type="password" id="reg-nip" formControlName="nip" placeholder="••••••" maxlength="6" autocomplete="off">
             </div>
           </div>
 

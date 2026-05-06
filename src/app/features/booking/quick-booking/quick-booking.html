@@ -98,12 +98,12 @@
         <div class="form-container" *ngIf="selectedSlot()">
           <div class="input-group">
             <label>Nombre Completo</label>
-            <input type="text" [(ngModel)]="customerName" placeholder="Ej. Juan Pérez" maxlength="150">
+            <input type="text" [(ngModel)]="customerName" placeholder="Ej. Juan Pérez" maxlength="150" autocomplete="off">
             <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 150 caracteres</div>
           </div>
           <div class="input-group">
             <label>Teléfono (WhatsApp)</label>
-            <input type="tel" [(ngModel)]="customerPhone" placeholder="10 dígitos" maxlength="15">
+            <input type="tel" [(ngModel)]="customerPhone" placeholder="10 dígitos" maxlength="15" autocomplete="off">
             <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Hasta 15 dígitos</div>
           </div>
           <div class="input-group">
@@ -185,7 +185,7 @@
           <p>Registra tu correo para poder consultar tu historial clínico y futuras citas en cualquier momento.</p>
 
           <div class="input-group">
-             <input type="email" [(ngModel)]="bookingEmail" placeholder="tu@email.com" maxlength="100">
+             <input type="email" [(ngModel)]="bookingEmail" placeholder="tu@email.com" maxlength="100" autocomplete="off">
              <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 100 caracteres</div>
           </div>
 
