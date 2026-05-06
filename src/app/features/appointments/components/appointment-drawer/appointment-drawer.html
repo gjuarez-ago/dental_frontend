@@ -32,7 +32,7 @@
                   <div class="search-results card shadow-lg">
                     @for (p of filteredPatients(); track p.id) {
                       <div class="result-item" (click)="selectPatient(p)">
-                        <div class="p-avatar">{{ p.nombreCompleto.substring(0,1) }}</div>
+                        <div class="p-avatar">{{ p.nombreCompleto?.substring(0,1) || '?' }}</div>
                         <div class="p-info">
                           <span class="p-name">{{ p.nombreCompleto }}</span>
                           <span class="p-id">ID: {{ p.id | slice:0:8 }}</span>
