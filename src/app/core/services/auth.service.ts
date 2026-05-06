@@ -2,8 +2,9 @@ import { Injectable, inject, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ApiResponse } from '../models/api-response.model';
 
 export interface User {
   id: string;
@@ -68,6 +69,7 @@ export class AuthService {
   login(credentials: { user: string; nip: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/login`, credentials).pipe(
       tap(response => {
+        if (!response.token) throw response;
         this.saveSession(response);
       })
     );
@@ -80,25 +82,37 @@ export class AuthService {
 
   patientLogin(user: string, nip: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.PATIENT_API}/login`, { user, nip }).pipe(
-      tap(response => this.saveSession(response))
+      tap(response => {
+        if (!response.token) throw response;
+        this.saveSession(response);
+      })
     );
   }
 
   completePatientProfile(data: { telefono: string; email: string; nip: string; genero: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.PATIENT_API}/complete-profile`, data).pipe(
-      tap(response => this.saveSession(response))
+      tap(response => {
+        if (!response.token) throw response;
+        this.saveSession(response);
+      })
     );
   }
 
   registerPatient(data: { nombreCompleto: string; telefono: string; email: string; nip: string; genero: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.PATIENT_API}/register`, data).pipe(
-      tap(response => this.saveSession(response))
+      tap(response => {
+        if (!response.token) throw response;
+        this.saveSession(response);
+      })
     );
   }
 
   setupAccess(data: { telefono: string; email: string }): Observable<AuthResponse & { temporaryPin?: string }> {
     return this.http.post<AuthResponse & { temporaryPin?: string }>(`${this.PATIENT_API}/setup-access`, data).pipe(
-      tap(response => this.saveSession(response))
+      tap(response => {
+        if (!response.token) throw response;
+        this.saveSession(response);
+      })
     );
   }
 

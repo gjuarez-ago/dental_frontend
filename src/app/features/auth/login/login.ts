@@ -4,6 +4,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
+import { ToastrService } from 'ngx-toastr';
 
 type PatientStep = 'PHONE_INPUT' | 'LOGIN' | 'COMPLETE_PROFILE' | 'REGISTER';
 
@@ -21,6 +22,7 @@ export class LoginComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly spinner = inject(NgxSpinnerService);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly toastr = inject(ToastrService);
 
   readonly errorMessage = signal<string | null>(null);
   readonly isLoading = signal(false);
@@ -124,10 +126,12 @@ export class LoginComponent implements OnInit {
             break;
         }
       },
-      error: () => {
+      error: (err) => {
         this.spinner.hide();
         this.isLoading.set(false);
-        this.errorMessage.set('Error al verificar el teléfono.');
+        const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'Error al verificar el teléfono.';
+        this.errorMessage.set(msg);
+        this.toastr.error(msg, 'Error');
       }
     });
   }
@@ -142,10 +146,12 @@ export class LoginComponent implements OnInit {
         this.spinner.hide();
         this.router.navigate(['/mis-citas']);
       },
-      error: () => {
+      error: (err) => {
         this.spinner.hide();
         this.isLoading.set(false);
-        this.errorMessage.set('NIP incorrecto.');
+        const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'NIP incorrecto.';
+        this.errorMessage.set(msg);
+        this.toastr.error(msg, 'Error');
       }
     });
   }
@@ -169,7 +175,9 @@ export class LoginComponent implements OnInit {
       error: (err) => {
         this.spinner.hide();
         this.isLoading.set(false);
-        this.errorMessage.set(err?.error?.userMessage || 'Error al completar el perfil.');
+        const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'Error al completar el perfil.';
+        this.errorMessage.set(msg);
+        this.toastr.error(msg, 'Error');
       }
     });
   }
@@ -187,7 +195,9 @@ export class LoginComponent implements OnInit {
       error: (err) => {
         this.spinner.hide();
         this.isLoading.set(false);
-        this.errorMessage.set(err?.error?.userMessage || 'Error al registrar.');
+        const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'Error al registrar.';
+        this.errorMessage.set(msg);
+        this.toastr.error(msg, 'Error');
       }
     });
   }
@@ -210,10 +220,12 @@ export class LoginComponent implements OnInit {
         this.spinner.hide();
         this.router.navigate(['/dashboard']);
       },
-      error: () => {
+      error: (err) => {
         this.spinner.hide();
         this.isLoading.set(false);
-        this.errorMessage.set('Credenciales incorrectas.');
+        const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'Credenciales incorrectas.';
+        this.errorMessage.set(msg);
+        this.toastr.error(msg, 'Error');
       }
     });
   }

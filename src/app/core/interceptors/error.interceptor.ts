@@ -13,8 +13,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       let errorMessage = 'Ha ocurrido un error inesperado';
 
-      // 401: Unauthorized -> Token expirado o inválido
-      if (error.status === 401) {
+      // 401: Unauthorized -> Token expirado o inválido (excepto para endpoints públicos como login)
+      if (error.status === 401 && !req.url.includes('/public/')) {
         authService.logout();
         toastr.warning('Su sesión ha expirado. Por favor, ingrese de nuevo.', 'Sesión Expirada', {
           timeOut: 5000,
