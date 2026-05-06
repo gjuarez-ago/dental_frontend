@@ -109,7 +109,7 @@
           <div class="input-group">
             <label>Notas adicionales (opcional)</label>
             <textarea [(ngModel)]="notes" rows="2" placeholder="Algún detalle que debamos saber..." maxlength="500"></textarea>
-            <div class="char-counter" style="font-size: 0.7rem; color: #64748b; text-align: right; margin-top: 2px; font-weight: 600;">{{ notes?.length || 0 }} / 500</div>
+            <div class="char-counter" style="font-size: 0.7rem; color: #64748b; text-align: right; margin-top: 2px; font-weight: 600;">{{ notes.length || 0 }} / 500</div>
           </div>
 
           <div class="payment-box">

@@ -76,7 +76,7 @@
 
       <div class="user-avatar">
         <div class="avatar-initials">
-          {{ user.nombreCompleto?.substring(0,1) }}{{ (user.nombreCompleto?.split(' ')?.length || 0) > 1 ? user.nombreCompleto?.split(' ')?.[1]?.substring(0,1) : '' }}
+          {{ user.nombreCompleto.substring(0,1) }}{{ user.nombreCompleto.split(' ').length > 1 ? user.nombreCompleto.split(' ')?.[1]?.substring(0,1) : '' }}
         </div>
         <div class="role-badge" [ngClass]="user.rol.toLowerCase()">
           {{ user.rol }}

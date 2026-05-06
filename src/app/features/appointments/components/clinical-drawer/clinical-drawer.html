@@ -25,10 +25,10 @@
                 <i class="ph ph-stethoscope"></i> Ficha Clínica
             </button>
             <button [class.active]="activeTab() === 'prescription'" (click)="activeTab.set('prescription')">
-                <i class="ph ph-pill"></i> Receta @if((medicamentos?.length || 0) > 0) { <span class="badge">{{medicamentos.length}}</span> }
+                <i class="ph ph-pill"></i> Receta @if(medicamentos.length > 0) { <span class="badge">{{medicamentos.length}}</span> }
             </button>
             <button [class.active]="activeTab() === 'history'" (click)="activeTab.set('history')">
-                <i class="ph ph-clock-counter-clockwise"></i> Historial @if((history()?.length || 0) > 0) { <span class="badge secondary">{{history().length}}</span> }
+                <i class="ph ph-clock-counter-clockwise"></i> Historial @if(history().length > 0) { <span class="badge secondary">{{history().length}}</span> }
             </button>
         </nav>
 
