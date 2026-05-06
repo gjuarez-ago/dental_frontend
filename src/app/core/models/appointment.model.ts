@@ -50,6 +50,7 @@ export interface Cita {
   pacienteSexo?: string;
   empresaNombre?: string;
   empresaLogoUrl?: string;
+  empresaIsotipoUrl?: string;
   empresaSitioWeb?: string;
   sucursalDireccion?: string;
   sucursalTelefono?: string;

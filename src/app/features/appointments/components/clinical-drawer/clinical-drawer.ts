@@ -303,7 +303,9 @@ export class ClinicalDrawerComponent implements OnChanges {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const logoUrl = this.cita?.empresaLogoUrl || 'images/logo_erm.png';
+    const logoUrl = this.cita?.empresaIsotipoUrl
+      || this.cita?.empresaLogoUrl
+      || 'images/logo_erm.png';
     const sitioWeb = this.cita?.empresaSitioWeb || 'https://novatia.health';
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(sitioWeb)}`;
     const fechaActual = new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
