@@ -527,7 +527,7 @@ export class ClinicalDrawerComponent implements OnChanges {
       <div>
         <div class="clinica-nombre">${this.cita?.empresaNombre || 'Dental Sonrisana'}</div>
         <div class="clinica-sub">
-          ${this.cita?.sucursalDireccion || 'NiÃ±os Heroes 8, Centro, 40831 San Jeronimito, Gro.'}<br>
+          ${this.cita?.sucursalDireccion || 'Niños Héroes 8, Centro, 40831 San Jeronimito, Gro.'}<br>
           Tel: ${this.cita?.sucursalTelefono || '758-108-2962'}
         </div>
       </div>
@@ -535,8 +535,8 @@ export class ClinicalDrawerComponent implements OnChanges {
     <div class="medico-info">
       <div class="medico-nombre">${doctorNombre}</div>
       <div class="medico-sub">
-        CÃ©dula: ${this.cita?.doctorCedula || 'â€”'}<br>
-        ${this.cita?.doctorEspecialidad || 'OdontologÃ­a General'}
+        Cédula: ${this.cita?.doctorCedula || '-'}<br>
+        ${this.cita?.doctorEspecialidad || 'Odontología General'}
       </div>
     </div>
   </div>
@@ -544,27 +544,27 @@ export class ClinicalDrawerComponent implements OnChanges {
   <!-- DATOS PACIENTE -->
   <div class="paciente-box">
     <div class="paciente-row-top">
-      <div><span class="lbl">Folio: </span><span class="val">${this.cita?.folio || 'â€”'}</span></div>
+      <div><span class="lbl">Folio: </span><span class="val">${this.cita?.folio || '—'}</span></div>
       <div><span class="lbl">Fecha: </span><span class="val">${fechaActual}</span></div>
     </div>
     <div class="paciente-nombre">${this.cita?.pacienteNombre || 'Paciente'}</div>
     <div class="paciente-meta">
-      Edad: <strong>${this.cita?.pacienteEdad || 'â€”'} aÃ±os</strong>
-      &nbsp;&nbsp;Sexo: <strong>${this.cita?.pacienteSexo || 'â€”'}</strong>
+      Edad: <strong>${this.cita?.pacienteEdad || '-'} años</strong>
+      &nbsp;&nbsp;Sexo: <strong>${this.cita?.pacienteSexo || '-'}</strong>
     </div>
     <div class="signos-grid">
       ${data.peso ? `<div class="signo"><strong>Peso:</strong> ${data.peso} kg</div>` : ''}
       ${data.talla ? `<div class="signo"><strong>Talla:</strong> ${data.talla} m</div>` : ''}
       ${data.imc ? `<div class="signo"><strong>IMC:</strong> ${data.imc}</div>` : ''}
       ${data.presionArterial ? `<div class="signo"><strong>P.A.:</strong> ${data.presionArterial}</div>` : ''}
-      ${data.temperatura ? `<div class="signo"><strong>Temp:</strong> ${data.temperatura} Â°C</div>` : ''}
+      ${data.temperatura ? `<div class="signo"><strong>Temp:</strong> ${data.temperatura} °C</div>` : ''}
     </div>
   </div>
 
-  <!-- DIAGNÃ“STICO -->
+  <!-- DIAGNÓSTICO -->
   <div class="diagnostico-line">
-    <span class="lbl">DiagnÃ³stico: </span>
-    <span class="val">${data.cie10Nombre || data.diagnostico || 'EvaluaciÃ³n General'}</span>
+    <span class="lbl">Diagnóstico: </span>
+    <span class="val">${data.cie10Nombre || data.diagnostico || 'Evaluación General'}</span>
   </div>
 
   <!-- Rx -->
@@ -586,7 +586,7 @@ export class ClinicalDrawerComponent implements OnChanges {
     <div class="firma-box">
       <div class="firma-linea"></div>
       <div class="firma-nombre">${doctorNombre}</div>
-      <div class="firma-cargo">Firma del MÃ©dico Responsable</div>
+      <div class="firma-cargo">Firma del Médico Responsable</div>
     </div>
 
     <div class="brand-box">
