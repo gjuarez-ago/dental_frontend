@@ -151,23 +151,23 @@
                 contactarte si es necesario.</p>
 
             <div class="card form-card">
-                <div class="form-group" [class.error]="bookingName.length > 0 && !isNameValid()">
+                <div class="form-group" [class.error]="(bookingName?.length || 0) > 0 && !isNameValid()">
                     <label for="pName">Nombre Completo *</label>
                     <div class="input-wrapper no-icon">
                         <input type="text" id="pName" [(ngModel)]="bookingName" placeholder="Tu nombre completo" maxlength="150" required>
                     </div>
                     <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 150 caracteres</div>
-                    <p class="error-msg" *ngIf="bookingName.length > 0 && !isNameValid()">El nombre debe tener al menos 3 caracteres.</p>
+                    <p class="error-msg" *ngIf="(bookingName?.length || 0) > 0 && !isNameValid()">El nombre debe tener al menos 3 caracteres.</p>
                 </div>
 
-                <div class="form-group" [class.error]="bookingPhone.length > 0 && !isPhoneValid()">
+                <div class="form-group" [class.error]="(bookingPhone?.length || 0) > 0 && !isPhoneValid()">
                     <label for="pPhone">WhatsApp de contacto *</label>
                     <div class="input-wrapper no-icon">
                         <input type="tel" id="pPhone" [ngModel]="bookingPhone" (input)="onPhoneInput($event)"
                             placeholder="Número de WhatsApp (10 dígitos)" maxlength="15" required>
                     </div>
                     <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Hasta 15 dígitos</div>
-                    <p class="error-msg" *ngIf="bookingPhone.length > 0 && !isPhoneValid()">Deben ser exactamente 10 números.</p>
+                    <p class="error-msg" *ngIf="(bookingPhone?.length || 0) > 0 && !isPhoneValid()">Deben ser exactamente 10 números.</p>
                 </div>
 
                 <div class="form-group">
@@ -176,7 +176,7 @@
                         <textarea id="pNotes" [(ngModel)]="bookingNotes" placeholder="Algún detalle que debamos saber..."
                             rows="4" maxlength="500"></textarea>
                     </div>
-                    <div class="char-counter" style="font-size: 0.7rem; color: #64748b; text-align: right; margin-top: 4px; font-weight: 600;">{{ bookingNotes.length || 0 }} / 500</div>
+                    <div class="char-counter" style="font-size: 0.7rem; color: #64748b; text-align: right; margin-top: 4px; font-weight: 600;">{{ bookingNotes?.length || 0 }} / 500</div>
                 </div>
             </div>
 

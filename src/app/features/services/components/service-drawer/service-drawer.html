@@ -59,7 +59,7 @@
         <div class="form-group full-width" [class.invalid]="isInvalid('descripcion')">
           <label>Descripción</label>
           <textarea formControlName="descripcion" placeholder="Describe brevemente el tratamiento..." maxlength="500"></textarea>
-          <div class="char-counter" style="font-size: 0.7rem; color: #64748b; text-align: right; margin-top: 4px; font-weight: 600;">{{ serviceForm.get('descripcion')?.value.length || 0 }} / 500</div>
+          <div class="char-counter" style="font-size: 0.7rem; color: #64748b; text-align: right; margin-top: 4px; font-weight: 600;">{{ serviceForm.get('descripcion')?.value?.length || 0 }} / 500</div>
           <span class="error-msg" *ngIf="isInvalid('descripcion')">La descripción es requerida</span>
         </div>
 

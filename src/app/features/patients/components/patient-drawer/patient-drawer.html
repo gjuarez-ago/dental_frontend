@@ -218,7 +218,7 @@
                         placeholder="Escribe aquí el motivo de visita, diagnóstico inicial o detalles del expediente..."></textarea>
             </div>
             <div class="char-counter">
-              {{ patientForm.get('notasClinicas')?.value.length || 0 }} / 2000
+              {{ patientForm.get('notasClinicas')?.value?.length || 0 }} / 2000
             </div>
           </div>
         </div>
