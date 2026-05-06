@@ -100,7 +100,7 @@
                          [class.selected]="appointmentForm.get('doctorId')?.value === doc.id"
                          (click)="appointmentForm.get('doctorId')?.setValue(doc.id)">
                       <div class="doc-avatar">
-                        {{ doc.nombreCompleto?.substring(0,1) }}{{ (doc.nombreCompleto?.split(' ')?.length || 0) > 1 ? doc.nombreCompleto?.split(' ')[1].substring(0,1) : '' }}
+                        {{ doc.nombreCompleto?.substring(0,1) }}{{ (doc.nombreCompleto?.split(' ')?.length || 0) > 1 ? doc.nombreCompleto?.split(' ')?.[1]?.substring(0,1) : '' }}
                       </div>
                       <span class="doc-name">{{ doc.nombreCompleto }}</span>
                     </div>
