@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, OnInit, OnDestroy, computed } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { forkJoin, finalize, takeUntil, Subject } from 'rxjs';
@@ -43,8 +43,25 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   readonly stats = signal<any[]>([]);
   readonly dashboardStats = signal<any>(null);
+  readonly sortOrder = signal<'URGENCY' | 'DATE'>('URGENCY');
 
-  readonly comprobantesPendientes = signal<ComprobantePendiente[]>([]);
+  readonly comprobantesPendientes = computed(() => {
+    const list = [...this.rawCitas()];
+    
+    if (this.sortOrder() === 'URGENCY') {
+      // Ordenar por tiempo de espera (creación): los más antiguos primero
+      list.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateA - dateB;
+      });
+    } else {
+      // Ordenar por fecha de la cita: los más cercanos primero
+      list.sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime());
+    }
+
+    return list.map(c => this.mapCitaToComprobante(c));
+  });
   readonly loading = signal<boolean>(false);
   readonly selectedImageUrl = signal<string | null>(null);
   private readonly rawCitas = signal<Cita[]>([]);
@@ -79,7 +96,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: (data) => {
         this.rawCitas.set(data.citas);
-        this.comprobantesPendientes.set(data.citas.map(c => this.mapCitaToComprobante(c)));
         
         if (data.stats) {
           this.dashboardStats.set(data.stats);
@@ -184,6 +200,14 @@ export class HomeComponent implements OnInit, OnDestroy {
   onAppointmentConfirmed() {
     this.cargarDashboard();
     this.toastr.success('Cita confirmada y comprobante validado.', 'Éxito');
+  }
+
+  toggleSort() {
+    this.sortOrder.update(current => current === 'URGENCY' ? 'DATE' : 'URGENCY');
+    this.toastr.info(
+      this.sortOrder() === 'URGENCY' ? 'Ordenando por mayor tiempo de espera' : 'Ordenando por fecha de cita',
+      'Orden Actualizado'
+    );
   }
 
   rechazarComprobante(id: string) {

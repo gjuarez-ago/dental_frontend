@@ -77,7 +77,7 @@
 
                     @for (day of monthlyDays(); track day.fecha) {
                     <button class="day" [class.selected]="state().selectedDate?.toISOString()?.startsWith(day.fecha)"
-                        [class.disabled]="!day.esLaboral || day.estaLlena || isPastDay(day.fecha)" (click)="onDateSelect(day)">
+                        [class.disabled]="!day.esLaboral || day.estaLlena || isInvalidDay(day.fecha)" (click)="onDateSelect(day)">
                         {{ day.fecha.split('-')[2] }}
                         @if (day.estaLlena) { <span class="dot-full"></span> }
                     </button>

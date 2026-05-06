@@ -23,6 +23,7 @@ export interface UserConfig {
   telefonoWhatsApp: string;
   horasAnticipacionCancelacion: number;
   direccionSucursal: string;
+  diasAnticipacionReserva: number;
 }
 
 const DAY_MAP: Record<string, string> = {
@@ -61,7 +62,8 @@ export class ConfigService {
     clabeInterbancaria: '',
     telefonoWhatsApp: '',
     horasAnticipacionCancelacion: 24,
-    direccionSucursal: ''
+    direccionSucursal: '',
+    diasAnticipacionReserva: 1
   });
 
   readonly config = this._config.asReadonly();
@@ -126,7 +128,8 @@ export class ConfigService {
       clabeInterbancaria: res.clabeInterbancaria ?? '',
       telefonoWhatsApp: res.telefonoWhatsApp ?? '',
       horasAnticipacionCancelacion: res.horasAnticipacionCancelacion ?? 24,
-      direccionSucursal: res.direccionSucursal ?? ''
+      direccionSucursal: res.direccionSucursal ?? '',
+      diasAnticipacionReserva: res.diasAnticipacionReserva ?? 1
     });
   }
 
@@ -151,7 +154,8 @@ export class ConfigService {
       clabeInterbancaria: config.clabeInterbancaria,
       telefonoWhatsApp: config.telefonoWhatsApp,
       horasAnticipacionCancelacion: config.horasAnticipacionCancelacion,
-      direccionSucursal: config.direccionSucursal
+      direccionSucursal: config.direccionSucursal,
+      diasAnticipacionReserva: config.diasAnticipacionReserva
     };
   }
 }

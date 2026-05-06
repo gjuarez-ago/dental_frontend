@@ -107,6 +107,7 @@ export class PatientPortalService {
     cuentaBancaria?: string;
     clabeInterbancaria?: string;
     telefono?: string;
+    leadDays?: number;
   }>> {
     return this.http.get<ApiResponse<any>>(`${this.API_URL}/my-clinic`);
   }

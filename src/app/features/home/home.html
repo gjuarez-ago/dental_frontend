@@ -70,8 +70,10 @@
       <h3 class="section-title">Comprobantes por Verificar <span class="badge">{{ comprobantesPendientes().length }}
           NUEVOS</span></h3>
       <div class="actions">
-        <button class="secondary-btn">Filtrar por Fecha</button>
-        <button class="secondary-btn">Generar Reporte</button>
+        <button class="secondary-btn sort-toggle" (click)="toggleSort()">
+          <i class="ph" [class]="sortOrder() === 'URGENCY' ? 'ph-sort-descending' : 'ph-calendar-list'"></i>
+          {{ sortOrder() === 'URGENCY' ? 'Prioridad: Urgencia' : 'Prioridad: Fecha Cita' }}
+        </button>
       </div>
     </div>
 

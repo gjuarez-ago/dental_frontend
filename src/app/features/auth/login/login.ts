@@ -1,6 +1,7 @@
 import { Component, inject, ChangeDetectionStrategy, signal, OnInit, PLATFORM_ID } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
@@ -23,6 +24,7 @@ export class LoginComponent implements OnInit {
   private readonly spinner = inject(NgxSpinnerService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly toastr = inject(ToastrService);
+  private readonly location = inject(Location);
 
   readonly errorMessage = signal<string | null>(null);
   readonly isLoading = signal(false);
@@ -88,6 +90,14 @@ export class LoginComponent implements OnInit {
     this.phoneForm.controls.telefono.reset();
   }
 
+  goBack(): void {
+    if (window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/']);
+    }
+  }
+
   goBackToPhone(): void {
     this.patientStep.set('PHONE_INPUT');
     this.patientPhone.set('');
@@ -131,7 +141,9 @@ export class LoginComponent implements OnInit {
         this.isLoading.set(false);
         const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'Error al verificar el teléfono.';
         this.errorMessage.set(msg);
-        this.toastr.error(msg, 'Error');
+        if (!(err instanceof HttpErrorResponse)) {
+          this.toastr.error(msg, 'Error');
+        }
       }
     });
   }
@@ -151,7 +163,9 @@ export class LoginComponent implements OnInit {
         this.isLoading.set(false);
         const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'NIP incorrecto.';
         this.errorMessage.set(msg);
-        this.toastr.error(msg, 'Error');
+        if (!(err instanceof HttpErrorResponse)) {
+          this.toastr.error(msg, 'Error');
+        }
       }
     });
   }
@@ -177,7 +191,9 @@ export class LoginComponent implements OnInit {
         this.isLoading.set(false);
         const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'Error al completar el perfil.';
         this.errorMessage.set(msg);
-        this.toastr.error(msg, 'Error');
+        if (!(err instanceof HttpErrorResponse)) {
+          this.toastr.error(msg, 'Error');
+        }
       }
     });
   }
@@ -197,7 +213,9 @@ export class LoginComponent implements OnInit {
         this.isLoading.set(false);
         const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'Error al registrar.';
         this.errorMessage.set(msg);
-        this.toastr.error(msg, 'Error');
+        if (!(err instanceof HttpErrorResponse)) {
+          this.toastr.error(msg, 'Error');
+        }
       }
     });
   }
@@ -225,7 +243,9 @@ export class LoginComponent implements OnInit {
         this.isLoading.set(false);
         const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'Credenciales incorrectas.';
         this.errorMessage.set(msg);
-        this.toastr.error(msg, 'Error');
+        if (!(err instanceof HttpErrorResponse)) {
+          this.toastr.error(msg, 'Error');
+        }
       }
     });
   }

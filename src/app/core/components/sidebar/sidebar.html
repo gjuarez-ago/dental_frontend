@@ -34,13 +34,6 @@
       <span class="label">Nueva Cita</span>
     </button>
 
-    @if (auth.getUserRole() === 'OWNER' && auth.currentUser()?.planSuscripcion !== 'RED') {
-      <a href="https://wa.me/529991234567?text=Hola,%20me%20gustaria%20mejorar%20mi%20plan%20en%20Novatia%20Health" 
-         target="_blank" class="upgrade-btn" title="Mejorar Plan">
-        <span class="icon">🚀</span>
-        <span class="label">Mejorar Plan</span>
-      </a>
-    }
     <button class="logout-btn" title="Cerrar Sesión" (click)="logout()">
       <span class="icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

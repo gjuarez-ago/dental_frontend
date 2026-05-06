@@ -33,6 +33,7 @@ export class ConfigDrawerComponent implements OnInit, OnChanges {
       // Nuevos campos globales
       telefonoWhatsApp: ['', [Validators.pattern(/^\d+$/), Validators.minLength(10)]],
       horasAnticipacionCancelacion: [24, [Validators.required, Validators.min(0)]],
+      diasAnticipacionReserva: [1, [Validators.required, Validators.min(1)]],
       direccionSucursal: [''],
       weeklySchedule: this.fb.array([])
     });
@@ -73,7 +74,8 @@ export class ConfigDrawerComponent implements OnInit, OnChanges {
       clabeInterbancaria: cfg.clabeInterbancaria,
       telefonoWhatsApp: cfg.telefonoWhatsApp,
       horasAnticipacionCancelacion: cfg.horasAnticipacionCancelacion,
-      direccionSucursal: cfg.direccionSucursal
+      direccionSucursal: cfg.direccionSucursal,
+      diasAnticipacionReserva: cfg.diasAnticipacionReserva
     });
 
     this.scheduleArray.clear();

@@ -1,7 +1,10 @@
 <div class="login-container">
+  <button type="button" class="back-nav-btn" (click)="goBack()" title="Volver">
+    <i class="ph ph-arrow-left"></i>
+    <span>Volver</span>
+  </button>
+
   <div class="login-card">
-
-
     <!-- ─── Role Toggle ──────────────────────────────────────────── -->
     <div class="role-selector">
       <button type="button" class="role-btn" [class.active]="loginMode() === 'PACIENTE'"

@@ -104,6 +104,7 @@ export class MyAppointmentsComponent implements OnInit {
     cuentaBancaria?: string;
     clabeInterbancaria?: string;
     telefono?: string;
+    leadDays?: number;
   } | null>(null);
 
   // Pago
@@ -231,9 +232,13 @@ export class MyAppointmentsComponent implements OnInit {
     const days: {date: string; day: number; disabled: boolean; past: boolean}[] = [];
     for (let i = 0; i < firstDay; i++) days.push({ date: '', day: 0, disabled: true, past: false });
     for (let d = 1; d <= daysInMonth; d++) {
-      const dt = new Date(year, month, d);
-      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      days.push({ date: dateStr, day: d, disabled: dt.getDay() === 0, past: dt < today });
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      days.push({
+        date: dateStr,
+        day: d,
+        disabled: this.isInvalidDay(dateStr),
+        past: new Date(year, month, d) < today
+      });
     }
     this.calendarDays.set(days);
   }
@@ -248,6 +253,23 @@ export class MyAppointmentsComponent implements OnInit {
     if (this.currentMonth() === 11) { this.currentMonth.set(0); this.currentYear.update(y => y + 1); }
     else this.currentMonth.update(m => m + 1);
     this.buildCalendar();
+  }
+
+  isInvalidDay(dateStr: string): boolean {
+    if (!dateStr) return true;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dayDate = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const clinic = this.clinicInfo();
+    const leadDays = clinic?.leadDays ? Number(clinic.leadDays) : 1;
+    
+    const minSelectableDate = new Date(today);
+    minSelectableDate.setDate(today.getDate() + leadDays);
+
+    // Es inválido si es antes de hoy + leadDays O si es domingo
+    return dayDate < minSelectableDate || dayDate.getDay() === 0;
   }
 
   selectDate(day: {date: string; day: number; disabled: boolean; past: boolean}): void {

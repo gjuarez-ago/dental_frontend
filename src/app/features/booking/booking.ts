@@ -6,6 +6,7 @@ import { BookingService } from '../../core/services/booking.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SlotDisponibilidad, DisponibilidadDia } from '../../core/models/appointment.model';
 import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
+import { ToastrService } from 'ngx-toastr';
 import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
 
 @Component({
@@ -21,6 +22,7 @@ export class BookingComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly spinner = inject(NgxSpinnerService);
+  private readonly toastr = inject(ToastrService);
 
   // Modal State
   readonly showModal = signal(false);
@@ -167,12 +169,17 @@ export class BookingComponent implements OnInit {
     this.loadMonthlyAvailability();
   }
 
-  isPastDay(dateStr: string): boolean {
+  isInvalidDay(dateStr: string): boolean {
     const [y, m, d] = dateStr.split('-').map(Number);
     const dayDate = new Date(y, m - 1, d);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return dayDate < today;
+
+    const minDays = this.bankDetails().leadDays || 1;
+    const minSelectableDate = new Date(today);
+    minSelectableDate.setDate(today.getDate() + minDays);
+
+    return dayDate < minSelectableDate;
   }
 
   onDateSelect(day: DisponibilidadDia): void {
@@ -413,12 +420,14 @@ export class BookingComponent implements OnInit {
           this.fb.setReceiptUploaded(true);
           this.fb.setStep(4);
           this.scrollToTop();
+        } else {
+          this.toastr.error(res.userMessage || 'Error al agendar cita', 'Error');
         }
       },
       error: () => {
         this.isSubmitting.set(false);
         this.spinner.hide();
-        this.showAlert('Hubo un error al procesar tu cita. Por favor intenta de nuevo.', 'danger', 'Error al Agendar');
+        // El ErrorInterceptor se encarga del toast automático para errores HTTP
       }
     });
   }
@@ -445,7 +454,7 @@ export class BookingComponent implements OnInit {
 
   setupAccount(): void {
     if (!this.isEmailValid() || !this.bookingPhone) {
-      this.showAlert('Ingresa un correo electrónico válido.', 'warning', 'Correo Inválido');
+      this.toastr.warning('Ingresa un correo electrónico válido.', 'Correo Inválido');
       return;
     }
 
@@ -477,12 +486,10 @@ export class BookingComponent implements OnInit {
           this.showModal.set(true);
         }
       },
-      error: (err) => {
+      error: () => {
         this.isSubmitting.set(false);
         this.spinner.hide();
-        // Extraer el mensaje de error del backend (campo userMessage o message)
-        const msg = err?.error?.userMessage || err?.error?.message || 'Hubo un error al crear tu acceso. Por favor intenta de nuevo.';
-        this.showAlert(msg, 'danger', 'Error de Acceso');
+        // El ErrorInterceptor se encarga del toast automático
       }
     });
   }

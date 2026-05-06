@@ -141,7 +141,8 @@ export class BookingService {
     bank: 'Cargando...',
     holder: '...',
     clabe: '...',
-    depositPercentage: 0.30
+    depositPercentage: 0.30,
+    leadDays: 1
   });
 
   readonly bankDetails = this._bankDetails.asReadonly();
@@ -159,7 +160,8 @@ export class BookingService {
               bank: res.result.banco || 'No configurado',
               holder: res.result.doctorName || 'Propietario',
               clabe: res.result.clabeInterbancaria || 'No configurada',
-              depositPercentage: res.result.depositPercentage || 0.30
+              depositPercentage: res.result.depositPercentage || 0.30,
+              leadDays: res.result.diasAnticipacionReserva || 1
             });
           }
         },
