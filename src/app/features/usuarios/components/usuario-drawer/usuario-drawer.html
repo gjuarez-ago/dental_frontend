@@ -41,8 +41,9 @@
             <label for="nombreCompleto">Nombre Completo *</label>
             <div class="input-wrapper">
               <i class="ph ph-user-focus"></i>
-              <input id="nombreCompleto" type="text" formControlName="nombreCompleto" placeholder="Ej. Juan Pérez">
+              <input id="nombreCompleto" type="text" formControlName="nombreCompleto" placeholder="Ej. Juan Pérez" maxlength="150">
             </div>
+            <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 150 caracteres</div>
             <span class="error-msg"
               *ngIf="userForm.get('nombreCompleto')?.touched && userForm.get('nombreCompleto')?.invalid">
               El nombre es requerido.
@@ -70,15 +71,16 @@
               <label for="telefonoContacto">WhatsApp / Teléfono *</label>
               <div class="input-wrapper">
                 <i class="ph ph-whatsapp-logo"></i>
-                <input id="telefonoContacto" type="tel" formControlName="telefonoContacto" placeholder="10 dígitos">
+                <input id="telefonoContacto" type="tel" formControlName="telefonoContacto" placeholder="10 dígitos" maxlength="15">
               </div>
+              <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Hasta 15 dígitos</div>
             </div>
 
             <div class="input-group" [class.error]="userForm.get('email')?.touched && userForm.get('email')?.invalid">
               <label for="email">Correo Electrónico *</label>
               <div class="input-wrapper">
                 <i class="ph ph-envelope"></i>
-                <input id="email" type="email" formControlName="email" placeholder="usuario@ejemplo.com">
+                <input id="email" type="email" formControlName="email" placeholder="usuario@ejemplo.com" maxlength="100">
               </div>
               <span class="error-msg"
                 *ngIf="userForm.get('email')?.touched && userForm.get('email')?.errors?.['required']">
@@ -113,8 +115,9 @@
               <label for="cedula">Cédula Profesional *</label>
               <div class="input-wrapper">
                 <i class="ph ph-certificate"></i>
-                <input id="cedula" type="text" formControlName="cedulaProfesional" placeholder="Folio oficial">
+                <input id="cedula" type="text" formControlName="cedulaProfesional" placeholder="Folio oficial" maxlength="50">
               </div>
+              <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 50 caracteres</div>
             </div>
           </div>
 

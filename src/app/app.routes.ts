@@ -27,6 +27,11 @@ export const routes: Routes = [
     title: 'Agendar Cita | Dental Sonrisana'
   },
   {
+    path: 'agendar/:tenantId',
+    loadComponent: () => import('./features/booking/quick-booking/quick-booking').then(m => m.QuickBookingComponent),
+    title: 'Agendar Cita Rápida'
+  },
+  {
     path: 'login',
     component: LoginComponent,
     title: 'Login - Dental Sonrisana',

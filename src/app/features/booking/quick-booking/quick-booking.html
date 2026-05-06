@@ -1,0 +1,209 @@
+<div class="quick-booking-page animate-fade-in">
+  <ngx-spinner bdColor="rgba(255,255,255,0.8)" size="medium" color="#0f172a" type="ball-beat"
+    [fullScreen]="true"></ngx-spinner>
+
+  <div class="booking-container">
+    <header class="booking-header">
+      <div class="clinic-badge">Novatia Premium</div>
+      <h1>Agenda tu cita en segundos</h1>
+      <p>Completa los pasos a continuación para confirmar tu espacio.</p>
+    </header>
+
+    <main class="booking-grid">
+      <!-- Sección 1: Selección de Servicio -->
+      <section class="booking-section">
+        <div class="section-title">
+          <span class="step-badge">1</span>
+          <h2>Selecciona el Servicio</h2>
+        </div>
+        <div class="services-list">
+          @for (svc of servicios(); track svc.id) {
+          <div class="service-card" [class.selected]="selectedService()?.id === svc.id" (click)='selectService(svc)'>
+            <div class="service-info">
+              <h3>{{ svc.nombre }}</h3>
+              <p>{{ svc.descripcion }}</p>
+              <div class="service-meta">
+                <span><i class="ph ph-clock"></i> {{ svc.duracionMinutos }} min</span>
+                <span><i class="ph ph-tag"></i> ${{ svc.precioBase }} MXN</span>
+              </div>
+            </div>
+            <div class="selection-indicator">
+              <i class="ph" [class]="selectedService()?.id === svc.id ? 'ph-check-circle-fill' : 'ph-circle'"></i>
+            </div>
+          </div>
+          }
+        </div>
+      </section>
+
+      <!-- Sección 2: Fecha y Hora -->
+      <section class="booking-section" [class.disabled]="!selectedService()">
+        <div class="section-title">
+          <span class="step-badge">2</span>
+          <h2>Fecha y Hora</h2>
+        </div>
+
+        <div class="calendar-wrapper" *ngIf="selectedService()">
+          <div class="calendar-header">
+            <button class="nav-btn" (click)="changeMonth(-1)"><i class="ph ph-caret-left"></i></button>
+            <h3>{{ currentMonthName() }}</h3>
+            <button class="nav-btn" (click)="changeMonth(1)"><i class="ph ph-caret-right"></i></button>
+          </div>
+
+          <div class="calendar-grid">
+            <div class="weekday">LU</div>
+            <div class="weekday">MA</div>
+            <div class="weekday">MI</div>
+            <div class="weekday">JU</div>
+            <div class="weekday">VI</div>
+            <div class="weekday">SA</div>
+            <div class="weekday">DO</div>
+
+            @for (day of getDaysInMonth(); track $index) {
+            @if (day) {
+            <button class="day-btn" [class.selected]="selectedDate()?.toISOString()?.startsWith(day.fecha)"
+              [class.full]="day.estaLlena" [class.closed]="!day.esLaboral" [class.past]="isPastDay(day.fecha)"
+              [disabled]="!day.esLaboral || day.estaLlena || isPastDay(day.fecha)" (click)="selectDate(day)">
+              {{ day.fecha.split('-')[2] }}
+            </button>
+            } @else {
+            <div class="day-empty"></div>
+            }
+            }
+          </div>
+        </div>
+
+        <div class="slots-container" *ngIf="selectedDate()">
+          <p class="subtitle">Horarios disponibles para el {{ formatDate(selectedDate()) }}</p>
+          <div class="slots-grid">
+            @for (slot of filteredSlots(); track slot.horaInicio) {
+            <button class="slot-btn" [class.selected]="selectedSlot()?.horaInicio === slot.horaInicio"
+              [disabled]="!slot.disponible" (click)="selectedSlot.set(slot)">
+              {{ slot.horaInicio }}
+            </button>
+            }
+            @if (filteredSlots().length === 0) {
+            <p class="no-slots">No hay horarios disponibles para este día.</p>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- Sección 3: Datos y Confirmación -->
+      <section class="booking-section" [class.disabled]="!selectedSlot()">
+        <div class="section-title">
+          <span class="step-badge">3</span>
+          <h2>Tus Datos y Pago</h2>
+        </div>
+
+        <div class="form-container" *ngIf="selectedSlot()">
+          <div class="input-group">
+            <label>Nombre Completo</label>
+            <input type="text" [(ngModel)]="customerName" placeholder="Ej. Juan Pérez" maxlength="150">
+            <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 150 caracteres</div>
+          </div>
+          <div class="input-group">
+            <label>Teléfono (WhatsApp)</label>
+            <input type="tel" [(ngModel)]="customerPhone" placeholder="10 dígitos" maxlength="15">
+            <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Hasta 15 dígitos</div>
+          </div>
+          <div class="input-group">
+            <label>Notas adicionales (opcional)</label>
+            <textarea [(ngModel)]="notes" rows="2" placeholder="Algún detalle que debamos saber..." maxlength="500"></textarea>
+            <div class="char-counter" style="font-size: 0.7rem; color: #64748b; text-align: right; margin-top: 2px; font-weight: 600;">{{ notes.length || 0 }} / 500</div>
+          </div>
+
+          <div class="payment-box">
+            <div class="payment-info">
+              <i class="ph ph-info"></i>
+              <p>Para confirmar tu cita se requiere un anticipo de <strong>${{ depositAmount() | number:'1.2-2' }}
+                  MXN</strong> ({{ clinicInfo().depositPercentage * 100 }}%).</p>
+            </div>
+
+            <div class="bank-details">
+              <p><strong>Banco:</strong> {{ clinicInfo().bank }}</p>
+              <p><strong>Titular:</strong> {{ clinicInfo().holder }}</p>
+              <p><strong>CLABE:</strong> {{ clinicInfo().clabe }}</p>
+            </div>
+
+            <div class="upload-area" (click)="fileInput.click()">
+              <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" hidden>
+              <i class="ph ph-camera"></i>
+              <span>Sube tu comprobante para agendar</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Nueva Sección: Ubicación -->
+    <section class="location-section card animate-slide-up" style="margin-top: 2rem; border-radius: 20px; overflow: hidden; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+      <div style="padding: 1.5rem;">
+        <div class="section-title" style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
+          <i class="ph-fill ph-map-pin" style="color: #0f172a; font-size: 1.5rem;"></i>
+          <h2 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">Nuestra Ubicación</h2>
+        </div>
+        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;">Te esperamos en <strong>Dental Sonrisana</strong>: Niños Heroes 8, Centro, 40831 Petatlán, Gro.</p>
+      </div>
+      
+      <div class="map-wrapper" style="width: 100%; height: 300px; position: relative;">
+        <iframe 
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3783.743!2d-101.3479732!3d17.5648433!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x84347d5c31b62b4f%3A0xf8c46ccd5cf0993a!2sDental%20Sonrisana!5e0!3m2!1ses!2smx!4v1715024000000!5m2!1ses!2smx" 
+          width="100%" 
+          height="100%" 
+          style="border:0;" 
+          allowfullscreen="" 
+          loading="lazy" 
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
+
+      <div style="padding: 1.25rem; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 0.85rem; color: #1e293b; font-weight: 600;">
+          <i class="ph ph-map-trifold"></i> Ver en grande
+        </div>
+        <a href="https://www.google.com/maps/dir//Dental+Sonrisana/@17.5648433,-101.3453983,17z/" target="_blank" class="btn-ghost" style="font-size: 0.85rem; padding: 0.5rem 1rem; border-radius: 8px; background: #0f172a; color: white; text-decoration: none;">
+          Abrir en Maps <i class="ph ph-arrow-square-out"></i>
+        </a>
+      </div>
+    </section>
+
+    <footer class="booking-footer">
+      <p>Al agendar, aceptas nuestros términos y condiciones de servicio.</p>
+    </footer>
+
+    <!-- Flujo de Éxito / Setup Account -->
+    <div id="success-flow" class="success-container animate-fade-in" *ngIf="isBookingSuccess()">
+      <div class="success-card">
+        <div class="success-icon">
+          <i class="ph-fill ph-check-circle"></i>
+        </div>
+        <h2>¡Cita Solicitada con Éxito!</h2>
+        <p>Hemos recibido tu comprobante. Te contactaremos por WhatsApp para la confirmación final.</p>
+
+        <div class="account-setup-box">
+          <h3>Obtén tu Acceso al Portal</h3>
+          <p>Registra tu correo para poder consultar tu historial clínico y futuras citas en cualquier momento.</p>
+
+          <div class="input-group">
+             <input type="email" [(ngModel)]="bookingEmail" placeholder="tu@email.com" maxlength="100">
+             <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 100 caracteres</div>
+          </div>
+
+          <button class="btn-setup" (click)="setupAccount()" [disabled]="!isEmailValid() || isSubmitting()">
+            @if (!isSubmitting()) {
+            Vincular mi correo y obtener NIP
+            } @else {
+            <i class="ph ph-circle-notch animate-spin"></i> Procesando...
+            }
+          </button>
+
+          <button class="btn-skip" (click)="router.navigate(['/'])">Regresar al inicio</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-confirm-modal [show]="showModal()" [title]="modalConfig().title" [message]="modalConfig().message"
+  [type]="modalConfig().type" [icon]="modalConfig().icon" (confirm)="onModalConfirm()"
+  (cancel)="showModal.set(false)"></app-confirm-modal>

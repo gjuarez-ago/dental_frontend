@@ -108,6 +108,7 @@ export class BookingComponent implements OnInit {
   bookingPhone = '';
   bookingNotes = '';
   bookingEmail = '';
+  lastSetupPin = '';
   agreedToTerms = false;
   agreedToSurgery = false;
 
@@ -444,7 +445,14 @@ export class BookingComponent implements OnInit {
     if (this.redirectOnModalClose) {
       this.redirectOnModalClose = false;
       this.fb.resetBooking();
-      this.router.navigate(['/mis-citas']);
+      
+      if (this.lastSetupPin === 'YA_TIENES_CUENTA') {
+        this.authService.clearSession();
+        this.router.navigate(['/login']);
+      } else {
+        // Es nuevo, dejarlo pasar directo
+        this.router.navigate(['/mis-citas']);
+      }
     }
   }
 
@@ -465,6 +473,7 @@ export class BookingComponent implements OnInit {
       next: (res) => {
         this.isSubmitting.set(false);
         this.spinner.hide();
+        this.lastSetupPin = res.temporaryPin || '';
         if (res.token) {
           if (res.temporaryPin === 'YA_TIENES_CUENTA') {
             this.modalConfig.set({

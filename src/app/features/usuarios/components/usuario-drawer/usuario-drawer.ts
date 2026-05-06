@@ -80,11 +80,11 @@ export class UsuarioDrawerComponent implements OnChanges {
 
   constructor() {
     this.userForm = this.fb.group({
-      nombreCompleto: ['', [Validators.required, Validators.minLength(3)]],
-      email: ['', [Validators.required, Validators.email]],
-      telefonoContacto: ['', [Validators.required, Validators.pattern(/^\d+$/), Validators.minLength(10)]],
+      nombreCompleto: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150)]],
+      email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
+      telefonoContacto: ['', [Validators.required, Validators.pattern(/^\d+$/), Validators.minLength(10), Validators.maxLength(15)]],
       rol: [UserRole.RECEPTIONIST, [Validators.required]],
-      cedulaProfesional: [''],
+      cedulaProfesional: ['', [Validators.maxLength(50)]],
       genero: ['', [Validators.required]],
       especialidades: [[]],
       esPersonalClinico: [false]

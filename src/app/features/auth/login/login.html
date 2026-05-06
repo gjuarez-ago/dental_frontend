@@ -5,17 +5,6 @@
   </button>
 
   <div class="login-card">
-    <!-- ─── Role Toggle ──────────────────────────────────────────── -->
-    <div class="role-selector">
-      <button type="button" class="role-btn" [class.active]="loginMode() === 'PACIENTE'"
-        (click)="setLoginMode('PACIENTE')">
-        <i class="ph ph-user"></i> Paciente
-      </button>
-      <button type="button" class="role-btn" [class.active]="loginMode() === 'STAFF'" (click)="setLoginMode('STAFF')">
-        <i class="ph ph-stethoscope"></i> Personal
-      </button>
-    </div>
-
     <!-- ─── Error Alert ──────────────────────────────────────────── -->
     <div *ngIf="errorMessage()" class="error-alert">
       <i class="ph ph-warning-circle"></i>
@@ -23,69 +12,28 @@
     </div>
 
     <!-- ════════════════════════════════════════════════════════════ -->
-    <!-- ─── MODO STAFF ────────────────────────────────────────────── -->
+    <!-- ─── FLUJO UNIFICADO ───────────────────────────────────────── -->
     <!-- ════════════════════════════════════════════════════════════ -->
-    <ng-container *ngIf="loginMode() === 'STAFF'">
-      <form class="login-form" [formGroup]="loginForm" (ngSubmit)="onLogin()">
+    <div class="unified-flow">
 
-        <div class="form-group">
-          <label for="staff-user">Usuario</label>
-          <div class="input-wrapper" [class.error]="loginForm.get('user')?.invalid && loginForm.get('user')?.touched">
-            <i class="ph ph-user"></i>
-            <input type="text" id="staff-user" formControlName="user" placeholder="nombre.usuario"
-              autocomplete="username">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="staff-nip">NIP</label>
-          <div class="input-wrapper" [class.error]="loginForm.get('nip')?.invalid && loginForm.get('nip')?.touched">
-            <i class="ph ph-key"></i>
-            <input type="password" id="staff-nip" formControlName="nip" placeholder="************" maxlength="10"
-              autocomplete="current-password">
-          </div>
-        </div>
-
-        <div class="form-options">
-          <label class="remember-me">
-            <input type="checkbox" formControlName="rememberMe"> Recordarme
-          </label>
-          <a href="#" class="forgot-password">¿Olvidaste tu NIP?</a>
-        </div>
-
-        <button type="submit" class="login-btn" [disabled]="loginForm.invalid || isLoading()">
-          <ng-container *ngIf="!isLoading()">Entrar al Sistema</ng-container>
-          <ng-container *ngIf="isLoading()">
-            <i class="ph ph-circle-notch animate-spin"></i> Accediendo...
-          </ng-container>
-        </button>
-
-      </form>
-    </ng-container>
-
-    <!-- ════════════════════════════════════════════════════════════ -->
-    <!-- ─── MODO PACIENTE ─────────────────────────────────────────── -->
-    <!-- ════════════════════════════════════════════════════════════ -->
-    <ng-container *ngIf="loginMode() === 'PACIENTE'">
-
-      <!-- ── Paso 1: Ingresar Teléfono ──────────────────────────── -->
+      <!-- ── Paso 1: Ingresar Teléfono/Usuario ──────────────────── -->
       <ng-container *ngIf="patientStep() === 'PHONE_INPUT'">
         <div class="step-header">
-          <i class="ph ph-phone"></i>
+          <i class="ph ph-user-circle"></i>
           <div>
-            <p class="step-title">Ingresa tu número</p>
-            <p class="step-subtitle">Verificaremos si ya eres paciente</p>
+            <p class="step-title">Acceso al Sistema</p>
+            <p class="step-subtitle">Ingresa tu número o usuario para continuar</p>
           </div>
         </div>
 
         <form class="login-form" [formGroup]="phoneForm" (ngSubmit)="onCheckPhone()">
           <div class="form-group">
-            <label for="patient-phone">Teléfono (10 dígitos)</label>
+            <label for="patient-phone">Teléfono o Usuario</label>
             <div class="input-wrapper"
               [class.error]="phoneForm.get('telefono')?.invalid && phoneForm.get('telefono')?.touched">
-              <i class="ph ph-phone"></i>
-              <input type="tel" id="patient-phone" formControlName="telefono" placeholder="Ej. 9991234567"
-                maxlength="10" autocomplete="tel">
+              <i class="ph ph-identification-badge"></i>
+              <input type="text" id="patient-phone" formControlName="telefono" placeholder="Ej. 7581082962"
+                autocomplete="username">
             </div>
           </div>
 
@@ -97,7 +45,7 @@
 
           <button type="submit" class="login-btn" [disabled]="phoneForm.invalid || isLoading()">
             <ng-container *ngIf="!isLoading()">
-              <i class="ph ph-arrow-right"></i> Continuar
+              Continuar <i class="ph ph-arrow-right"></i>
             </ng-container>
             <ng-container *ngIf="isLoading()">
               <i class="ph ph-circle-notch animate-spin"></i> Verificando...
@@ -106,13 +54,15 @@
         </form>
       </ng-container>
 
-      <!-- ── Paso 2A: Login (Paciente verificado) ─────────────────── -->
+      <!-- ── Paso 2: Login (NIP) ──────────────────────────────────── -->
       <ng-container *ngIf="patientStep() === 'LOGIN'">
         <div class="step-header">
           <i class="ph ph-lock-key"></i>
           <div>
             <p class="step-title">Bienvenido de vuelta</p>
-            <p class="step-subtitle">Ingresa tu NIP de 6 dígitos</p>
+            <p class="step-subtitle">
+              {{ loginMode() === 'STAFF' ? 'Ingresa tus credenciales de acceso' : 'Ingresa tu NIP de 6 dígitos' }}
+            </p>
           </div>
         </div>
 
@@ -124,11 +74,11 @@
 
         <form class="login-form" [formGroup]="patientLoginForm" (ngSubmit)="onPatientLogin()">
           <div class="form-group">
-            <label for="patient-nip">NIP</label>
+            <label for="patient-nip">NIP / PIN</label>
             <div class="input-wrapper"
               [class.error]="patientLoginForm.get('nip')?.invalid && patientLoginForm.get('nip')?.touched">
               <i class="ph ph-key"></i>
-              <input type="password" id="patient-nip" formControlName="nip" placeholder="••••••" maxlength="6"
+              <input type="password" id="patient-nip" formControlName="nip" placeholder="••••••" [maxlength]="loginMode() === 'STAFF' ? 10 : 6"
                 autocomplete="current-password">
             </div>
           </div>
@@ -141,6 +91,10 @@
               <i class="ph ph-circle-notch animate-spin"></i> Accediendo...
             </ng-container>
           </button>
+
+          <div class="form-options center" *ngIf="loginMode() === 'PACIENTE'">
+            <a href="#" class="forgot-password">¿Olvidaste tu NIP?</a>
+          </div>
         </form>
       </ng-container>
 
@@ -149,8 +103,8 @@
         <div class="step-header">
           <i class="ph ph-user-gear"></i>
           <div>
-            <p class="step-title">Completa tu perfil</p>
-            <p class="step-subtitle">Necesitamos unos datos más para activar tu cuenta</p>
+            <p class="step-title">Activa tu cuenta</p>
+            <p class="step-subtitle">Detectamos que ya eres paciente, completa estos datos para entrar</p>
           </div>
         </div>
 
@@ -215,8 +169,8 @@
         <div class="step-header">
           <i class="ph ph-user-plus"></i>
           <div>
-            <p class="step-title">Crea tu cuenta</p>
-            <p class="step-subtitle">Regístrate para agendar citas</p>
+            <p class="step-title">Nueva Cuenta</p>
+            <p class="step-subtitle">No encontramos tu número, regístrate como paciente</p>
           </div>
         </div>
 
@@ -289,17 +243,16 @@
           </button>
 
           <button type="button" class="back-link" (click)="goBackToPhone()">
-            <i class="ph ph-arrow-left"></i> Volver
+            <i class="ph ph-arrow-left"></i> Usar otro número
           </button>
         </form>
       </ng-container>
 
-    </ng-container>
+    </div>
 
     <footer class="login-footer">
       © 2026 Dental Sonrisana. Todos los derechos reservados.
     </footer>
-
   </div>
 
   <ngx-spinner bdColor="rgba(13, 27, 42, 0.6)" size="medium" color="#457b9d" type="ball-scale-multiple"

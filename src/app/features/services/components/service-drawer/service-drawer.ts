@@ -54,8 +54,8 @@ export class ServiceDrawerComponent implements OnChanges {
   }
   
   readonly serviceForm: FormGroup = this.fb.group({
-    nombre: ['', [Validators.required, Validators.minLength(3)]],
-    descripcion: ['', [Validators.required]],
+    nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+    descripcion: ['', [Validators.required, Validators.maxLength(500)]],
     precioBase: [0, [Validators.required, Validators.min(0)]],
     duracionMinutos: [30, [Validators.required, Validators.min(5)]],
     colorEtiqueta: ['#1A2B4C', [Validators.required]],

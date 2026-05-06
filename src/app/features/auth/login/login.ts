@@ -32,14 +32,8 @@ export class LoginComponent implements OnInit {
   readonly patientStep = signal<PatientStep>('PHONE_INPUT');
   readonly patientPhone = signal('');
 
-  readonly loginForm = this.fb.nonNullable.group({
-    user: ['', [Validators.required]],
-    nip: ['', [Validators.required, Validators.minLength(4)]],
-    rememberMe: [false]
-  });
-
   readonly phoneForm = this.fb.nonNullable.group({
-    telefono: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10)]],
+    telefono: ['', [Validators.required]],
     rememberMe: [false]
   });
 
@@ -68,26 +62,10 @@ export class LoginComponent implements OnInit {
   }
 
   private loadRememberedData(): void {
-    const savedUser = localStorage.getItem('staff_user');
-    if (savedUser) {
-      this.loginForm.patchValue({ user: savedUser, rememberMe: true });
-    }
-
     const savedPhone = localStorage.getItem('patient_phone');
     if (savedPhone) {
       this.phoneForm.patchValue({ telefono: savedPhone, rememberMe: true });
     }
-  }
-
-  setLoginMode(mode: 'STAFF' | 'PACIENTE'): void {
-    this.loginMode.set(mode);
-    this.patientStep.set('PHONE_INPUT');
-    this.patientPhone.set('');
-    this.errorMessage.set(null);
-    // Reset sin borrar rememberMe si es posible, o re-cargando
-    this.loginForm.controls.user.reset();
-    this.loginForm.controls.nip.reset();
-    this.phoneForm.controls.telefono.reset();
   }
 
   goBack(): void {
@@ -128,9 +106,20 @@ export class LoginComponent implements OnInit {
         this.patientPhone.set(telefono);
 
         switch (res.status) {
-          case 'EXISTS_VERIFIED': this.patientStep.set('LOGIN'); break;
-          case 'EXISTS_UNVERIFIED': this.patientStep.set('COMPLETE_PROFILE'); break;
+          case 'STAFF_FOUND':
+            this.loginMode.set('STAFF');
+            this.patientStep.set('LOGIN');
+            break;
+          case 'EXISTS_VERIFIED':
+            this.loginMode.set('PACIENTE');
+            this.patientStep.set('LOGIN');
+            break;
+          case 'EXISTS_UNVERIFIED':
+            this.loginMode.set('PACIENTE');
+            this.patientStep.set('COMPLETE_PROFILE');
+            break;
           case 'NOT_FOUND':
+            this.loginMode.set('PACIENTE');
             this.patientStep.set('REGISTER');
             this.registerForm.patchValue({ telefono });
             break;
@@ -153,21 +142,44 @@ export class LoginComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
     this.spinner.show();
-    this.authService.patientLogin(this.patientPhone(), this.patientLoginForm.getRawValue().nip).subscribe({
-      next: () => {
-        this.spinner.hide();
-        this.router.navigate(['/mis-citas']);
-      },
-      error: (err) => {
-        this.spinner.hide();
-        this.isLoading.set(false);
-        const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'NIP incorrecto.';
-        this.errorMessage.set(msg);
-        if (!(err instanceof HttpErrorResponse)) {
-          this.toastr.error(msg, 'Error');
+
+    const nip = this.patientLoginForm.getRawValue().nip;
+
+    if (this.loginMode() === 'STAFF') {
+      // Login como Personal
+      this.authService.login({ user: this.patientPhone(), nip }).subscribe({
+        next: () => {
+          this.spinner.hide();
+          this.router.navigate(['/dashboard']);
+        },
+        error: (err) => {
+          this.spinner.hide();
+          this.isLoading.set(false);
+          const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'NIP incorrecto.';
+          this.errorMessage.set(msg);
+          if (!(err instanceof HttpErrorResponse)) {
+            this.toastr.error(msg, 'Error');
+          }
         }
-      }
-    });
+      });
+    } else {
+      // Login como Paciente
+      this.authService.patientLogin(this.patientPhone(), nip).subscribe({
+        next: () => {
+          this.spinner.hide();
+          this.router.navigate(['/mis-citas']);
+        },
+        error: (err) => {
+          this.spinner.hide();
+          this.isLoading.set(false);
+          const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'NIP incorrecto.';
+          this.errorMessage.set(msg);
+          if (!(err instanceof HttpErrorResponse)) {
+            this.toastr.error(msg, 'Error');
+          }
+        }
+      });
+    }
   }
 
   onCompleteProfile(): void {
@@ -212,36 +224,6 @@ export class LoginComponent implements OnInit {
         this.spinner.hide();
         this.isLoading.set(false);
         const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'Error al registrar.';
-        this.errorMessage.set(msg);
-        if (!(err instanceof HttpErrorResponse)) {
-          this.toastr.error(msg, 'Error');
-        }
-      }
-    });
-  }
-
-  onLogin(): void {
-    if (this.loginForm.invalid || this.isLoading()) return;
-    const { user, nip, rememberMe } = this.loginForm.getRawValue();
-    if (isPlatformBrowser(this.platformId)) {
-      if (rememberMe) {
-        localStorage.setItem('staff_user', user);
-      } else {
-        localStorage.removeItem('staff_user');
-      }
-    }
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-    this.spinner.show();
-    this.authService.login({ user, nip }).subscribe({
-      next: () => {
-        this.spinner.hide();
-        this.router.navigate(['/dashboard']);
-      },
-      error: (err) => {
-        this.spinner.hide();
-        this.isLoading.set(false);
-        const msg = err?.userMessage || err?.error?.userMessage || err?.message || err?.error?.message || 'Credenciales incorrectas.';
         this.errorMessage.set(msg);
         if (!(err instanceof HttpErrorResponse)) {
           this.toastr.error(msg, 'Error');

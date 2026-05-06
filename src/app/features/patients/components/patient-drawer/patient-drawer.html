@@ -23,8 +23,9 @@
             <label for="nombreCompleto">Nombre Completo *</label>
             <div class="input-wrapper">
               <i class="ph ph-user"></i>
-              <input id="nombreCompleto" type="text" formControlName="nombreCompleto" placeholder="Ej. Elena Ruiz">
+              <input id="nombreCompleto" type="text" formControlName="nombreCompleto" placeholder="Ej. Elena Ruiz" maxlength="150">
             </div>
+            <div class="field-hint">Máx. 150 caracteres</div>
             <span class="error-msg" *ngIf="isInvalid('nombreCompleto')">El nombre es requerido (mín. 3 carácteres).</span>
           </div>
 
@@ -33,8 +34,9 @@
               <label for="telefono">WhatsApp de contacto *</label>
               <div class="input-wrapper">
                 <i class="ph ph-whatsapp-logo"></i>
-                <input id="telefono" type="tel" formControlName="telefono" placeholder="Ej. 9991557878">
+                <input id="telefono" type="tel" formControlName="telefono" placeholder="Ej. 9991557878" maxlength="15">
               </div>
+              <div class="field-hint">Hasta 15 dígitos</div>
               <span class="error-msg" *ngIf="isInvalid('telefono')">Se requiere un número de 10 dígitos.</span>
             </div>
 
@@ -52,14 +54,15 @@
               <label for="curp">CURP</label>
               <div class="input-wrapper">
                 <i class="ph ph-fingerprint"></i>
-                <input id="curp" type="text" formControlName="curp" placeholder="18 caracteres">
+                <input id="curp" type="text" formControlName="curp" placeholder="18 caracteres" maxlength="18">
               </div>
+              <div class="field-hint">Exactamente 18 caracteres</div>
             </div>
             <div class="input-group">
               <label for="direccion">Dirección</label>
               <div class="input-wrapper">
                 <i class="ph ph-map-pin"></i>
-                <input id="direccion" type="text" formControlName="direccion" placeholder="Calle, No. y Colonia">
+                <input id="direccion" type="text" formControlName="direccion" placeholder="Calle, No. y Colonia" maxlength="255">
               </div>
             </div>
           </div>
@@ -69,7 +72,7 @@
               <label for="email">Correo Electrónico *</label>
               <div class="input-wrapper">
                 <i class="ph ph-envelope"></i>
-                <input id="email" type="email" formControlName="email" placeholder="paciente@ejemplo.com">
+                <input id="email" type="email" formControlName="email" placeholder="paciente@ejemplo.com" maxlength="100">
               </div>
               <span class="error-msg" *ngIf="isInvalid('email')">El correo electrónico es obligatorio y debe ser válido.</span>
             </div>
@@ -96,7 +99,7 @@
               <label for="antecedentesHeredofamiliares">Antecedentes Familiares</label>
               <div class="input-wrapper">
                 <i class="ph ph-users-three"></i>
-                <input id="antecedentesHeredofamiliares" type="text" formControlName="antecedentesHeredofamiliares" placeholder="Ej. Diabetes en padres, hipertensión...">
+                <input id="antecedentesHeredofamiliares" type="text" formControlName="antecedentesHeredofamiliares" placeholder="Ej. Diabetes en padres, hipertensión..." maxlength="500">
               </div>
             </div>
             
@@ -104,7 +107,7 @@
               <label for="antecedentesNoPatologicos">Hábitos / No Patológicos</label>
               <div class="input-wrapper">
                 <i class="ph ph-coffee"></i>
-                <input id="antecedentesNoPatologicos" type="text" formControlName="antecedentesNoPatologicos" placeholder="Ej. Fuma, bebe alcohol, dieta...">
+                <input id="antecedentesNoPatologicos" type="text" formControlName="antecedentesNoPatologicos" placeholder="Ej. Fuma, bebe alcohol, dieta..." maxlength="500">
               </div>
             </div>
           </div>
@@ -113,7 +116,7 @@
             <label for="alergias">Alergias Conocidas *</label>
             <div class="input-wrapper danger">
               <i class="ph ph-warning-diamond"></i>
-              <input id="alergias" type="text" formControlName="alergias" placeholder="Ej. Penicilina, Látex (Dato Vital)">
+              <input id="alergias" type="text" formControlName="alergias" placeholder="Ej. Penicilina, Látex (Dato Vital)" maxlength="500">
             </div>
             <span class="error-msg" *ngIf="isInvalid('alergias')">Por seguridad clínica, especifique si tiene alergias o 'Ninguna'.</span>
           </div>
@@ -122,7 +125,7 @@
             <label for="enfermedadesCronicas">Enfermedades Crónicas *</label>
             <div class="input-wrapper">
               <i class="ph ph-activity"></i>
-              <input id="enfermedadesCronicas" type="text" formControlName="enfermedadesCronicas" placeholder="Ej. Diabetes, Hipertensión o 'Ninguna'">
+              <input id="enfermedadesCronicas" type="text" formControlName="enfermedadesCronicas" placeholder="Ej. Diabetes, Hipertensión o 'Ninguna'" maxlength="500">
             </div>
             <span class="error-msg" *ngIf="isInvalid('enfermedadesCronicas')">Este campo es obligatorio por seguridad clínica.</span>
           </div>
@@ -146,7 +149,7 @@
               <label for="ocupacion">Ocupación</label>
               <div class="input-wrapper">
                 <i class="ph ph-briefcase"></i>
-                <input id="ocupacion" type="text" formControlName="ocupacion" placeholder="Ej. Administrativo">
+                <input id="ocupacion" type="text" formControlName="ocupacion" placeholder="Ej. Administrativo" maxlength="100">
               </div>
             </div>
           </div>
@@ -160,7 +163,7 @@
               <label for="emergenciaNombre">Nombre de contacto de emergencia *</label>
               <div class="input-wrapper">
                 <i class="ph ph-user-focus"></i>
-                <input id="emergenciaNombre" type="text" formControlName="emergenciaNombre" placeholder="Nombre completo">
+                <input id="emergenciaNombre" type="text" formControlName="emergenciaNombre" placeholder="Nombre completo" maxlength="150">
               </div>
               <span class="error-msg" *ngIf="isInvalid('emergenciaNombre')">Nombre requerido.</span>
             </div>
@@ -168,7 +171,7 @@
               <label for="emergenciaTelefono">Teléfono emergencia *</label>
               <div class="input-wrapper">
                 <i class="ph ph-phone"></i>
-                <input id="emergenciaTelefono" type="tel" formControlName="emergenciaTelefono" placeholder="10 dígitos">
+                <input id="emergenciaTelefono" type="tel" formControlName="emergenciaTelefono" placeholder="10 dígitos" maxlength="15">
               </div>
               <span class="error-msg" *ngIf="isInvalid('emergenciaTelefono')">Teléfono de 10 dígitos requerido.</span>
             </div>
@@ -211,8 +214,11 @@
             <label for="notasClinicas">Motivo de consulta y observaciones relevantes</label>
             <div class="input-wrapper textarea-wrapper">
               <i class="ph ph-note-pencil"></i>
-              <textarea id="notasClinicas" formControlName="notasClinicas" rows="5" 
+              <textarea id="notasClinicas" formControlName="notasClinicas" rows="5" maxlength="2000"
                         placeholder="Escribe aquí el motivo de visita, diagnóstico inicial o detalles del expediente..."></textarea>
+            </div>
+            <div class="char-counter">
+              {{ patientForm.get('notasClinicas')?.value.length || 0 }} / 2000
             </div>
           </div>
         </div>

@@ -32,7 +32,7 @@ export interface AuthResponse {
 
 // Respuesta del endpoint /check
 export interface PatientCheckResponse {
-  status: 'EXISTS_VERIFIED' | 'EXISTS_UNVERIFIED' | 'NOT_FOUND';
+  status: 'EXISTS_VERIFIED' | 'EXISTS_UNVERIFIED' | 'NOT_FOUND' | 'STAFF_FOUND';
   message: string;
 }
 
@@ -117,12 +117,16 @@ export class AuthService {
   }
 
   logout(): void {
+    this.clearSession();
+    this.router.navigate(['/']);
+  }
+
+  clearSession(): void {
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     }
     this.currentUser.set(null);
-    this.router.navigate(['/']);
   }
 
   isLoggedIn(): boolean {

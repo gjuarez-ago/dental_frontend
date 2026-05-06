@@ -51,13 +51,15 @@
       <div class="form-grid">
         <div class="form-group full-width" [class.invalid]="isInvalid('nombre')">
           <label>Nombre del Servicio</label>
-          <input type="text" formControlName="nombre" placeholder="Ej: Limpieza Completa">
+          <input type="text" formControlName="nombre" placeholder="Ej: Limpieza Completa" maxlength="100">
+          <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 100 caracteres</div>
           <span class="error-msg" *ngIf="isInvalid('nombre')">El nombre es requerido (mín. 3 letras)</span>
         </div>
 
         <div class="form-group full-width" [class.invalid]="isInvalid('descripcion')">
           <label>Descripción</label>
-          <textarea formControlName="descripcion" placeholder="Describe brevemente el tratamiento..."></textarea>
+          <textarea formControlName="descripcion" placeholder="Describe brevemente el tratamiento..." maxlength="500"></textarea>
+          <div class="char-counter" style="font-size: 0.7rem; color: #64748b; text-align: right; margin-top: 4px; font-weight: 600;">{{ serviceForm.get('descripcion')?.value.length || 0 }} / 500</div>
           <span class="error-msg" *ngIf="isInvalid('descripcion')">La descripción es requerida</span>
         </div>
 

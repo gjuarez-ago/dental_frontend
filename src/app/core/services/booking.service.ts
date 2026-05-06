@@ -56,6 +56,13 @@ export class BookingService {
     );
   }
 
+  getPublicSucursales(tenantId: string): Observable<any[]> {
+    const params = new HttpParams().set('tenantId', tenantId);
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/sucursales`, { params }).pipe(
+      map(res => (res.ok && res.result) ? res.result : [])
+    );
+  }
+
   getMonthlyAvailability(tenantId: string, sucursalId: string, month: number, year: number, serviceId?: string): Observable<DisponibilidadDia[]> {
     let params = new HttpParams()
       .set('tenantId', tenantId)

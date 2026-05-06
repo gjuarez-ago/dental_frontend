@@ -28,20 +28,20 @@ export class PatientDrawerComponent implements OnChanges, OnDestroy {
 
   constructor() {
     this.patientForm = this.fb.group({
-      nombreCompleto: ['', [Validators.required, Validators.minLength(3)]],
-      telefono: ['', [Validators.required, Validators.pattern(/^[0-9\s-]+$/)]],
-      email: ['', [Validators.required, Validators.email]], // Ahora requerido por tu petición
+      nombreCompleto: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150)]],
+      telefono: ['', [Validators.required, Validators.pattern(/^[0-9\s-]+$/), Validators.maxLength(15)]],
+      email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]], // Ahora requerido por tu petición
       fechaNacimiento: ['', [Validators.required]],
       genero: ['OTRO', [Validators.required]],
-      curp: [''],
-      direccion: [''],
-      ocupacion: [''],
+      curp: ['', [Validators.maxLength(18)]],
+      direccion: ['', [Validators.maxLength(255)]],
+      ocupacion: ['', [Validators.maxLength(100)]],
 
-      alergias: ['', [Validators.required]],
-      enfermedadesCronicas: ['', [Validators.required]],
-      antecedentesHeredofamiliares: [''],
-      antecedentesNoPatologicos: [''],
-      medicamentosActuales: [''],
+      alergias: ['', [Validators.required, Validators.maxLength(500)]],
+      enfermedadesCronicas: ['', [Validators.required, Validators.maxLength(500)]],
+      antecedentesHeredofamiliares: ['', [Validators.maxLength(500)]],
+      antecedentesNoPatologicos: ['', [Validators.maxLength(500)]],
+      medicamentosActuales: ['', [Validators.maxLength(500)]],
       tipoSangre: ['O+'],
 
       // Privacidad
@@ -49,11 +49,11 @@ export class PatientDrawerComponent implements OnChanges, OnDestroy {
       fechaAceptacionPrivacidad: [null],
 
       // Emergencia
-      emergenciaNombre: ['', [Validators.required]],
-      emergenciaTelefono: ['', [Validators.required, Validators.pattern(/^[0-9\s-]+$/)]],
+      emergenciaNombre: ['', [Validators.required, Validators.maxLength(150)]],
+      emergenciaTelefono: ['', [Validators.required, Validators.pattern(/^[0-9\s-]+$/), Validators.maxLength(15)]],
       
       // Notas clínicas
-      notasClinicas: [''],
+      notasClinicas: ['', [Validators.maxLength(2000)]],
 
       // Auditoría
       saldoPendiente: [{ value: 0, disabled: true }],

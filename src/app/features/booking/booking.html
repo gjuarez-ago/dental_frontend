@@ -154,8 +154,9 @@
                 <div class="form-group" [class.error]="bookingName.length > 0 && !isNameValid()">
                     <label for="pName">Nombre Completo *</label>
                     <div class="input-wrapper no-icon">
-                        <input type="text" id="pName" [(ngModel)]="bookingName" placeholder="Tu nombre completo" required>
+                        <input type="text" id="pName" [(ngModel)]="bookingName" placeholder="Tu nombre completo" maxlength="150" required>
                     </div>
+                    <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 150 caracteres</div>
                     <p class="error-msg" *ngIf="bookingName.length > 0 && !isNameValid()">El nombre debe tener al menos 3 caracteres.</p>
                 </div>
 
@@ -163,8 +164,9 @@
                     <label for="pPhone">WhatsApp de contacto *</label>
                     <div class="input-wrapper no-icon">
                         <input type="tel" id="pPhone" [ngModel]="bookingPhone" (input)="onPhoneInput($event)"
-                            placeholder="Número de WhatsApp (10 dígitos)" maxlength="10" required>
+                            placeholder="Número de WhatsApp (10 dígitos)" maxlength="15" required>
                     </div>
+                    <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Hasta 15 dígitos</div>
                     <p class="error-msg" *ngIf="bookingPhone.length > 0 && !isPhoneValid()">Deben ser exactamente 10 números.</p>
                 </div>
 
@@ -172,8 +174,9 @@
                     <label for="pNotes">¿Cuál es el motivo de tu visita?</label>
                     <div class="input-wrapper no-icon">
                         <textarea id="pNotes" [(ngModel)]="bookingNotes" placeholder="Algún detalle que debamos saber..."
-                            rows="4"></textarea>
+                            rows="4" maxlength="500"></textarea>
                     </div>
+                    <div class="char-counter" style="font-size: 0.7rem; color: #64748b; text-align: right; margin-top: 4px; font-weight: 600;">{{ bookingNotes.length || 0 }} / 500</div>
                 </div>
             </div>
 
@@ -353,7 +356,8 @@
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <div class="input-wrapper" style="position: relative;">
                         <i class="ph ph-envelope-simple" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 1.2rem;"></i>
-                        <input type="email" [(ngModel)]="bookingEmail" placeholder="tu@correo.com" style="width: 100%; padding: 0.85rem 1rem 0.85rem 2.75rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 1rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
+                        <input type="email" [(ngModel)]="bookingEmail" placeholder="tu@correo.com" maxlength="100" style="width: 100%; padding: 0.85rem 1rem 0.85rem 2.75rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 1rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
+                        <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 100 caracteres</div>
                     </div>
                 </div>
                 <button class="btn-primary-pill full-width" [disabled]="!isEmailValid()" (click)="setupAccount()" style="margin-bottom: 0; padding: 0.85rem; border-radius: 12px; font-weight: 600; font-size: 1rem; display: flex; justify-content: center; align-items: center; gap: 0.5rem; background: #0f172a;">
@@ -415,6 +419,34 @@
             Procesando...
         </p>
     </ngx-spinner>
+
+    <!-- Nueva Sección: Ubicación -->
+    <section class="location-section card animate-slide-up" style="margin: 2rem 1.5rem; border-radius: 20px; overflow: hidden; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+      <div style="padding: 1.5rem;">
+        <div class="section-title" style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
+          <i class="ph-fill ph-map-pin" style="color: #1A2B4C; font-size: 1.5rem;"></i>
+          <h2 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #1A2B4C;">Donde estamos</h2>
+        </div>
+        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;"><strong>Dental Sonrisana</strong>. Ubicación exacta para tu llegada.</p>
+      </div>
+      
+      <div class="map-wrapper" style="width: 100%; height: 250px;">
+        <iframe 
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3783.743!2d-101.3479732!3d17.5648433!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x84347d5c31b62b4f%3A0xf8c46ccd5cf0993a!2sDental%20Sonrisana!5e0!3m2!1ses!2smx!4v1715024000000!5m2!1ses!2smx" 
+          width="100%" 
+          height="100%" 
+          style="border:0;" 
+          allowfullscreen="" 
+          loading="lazy">
+        </iframe>
+      </div>
+
+      <div style="padding: 1rem; background: #fcfcfd; display: flex; justify-content: flex-end;">
+        <a href="https://www.google.com/maps/dir//Dental+Sonrisana/@17.5648433,-101.3453983,17z/" target="_blank" style="font-size: 0.85rem; font-weight: 700; color: #1A2B4C; text-decoration: none; display: flex; align-items: center; gap: 6px;">
+          CÓMO LLEGAR <i class="ph ph-navigation-arrow"></i>
+        </a>
+      </div>
+    </section>
 
     <!-- Modal de Alerta Informativa -->
     <app-confirm-modal
