@@ -29,8 +29,8 @@
   .header-content {
     .title-group {
       display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;
-      i { font-size: 1.5rem; color: #1A2B4C; }
-      h2 { font-size: 1.25rem; font-weight: 850; color: #1A2B4C; margin: 0; letter-spacing: -0.01em; }
+      i { font-size: 1.5rem; color: var(--primary); }
+      h2 { font-size: 1.25rem; font-weight: 850; color: var(--primary); margin: 0; letter-spacing: -0.01em; }
     }
     p { font-size: 0.8125rem; color: #64748b; font-weight: 500; margin: 0; }
   }
@@ -91,7 +91,7 @@
   }
 
   &:focus-within label {
-    color: #1A2B4C;
+    color: var(--primary);
   }
 
   input {
@@ -105,7 +105,7 @@
     
     &:focus { 
       outline: none; 
-      border-color: #1A2B4C; 
+      border-color: var(--primary); 
       background: white;
       box-shadow: 0 0 0 4px rgba(26, 43, 76, 0.08); 
       transform: translateY(-1px);
@@ -167,7 +167,7 @@
 
   .day-info {
     display: flex; align-items: center; gap: 1rem;
-    .day-name { font-weight: 750; color: #1A2B4C; font-size: 0.9375rem; min-width: 90px; }
+    .day-name { font-weight: 750; color: var(--primary); font-size: 0.9375rem; min-width: 90px; }
   }
 
   .time-controls {
@@ -175,8 +175,8 @@
     .time-field {
       input {
         padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.5rem;
-        font-size: 0.8125rem; font-weight: 700; color: #1A2B4C; font-family: inherit;
-        &:focus { border-color: #1A2B4C; outline: none; }
+        font-size: 0.8125rem; font-weight: 700; color: var(--primary); font-family: inherit;
+        &:focus { border-color: var(--primary); outline: none; }
       }
     }
     .separator { color: #94a3b8; font-weight: 600; }
@@ -205,11 +205,11 @@
   padding: 1.5rem 2rem; border-top: 1px solid #f1f5f9;
   display: flex; gap: 1rem;
   button { flex: 1; padding: 1rem; border-radius: 1rem; font-weight: 750; font-size: 0.9375rem; cursor: pointer; transition: all 0.2s; }
-  .btn-secondary { background: white; border: 1.5px solid #e2e8f0; color: #64748b; &:hover { background: #f8fafc; color: #1A2B4C; } }
-  .btn-primary { background: #1A2B4C; border: none; color: white; &:hover { background: #253C6A; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26, 43, 76, 0.2); } &:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; } }
+  .btn-secondary { background: white; border: 1.5px solid #e2e8f0; color: #64748b; &:hover { background: #f8fafc; color: var(--primary); } }
+  .btn-primary { background: var(--primary); border: none; color: white; &:hover { background: #253C6A; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26, 43, 76, 0.2); } &:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; } }
 }
 
-.close-btn { width: 2.25rem; height: 2.25rem; border-radius: 50%; border: none; background: white; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; &:hover { color: #1A2B4C; transform: rotate(90deg); } }
+.close-btn { width: 2.25rem; height: 2.25rem; border-radius: 50%; border: none; background: white; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; &:hover { color: var(--primary); transform: rotate(90deg); } }
 
 /* LOADING STATES */
 .loading-overlay {
@@ -226,12 +226,12 @@
 
   i {
     font-size: 2.5rem;
-    color: #1A2B4C;
+    color: var(--primary);
   }
 
   p {
     font-weight: 600;
-    color: #1A2B4C;
+    color: var(--primary);
     font-size: 0.875rem;
   }
 }

@@ -57,7 +57,7 @@
     h2 {
       font-size: 1.25rem;
       font-weight: 800;
-      color: #1A2B4C;
+      color: var(--primary);
       margin-bottom: 4px;
     }
 
@@ -73,7 +73,7 @@
     border-radius: 50%;
     border: none;
     background: #f1f5f9;
-    color: #1A2B4C;
+    color: var(--primary);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -108,7 +108,7 @@
   .section-title {
     font-size: 0.8125rem;
     font-weight: 800;
-    color: #1A2B4C;
+    color: var(--primary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     display: flex;
@@ -118,7 +118,7 @@
 
     i {
       font-size: 1.25rem;
-      color: #1A2B4C;
+      color: var(--primary);
     }
   }
 
@@ -180,7 +180,7 @@
       transition: all 0.3s ease;
 
       &:focus-within {
-        border-color: #1A2B4C;
+        border-color: var(--primary);
         box-shadow: 0 4px 12px rgba(26, 43, 76, 0.08);
       }
     }
@@ -287,7 +287,7 @@
     display: block;
     font-size: 0.875rem;
     font-weight: 700;
-    color: #1A2B4C;
+    color: var(--primary);
     margin-bottom: 0.5rem;
   }
 
@@ -313,7 +313,7 @@
       border: 1.5px solid #e2e8f0;
       border-radius: 0.75rem;
       font-size: 0.9375rem;
-      color: #1A2B4C;
+      color: var(--primary);
       transition: all 0.2s;
       outline: none;
       background: white;
@@ -323,11 +323,11 @@
       }
 
       &:focus {
-        border-color: #1A2B4C;
+        border-color: var(--primary);
         box-shadow: 0 0 0 4px rgba(26, 43, 76, 0.05);
 
         &+i {
-          color: #1A2B4C;
+          color: var(--primary);
         }
       }
     }
@@ -507,7 +507,7 @@
   }
 
   .btn-save {
-    background: #1A2B4C;
+    background: var(--primary);
     border: none;
     color: white;
 

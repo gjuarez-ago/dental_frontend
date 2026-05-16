@@ -65,6 +65,11 @@ export class MyAppointmentsComponent implements OnInit {
     this.showModal.set(false);
   }
 
+  readonly userInitials = computed(() => {
+    const name = this.authService.currentUser()?.nombreCompleto ?? '';
+    return name.split(' ').map((w: string) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'U';
+  });
+
   appointments = signal<CitaPatient[]>([]);
   loading = signal(true);
 

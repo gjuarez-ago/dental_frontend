@@ -1,0 +1,260 @@
+<div class="onboarding-shell">
+  <div class="onboarding-card">
+    
+    <!-- Header -->
+    <header class="onboarding-header">
+      <div class="logo-area">
+        <img src="/images/logo_erm.png" alt="Logo" class="logo-isotype" style="width: 28px; height: 28px; margin-right: 8px; object-fit: contain;">
+        <span class="logo-text">novatia</span>
+      </div>
+      <div class="step-indicator">
+        Paso {{ currentStep() }} de {{ totalSteps }}
+      </div>
+    </header>
+
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="(currentStep() / totalSteps) * 100"></div>
+    </div>
+
+    <!-- Stepper Content -->
+    <main class="onboarding-body">
+
+      <!-- STEP 1: LEGAL -->
+      @if (currentStep() === 1) {
+        <section class="step-content animate-fade-in">
+          <div class="step-icon-wrap">
+            <i class="ph ph-scales"></i>
+          </div>
+          <h1 class="step-title">Cumplimiento Legal</h1>
+          <p class="step-subtitle">Para garantizar la seguridad de los pacientes, validamos que todos nuestros especialistas cuenten con cédula profesional.</p>
+
+          <form [formGroup]="legalForm" class="legal-box">
+            <div class="form-group">
+              <label>Número de Cédula Profesional *</label>
+              <input type="text" formControlName="cedulaProfesional" placeholder="Ej. 123456789" inputmode="numeric" maxlength="20">
+              <div class="error-msg" *ngIf="legalForm.get('cedulaProfesional')?.invalid && legalForm.get('cedulaProfesional')?.touched">
+                <span *ngIf="legalForm.get('cedulaProfesional')?.errors?.['required']">La cédula profesional es obligatoria.</span>
+                <span *ngIf="legalForm.get('cedulaProfesional')?.errors?.['pattern']">Solo se permiten números.</span>
+                <span *ngIf="legalForm.get('cedulaProfesional')?.errors?.['minlength']">Mínimo 6 dígitos.</span>
+                <span *ngIf="legalForm.get('cedulaProfesional')?.errors?.['maxlength']">Máximo 20 dígitos.</span>
+              </div>
+            </div>
+
+            <label class="check-container">
+              <input type="checkbox" formControlName="confirmaCedula">
+              <span class="checkmark"></span>
+              <span class="check-text">Confirmo que cuento con título y cédula profesional vigente para ejercer mi especialidad en México.</span>
+            </label>
+
+            <div class="legal-warning">
+              <i class="ph ph-warning-circle"></i>
+              <span>El uso de la plataforma sin contar con la documentación legal correspondiente es motivo de cancelación inmediata y reporte a las autoridades sanitarias.</span>
+            </div>
+          </form>
+
+          <div class="step-actions">
+            <button class="btn-cancel" (click)="cancelAccount()">No cuento con cédula</button>
+            <button class="btn-primary" (click)="next()">
+              Confirmar y continuar
+              <i class="ph ph-arrow-right"></i>
+            </button>
+          </div>
+        </section>
+      }
+
+      <!-- STEP 2: PROFILE & CONFIG -->
+      @if (currentStep() === 2) {
+        <section class="step-content animate-fade-in">
+          <div class="step-icon-wrap">
+            <i class="ph ph-user-focus"></i>
+          </div>
+          <h1 class="step-title">Tu Perfil y Espacio</h1>
+          <p class="step-subtitle">Configura tu presencia profesional y los detalles técnicos de tu consultorio.</p>
+
+          <form class="form-grid">
+            <!-- Profile Section -->
+            <div [formGroup]="profileForm" class="form-section">
+              <div class="profile-upload-area">
+                <div class="avatar-preview">
+                  @if (previewUrl()) {
+                    <img [src]="previewUrl()" alt="Preview">
+                  } @else {
+                    <i class="ph ph-user"></i>
+                  }
+                  <button type="button" class="btn-upload-avatar" (click)="photoInput.click()">
+                    <i class="ph ph-camera"></i>
+                  </button>
+                </div>
+                <input #photoInput type="file" hidden (change)="onFileSelected($event)" accept="image/*">
+                <p class="upload-hint">Sube una foto profesional.</p>
+              </div>
+
+              <div class="form-group">
+                <label>Descripción / Biografía</label>
+                <textarea formControlName="biografia" placeholder="Ej. Especialista en ortodoncia..." rows="3" maxlength="600"></textarea>
+                <div class="char-count" style="font-size: 0.7rem; text-align: right; color: #94a3b8;">
+                  {{ profileForm.get('biografia')?.value?.length || 0 }}/600
+                </div>
+                <div class="error-msg" *ngIf="profileForm.get('biografia')?.invalid && profileForm.get('biografia')?.touched">
+                  <span *ngIf="profileForm.get('biografia')?.errors?.['required']">La biografía es obligatoria.</span>
+                  <span *ngIf="profileForm.get('biografia')?.errors?.['minlength']">Mínimo 20 caracteres.</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Género</label>
+                <select formControlName="genero">
+                  <option value="" disabled>Selecciona tu género</option>
+                  <option value="MASCULINO">Masculino</option>
+                  <option value="FEMENINO">Femenino</option>
+                  <option value="OTRO">Otro / No especificar</option>
+                </select>
+                <div class="error-msg" *ngIf="profileForm.get('genero')?.invalid && profileForm.get('genero')?.touched">
+                  El género es obligatorio.
+                </div>
+              </div>
+            </div>
+
+            <!-- Essential Config Section -->
+            <!-- Essential Config Section -->
+            <div [formGroup]="clinicForm" class="form-section">
+              <div class="form-group">
+                <label>Zona Horaria</label>
+                <select formControlName="zonaHoraria">
+                  <option value="America/Mexico_City">Centro (CDMX, GDL, MTY)</option>
+                  <option value="America/Tijuana">Noroeste (Tijuana)</option>
+                  <option value="America/Hermosillo">Sonora (Hermosillo)</option>
+                  <option value="America/Cancun">Sureste (Cancún)</option>
+                </select>
+              </div>
+
+              <div class="toggle-card small">
+                <div class="toggle-info">
+                  <strong>Habilitar envío de comprobantes</strong>
+                  <span>Permite depósitos y transferencias.</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" formControlName="habilitarComprobantes">
+                  <span class="slider round"></span>
+                </label>
+              </div>
+
+              @if (clinicForm.get('habilitarComprobantes')?.value) {
+                <div class="bank-details-compact animate-fade-in">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Banco</label>
+                      <input type="text" formControlName="banco" placeholder="Ej. BBVA" maxlength="50">
+                    </div>
+                    <div class="form-group">
+                      <label>CLABE (18 dígitos)</label>
+                      <input type="text" formControlName="clabeInterbancaria" placeholder="18 dígitos numéricos" maxlength="18" inputmode="numeric">
+                      <div class="error-msg" *ngIf="clinicForm.get('clabeInterbancaria')?.invalid && clinicForm.get('clabeInterbancaria')?.touched">
+                        La CLABE debe tener exactamente 18 dígitos numéricos.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </form>
+
+          <div class="step-actions">
+            <button class="btn-secondary" (click)="prev()">Atrás</button>
+            <button class="btn-primary" (click)="next()">
+              Continuar
+              <i class="ph ph-arrow-right"></i>
+            </button>
+          </div>
+        </section>
+      }
+
+      <!-- STEP 3: SCHEDULES -->
+      @if (currentStep() === 3) {
+        <section class="step-content animate-fade-in">
+          <div class="step-icon-wrap">
+            <i class="ph ph-calendar"></i>
+          </div>
+          <h1 class="step-title">Horarios de Atención</h1>
+          <p class="step-subtitle">{{ labels().scheduleSubtitle }}</p>
+
+          <div class="schedule-grid" [formGroup]="scheduleForm">
+            @for (day of ['mon','tue','wed','thu','fri','sat','sun']; track day) {
+              <div class="day-row" [formGroupName]="day">
+                <label class="day-check">
+                  <input type="checkbox" formControlName="active">
+                  <span class="day-name">{{ day === 'mon' ? 'Lunes' : day === 'tue' ? 'Martes' : day === 'wed' ? 'Miércoles' : day === 'thu' ? 'Jueves' : day === 'fri' ? 'Viernes' : day === 'sat' ? 'Sábado' : 'Domingo' }}</span>
+                </label>
+                
+                <div class="time-range" *ngIf="scheduleForm.get(day + '.active')?.value">
+                  <input type="time" formControlName="start">
+                  <span>a</span>
+                  <input type="time" formControlName="end">
+                </div>
+                <div class="day-off" *ngIf="!scheduleForm.get(day + '.active')?.value">
+                  Cerrado
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="step-actions">
+            <button class="btn-secondary" (click)="prev()">Atrás</button>
+            <button class="btn-primary" (click)="next()">
+              Guardar Horarios
+              <i class="ph ph-arrow-right"></i>
+            </button>
+          </div>
+        </section>
+      }
+
+      <!-- STEP 4: SERVICE -->
+      @if (currentStep() === 4) {
+        <section class="step-content animate-fade-in">
+          <div class="step-icon-wrap">
+            <i class="ph ph-stethoscope"></i>
+          </div>
+          <h1 class="step-title">Tu Primer Servicio</h1>
+          <p class="step-subtitle">{{ labels().serviceSubtitle }}</p>
+
+          <form [formGroup]="serviceForm" class="form-grid">
+            <div class="form-group">
+              <label>Nombre del Servicio</label>
+              <input type="text" formControlName="nombre" placeholder="Ej. Consulta General, Limpieza Dental" maxlength="100">
+              <div class="error-msg" *ngIf="serviceForm.get('nombre')?.invalid && serviceForm.get('nombre')?.touched">
+                El nombre es obligatorio (máx. 100 caracteres).
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Duración (minutos)</label>
+                <input type="number" formControlName="duracion" step="5" min="10" max="480">
+                <div class="error-msg" *ngIf="serviceForm.get('duracion')?.invalid && serviceForm.get('duracion')?.touched">
+                  Rango permitido: 10 a 480 minutos.
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Precio Base (MXN)</label>
+                <input type="number" formControlName="precio" min="0" max="1000000">
+                <div class="error-msg" *ngIf="serviceForm.get('precio')?.invalid && serviceForm.get('precio')?.touched">
+                  Precio inválido (máx. 1,000,000).
+                </div>
+              </div>
+            </div>
+          </form>
+
+          <div class="step-actions">
+            <button class="btn-secondary" (click)="prev()">Atrás</button>
+            <button class="btn-primary" (click)="finish()">
+              Completar Configuración
+              <i class="ph ph-check"></i>
+            </button>
+          </div>
+        </section>
+      }
+    </main>
+
+  </div>
+</div>
+
+<ngx-spinner type="ball-clip-rotate" size="medium" color="#0EA5E9"></ngx-spinner>

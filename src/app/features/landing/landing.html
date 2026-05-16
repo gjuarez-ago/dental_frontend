@@ -1,281 +1,278 @@
-<div class="sonrisana-landing">
-    <!-- NAVBAR -->
-    <nav class="fixed-nav">
-        <div class="max-w-7xl nav-container px-6">
-            <a href="#" class="logo-text">
-                <img src="images/logo_blue.png" alt="Dental Sonrisana" class="logo-img">
-            </a>
-
-            <div class="nav-links">
-                <a routerLink="/login" class="btn-primary-pill nav-btn-main">
-                    Ver mis citas
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- HERO SECTION -->
-    <header class="hero hero-grid px-6 max-w-7xl">
-        <div class="flex flex-col items-start reveal" #revealElement>
-            <div class="hero-badge">
-                <span class="dot"></span>
-                <span class="text">Atención Especializada</span>
-            </div>
-
-            <h1 class="hero-title">
-                Diseñamos <br>
-                <span class="gradient-text">sonrisas</span> que<br>
-                cambian vidas.
-            </h1>
-
-            <p class="hero-desc">
-                Dirigidos por la <strong>Dra. Sarai Rios</strong>, combinamos calidez humana, tecnología de
-                vanguardia y
-                tratamientos sin dolor para toda tu familia.
-            </p>
-
-            <div class="flex flex-wrap items-center gap-4">
-                <a href="#servicios" class="btn-primary-pill" style="padding: 1rem 2.5rem;">
-                    Agendar Cita <i class="ph-fill ph-calendar-plus"></i>
-                </a>
-
-            </div>
-
-            <!-- Trust Indicators -->
-            <div class="mt-10 flex items-center gap-6 border-t border-gray-100 pt-6 w-full max-w-md"
-                style="margin-top: 2.5rem; display: flex; border-top: 1px solid #f3f4f6; width: 100%;">
-                <div>
-                    <p
-                        style="font-family: var(--font-heading); font-weight: 800; font-size: 1.5rem; color: var(--navy);">
-                        100%</p>
-                    <p style="font-size: 0.75rem; color: #6b7280; font-weight: 500; text-transform: uppercase;">Trato
-                        Humano</p>
-                </div>
-                <div style="width: 1px; height: 2.5rem; background: #e5e7eb; margin: 0 1.5rem;"></div>
-                <div>
-                    <div style="display: flex; color: var(--mint-dark); margin-bottom: 0.25rem;">
-                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i
-                            class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
-                    </div>
-                    <p style="font-size: 0.75rem; color: #6b7280; font-weight: 500; text-transform: uppercase;">
-                        Pacientes Felices</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="hero-image-wrapper reveal">
-            <!-- Forma de fondo abstracta -->
-            <div class="blob-shape"></div>
-
-            <!-- Imagen principal con fallback de color -->
-            <div class="main-image-container">
-                <img src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=1000&q=80"
-                    alt="Dra Sarai Rios" class="main-image" fetchpriority="high" loading="eager">
-                <div class="main-image-placeholder-overlay"></div>
-            </div>
-
-            <!-- Floating Badge 1 -->
-            <div class="floating-badge badge-top">
-                <div class="badge-icon">
-                    <i class="ph-fill ph-shield-check"></i>
-                </div>
-                <div class="badge-text">
-                    <p class="title">Calidad Premium</p>
-                    <p class="desc">Materiales certificados</p>
-                </div>
-            </div>
-
-            <!-- Floating Badge 2 -->
-            <div class="floating-badge badge-bottom">
-                <div class="avatar-group">
-                    <div class="avatar-placeholder"></div>
-                    <div class="avatar-placeholder"></div>
-                    <div class="more">+5k</div>
-                </div>
-                <div class="badge-text">
-                    <p class="title">Confianza</p>
-                    <p class="desc">Sonrisas restauradas</p>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- SERVICIOS -->
-    <section id="servicios" class="services-section">
-        <div class="max-w-7xl px-6">
-            <div class="reveal" style="margin-bottom: 4rem;">
-                <p class="section-tag">Catálogo Médico</p>
-                <h2 class="section-title">Nuestros Servicios</h2>
-                <p class="section-desc">Transparencia desde el primer momento. Conoce nuestros tratamientos y agenda tu
-                    cita en segundos.</p>
-            </div>
-
-            @if (isLoading()) {
-            <div class="flex justify-center py-20"
-                style="display: flex; justify-content: center; padding: 5rem 0; width: 100%;">
-                <div class="loader"></div>
-            </div>
-            } @else {
-            <div class="services-grid">
-                @for (service of services(); track service.id) {
-                <article class="service-card reveal">
-                    <div class="img-container">
-                        @if (service.imagenUrl) {
-                        <img [src]="service.imagenUrl" [alt]="service.nombre" loading="lazy" width="600" height="300"
-                            style="object-fit: cover;">
-                        } @else {
-                        <div
-                            style="width: 100%; height: 200px; background: #f3f4f6; display: flex; align-items: center; justify-content: center;">
-                            <i class="ph-bold ph-plus-circle" style="font-size: 3rem; color: #d1d5db;"></i>
-                        </div>
-                        }
-                        <span class="price-tag">
-                            {{ service.requiereValoracion ? 'Valoración' : 'Desde $' + service.precioBase }}
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <h3>{{ service.nombre }}</h3>
-                        <p>{{ service.descripcion }}</p>
-
-                        <div class="service-meta">
-                            <div class="meta-item">
-                                <i class="ph ph-clock"></i>
-                                <span>{{ service.duracionMinutos }} min aprox.</span>
-                            </div>
-                        </div>
-                        @if (service.requiereValoracion) {
-                        <button (click)="openBooking(service)" class="booking-btn secondary">
-                            <i class="ph-fill ph-file-search"></i> Agendar Valoración
-                        </button>
-                        } @else {
-                        <button (click)="openBooking(service)" class="booking-btn">
-                            <i class="ph-fill ph-calendar-plus"></i> Agendar Cita
-                        </button>
-                        }
-                    </div>
-                </article>
-                }
-            </div>
-            }
-        </div>
-    </section>
-
-    <!-- COMPROMISO (Sección Informativa) -->
-    <section id="compromiso" class="commitment-section">
-        <div class="max-w-7xl px-6">
-            <div class="commitment-grid">
-                <div class="commitment-image-wrapper reveal">
-                    <img src="https://images.unsplash.com/photo-1584362917165-526a968579e8?auto=format&fit=crop&w=800&q=80"
-                        alt="Instalaciones Dental Sonrisana" loading="lazy" class="commitment-img">
-                </div>
-                <div class="commitment-content reveal">
-                    <p class="section-tag">La Clínica</p>
-                    <h2 class="section-title">Por qué elegir <br>Dental Sonrisana</h2>
-
-                    <div class="feature-list">
-                        <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="ph-fill ph-drop"></i>
-                            </div>
-                            <div class="feature-text">
-                                <h4>Higiene Absoluta</h4>
-                                <p>Manejamos los más estrictos protocolos de esterilización internacional para proteger
-                                    tu salud en cada visita.</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="ph-fill ph-heart"></i>
-                            </div>
-                            <div class="feature-text">
-                                <h4>Confort del Paciente</h4>
-                                <p>Entendemos el nerviosismo. Diseñamos una experiencia relajada, con empatía y
-                                    tratamientos sin dolor.</p>
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="ph-fill ph-microscope"></i>
-                            </div>
-                            <div class="feature-text">
-                                <h4>Diagnóstico Preciso</h4>
-                                <p>No adivinamos. Usamos tecnología moderna para darte un diagnóstico certero y no
-                                    cobrarte de más.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- UBICACIÓN (MAPA) -->
-    <section id="ubicacion" class="location-section">
-        <div class="max-w-7xl px-6">
-            <div class="reveal" style="margin-bottom: 3rem; text-align: center;">
-                <p class="section-tag">Ubicación</p>
-                <h2 class="section-title">Estamos cerca de ti</h2>
-                <p class="section-desc">Visítanos en nuestras instalaciones de vanguardia en Zihuatanejo.</p>
-            </div>
-
-            <div class="map-card reveal">
-                <div id="mapbox-container" class="mapbox-wrapper"></div>
-                <div class="map-info">
-                    <div class="info-item">
-                        <i class="ph-fill ph-map-pin"></i>
-                        <div>
-                            <h4>Dirección</h4>
-                            <p>Niños Heroes 8, Centro, 40831 San Jeronimito, Gro.</p>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <i class="ph-fill ph-clock"></i>
-                        <div>
-                            <h4>Horario</h4>
-                            <p>Lun - Sáb: 9:00 AM - 7:00 PM</p>
-                        </div>
-                    </div>
-                    <a href="https://www.google.com/maps/dir//Dental+Sonrisana/@17.5648433,-101.3453983,17z/" target="_blank" class="btn-directions">
-                        Obtener Direcciones <i class="ph ph-navigation-arrow"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="footer">
-        <div class="max-w-7xl px-6">
-            <div class="footer-content">
-                <a href="#" class="logo-text">
-                    <img src="images/logo_blue.png" alt="Sonrisana" class="logo-footer">
-                </a>
-                <div style="display: flex; gap: 2rem; font-size: 0.875rem;">
-                    <a href="#servicios" style="color: #d1d5db; text-decoration: none;">Tratamientos</a>
-                    <a href="#compromiso" style="color: #d1d5db; text-decoration: none;">La Clínica</a>
-                </div>
-            </div>
-            <div
-                style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: #9ca3af;">
-                <p>&copy; 2026 Dental Sonrisana. Todos los derechos reservados.</p>
-                <div
-                    style="background: rgba(255,255,255,0.05); padding: 0.5rem 1rem; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1); color: white; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="ph-fill ph-whatsapp-logo" style="color: var(--mint-dark); font-size: 1.125rem;"></i>
-                    <span>Citas: 758-108-2962</span>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- WHATSAPP WIDGET -->
-    <a href="https://wa.me/527581082962" target="_blank" class="wa-widget">
-        <i class="ph-fill ph-whatsapp-logo"></i>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="logo">
+      <img src="/images/logo_erm.png" alt="" class="logo-iso">
+      novatia
     </a>
+    <div class="nav-links">
+      <a (click)="scrollTo('especialidades')">Especialidades</a>
+      <a (click)="scrollTo('proceso')">¿Cómo funciona?</a>
 
-    <ngx-spinner bdColor="rgba(26, 43, 76, 0.4)" size="medium" color="#BEE7DF" type="ball-scale-multiple"
-        [fullScreen]="true">
-        <p style="color: white; font-family: 'Manrope', sans-serif; font-weight: 600; margin-top: 1rem;">
-            Preparando tu visita...
-        </p>
-    </ngx-spinner>
+      <!-- ── Usuario NO autenticado ──────────────────────────────────── -->
+      @if (!isLoggedIn()) {
+        <!-- Botón pacientes → abre drawer -->
+        <button type="button" class="patient-btn" (click)="openAuthDrawer()">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Pacientes
+        </button>
+
+        <!-- Menú profesionales -->
+        <div class="pro-menu" (click)="toggleProMenu($event)" [class.open]="proMenuOpen()">
+          <button type="button" class="pro-trigger">
+            Para profesionales
+            <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          @if (proMenuOpen()) {
+            <div class="pro-dropdown" (click)="$event.stopPropagation()">
+              <a routerLink="/login" class="pro-link">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                <div>
+                  <strong>Iniciar sesión</strong>
+                  <span>Accede al CRM de tu negocio</span>
+                </div>
+              </a>
+              <a routerLink="/signup" class="pro-link primary">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                <div>
+                  <strong>Crear cuenta</strong>
+                  <span>Registra tu consultorio o empresa</span>
+                </div>
+              </a>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Paciente autenticado ────────────────────────────────────── -->
+      @if (isLoggedIn() && isPatient()) {
+        <a routerLink="/booking" class="nav-user-pill">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Agendar cita
+        </a>
+        <button type="button" class="nav-user-pill avatar-pill" (click)="goToPortal()" title="Mis citas">
+          <span class="nav-avatar">{{ userInitials() }}</span>
+          Mis citas
+        </button>
+      }
+
+      <!-- ── Staff autenticado ───────────────────────────────────────── -->
+      @if (isLoggedIn() && !isPatient()) {
+        <button type="button" class="nav-user-pill avatar-pill" (click)="goToPortal()" title="Ir al CRM">
+          <span class="nav-avatar">{{ userInitials() }}</span>
+          Mi CRM
+        </button>
+      }
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-blob hero-blob-1"></div>
+  <div class="hero-blob hero-blob-2"></div>
+  <div class="hero-blob hero-blob-3"></div>
+
+  <div class="particles" aria-hidden="true">
+    <span class="particle p1">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.49-2.1-4.5-4.69-4.5-1.93 0-3.6 1.13-4.31 2.73-.71-1.6-2.38-2.73-4.31-2.73C5.1 3.75 3 5.76 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+    </span>
+    <span class="particle p2">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+    </span>
+    <span class="particle p3">
+      <svg width="28" height="22" fill="none" viewBox="0 0 32 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2 12h5l3-7 4 14 3-9 2 4h11"/></svg>
+    </span>
+    <span class="particle p4">
+      <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="4.5" y="9" width="15" height="6" rx="3" transform="rotate(-30 12 12)"/><path stroke-linecap="round" d="M9.2 14.8l5.6-5.6"/></svg>
+    </span>
+    <span class="particle p5">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.49-2.1-4.5-4.69-4.5-1.93 0-3.6 1.13-4.31 2.73-.71-1.6-2.38-2.73-4.31-2.73C5.1 3.75 3 5.76 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+    </span>
+    <span class="particle p6">
+      <svg width="26" height="20" fill="none" viewBox="0 0 32 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2 12h5l3-7 4 14 3-9 2 4h11"/></svg>
+    </span>
+    <span class="particle p7">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+    </span>
+    <span class="particle p8">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="4.5" y="9" width="15" height="6" rx="3" transform="rotate(-30 12 12)"/><path stroke-linecap="round" d="M9.2 14.8l5.6-5.6"/></svg>
+    </span>
+  </div>
+
+  <div class="hero-inner">
+    <h1 class="hero-title">Encuentra tu <span class="hero-highlight">especialista</span> y agenda hoy.</h1>
+    <p class="hero-sub">
+      Citas presenciales y en línea con los mejores médicos de tu ciudad. Sin filas, sin esperas, sin complicaciones.
+    </p>
+
+    <div class="search">
+      <form class="search-bar" (ngSubmit)="handleSearch()">
+        <!-- Estado (requerido) -->
+        <div class="search-field">
+          <svg class="search-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.1-7.5 11.25-7.5 11.25S4.5 17.6 4.5 10.5a7.5 7.5 0 1115 0z"/>
+          </svg>
+          <select class="search-select"
+                  [ngModel]="selectedEstadoId()"
+                  (ngModelChange)="selectedEstadoId.set($event)"
+                  name="estado">
+            <option value="">¿Dónde buscas?</option>
+            @for (e of estados(); track e.id) {
+              <option [value]="e.id">{{ e.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Giro / especialidad (autocomplete) -->
+        <div class="search-field giro-field">
+          <svg class="search-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.2-5.2m0 0a7.5 7.5 0 10-10.6 0 7.5 7.5 0 0010.6 0z"/>
+          </svg>
+          <input type="text" class="search-input"
+                 [value]="giroInputText()"
+                 (input)="onGiroInput($any($event.target).value)"
+                 (focus)="giroDropdownOpen.set(true)"
+                 (blur)="blurGiro()"
+                 placeholder="Especialidad o giro..."
+                 autocomplete="off">
+          @if (giroInputText()) {
+            <button type="button" class="clear-x" (click)="clearGiro()">×</button>
+          }
+          @if (giroDropdownOpen() && filteredGiros().length) {
+            <ul class="giro-dd">
+              @for (opt of filteredGiros(); track opt.valor) {
+                <li (mousedown)="selectGiro(opt)">
+                  <span>{{ opt.nombre }}</span>
+                  <span class="dd-count">{{ opt.totalEspecialistas }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <button type="submit" class="btn-search" [disabled]="!selectedEstadoId()">Buscar</button>
+      </form>
+
+      <div class="quick-links">
+        <span>Populares:</span>
+        @for (s of popularSpecs; track s.slug) {
+          <a (click)="goToSpecialty(s.slug)">{{ s.name }}</a>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="stats">
+  <div>
+    <div class="stat-num">500+</div>
+    <div class="stat-label">Especialistas verificados</div>
+  </div>
+  <div>
+    <div class="stat-num">15</div>
+    <div class="stat-label">Especialidades</div>
+  </div>
+  <div>
+    <div class="stat-num">48h</div>
+    <div class="stat-label">Cita promedio</div>
+  </div>
 </div>
+
+<section id="especialidades">
+  <div class="section-inner">
+    <div class="section-head">
+      <h2 class="section-title">Atención por especialidad</h2>
+      <p class="section-sub">Médicos verificados en cada área. De medicina general a sub-especialidades.</p>
+    </div>
+    <div class="specs-grid">
+      @for (s of specialties; track s.slug) {
+        <a class="spec-card" (click)="goToSpecialty(s.slug)">
+          <div class="spec-emoji">{{ s.emoji }}</div>
+          <div class="spec-name">{{ s.name }}</div>
+          <div class="spec-count">{{ s.count }} médicos</div>
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="how-section" id="proceso">
+  <div class="section-inner">
+    <div class="section-head">
+      <h2 class="section-title">Tres pasos. Cero filas.</h2>
+    </div>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-num">01</div>
+        <div class="how-step-title">Busca y compara</div>
+        <p class="how-step-desc">Filtra por especialidad, ciudad y reseñas reales de pacientes.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">02</div>
+        <div class="how-step-title">Agenda y paga</div>
+        <p class="how-step-desc">Elige horario y paga seguro con tarjeta o transferencia.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">03</div>
+        <div class="how-step-title">Asiste a tu cita</div>
+        <p class="how-step-desc">Recordatorios por WhatsApp. En consultorio o por video.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pro-cta">
+  <div class="pro-cta-inner">
+    <div class="pro-cta-content">
+      <p class="pro-cta-eyebrow">Para profesionales</p>
+      <h2 class="pro-cta-title">¿Tienes un consultorio o eres profesional independiente?</h2>
+      <p class="pro-cta-sub">Registra tu negocio en Novatia y empieza a recibir pacientes hoy. Plan de prueba gratis, sin tarjeta.</p>
+    </div>
+    <div class="pro-cta-actions">
+      <a routerLink="/signup" class="btn-cta-primary">
+        Crear cuenta gratis
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      </a>
+      <a routerLink="/login" class="btn-cta-secondary">Ya tengo cuenta</a>
+    </div>
+  </div>
+</section>
+
+<div class="trust">
+  <div class="trust-inner">
+    <div class="trust-item">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      Cédula verificada
+    </div>
+    <div class="trust-item">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      Pagos seguros SSL
+    </div>
+    <div class="trust-item">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      Cancelación 24h
+    </div>
+    <div class="trust-item">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      Reembolso garantizado
+    </div>
+  </div>
+</div>
+
+<footer class="landing-footer">
+  <div class="footer-inner">
+    <span>© 2026 Novatia</span>
+    <div class="footer-links">
+      <a routerLink="/privacidad">Privacidad</a>
+      <a routerLink="/terminos">Términos</a>
+      <a routerLink="/contacto">Contacto</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Auth Drawer (solo visible cuando no hay sesión activa o usuario lo abre) -->
+<app-auth-drawer
+  [isOpen]="authDrawerOpen()"
+  (closed)="closeAuthDrawer()"
+  (authenticated)="onAuthenticated($event)"></app-auth-drawer>

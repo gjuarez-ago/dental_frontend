@@ -32,7 +32,7 @@
                   <div class="search-results card shadow-lg">
                     @for (p of filteredPatients(); track p.id) {
                       <div class="result-item" (click)="selectPatient(p)">
-                        <div class="p-avatar">{{ p.nombreCompleto?.substring(0,1) || '?' }}</div>
+                        <div class="p-avatar">{{ (p.nombreCompleto || '')[0] || '?' }}</div>
                         <div class="p-info">
                           <span class="p-name">{{ p.nombreCompleto }}</span>
                           <span class="p-id">ID: {{ p.id | slice:0:8 }}</span>
@@ -100,7 +100,7 @@
                          [class.selected]="appointmentForm.get('doctorId')?.value === doc.id"
                          (click)="appointmentForm.get('doctorId')?.setValue(doc.id)">
                       <div class="doc-avatar">
-                        {{ doc.nombreCompleto?.substring(0,1) }}{{ (doc.nombreCompleto?.split(' ')?.length || 0) > 1 ? doc.nombreCompleto?.split(' ')?.[1]?.substring(0,1) : '' }}
+                        {{ (doc.nombreCompleto || '')[0] }}{{ (doc.nombreCompleto?.split(' ')?.length || 0) > 1 ? (doc.nombreCompleto?.split(' ')?.[1] || '')[0] : '' }}
                       </div>
                       <span class="doc-name">{{ doc.nombreCompleto }}</span>
                     </div>

@@ -4,12 +4,12 @@
   background: white;
   overflow: hidden;
 
-  --navy: #1A2B4C;
-  --navy-light: #253C6A;
-  --mint: #BEE7DF;
-  --mint-dark: #85CDBB;
-  --slate: #64748b;
-  --bg-light: #F8FAFC;
+  --navy:       var(--primary);
+  --navy-light: var(--primary-hover);
+  --mint:       var(--secondary-soft);
+  --mint-dark:  var(--secondary);
+  --slate:      var(--text-muted);
+  --bg-light:   var(--bg-main);
 }
 
 /* SIDEBAR: PATIENTS LIST */

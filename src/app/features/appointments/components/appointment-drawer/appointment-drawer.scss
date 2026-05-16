@@ -51,7 +51,7 @@
     h2 {
       font-size: 1.6rem;
       font-weight: 900;
-      color: #1A2B4C;
+      color: var(--primary);
       letter-spacing: -0.03em;
       margin-bottom: 0.35rem;
     }
@@ -135,7 +135,7 @@
 
     i {
       margin: 0 1rem;
-      color: #1A2B4C;
+      color: var(--primary);
       font-size: 1.2rem;
     }
 
@@ -145,7 +145,7 @@
       border: none;
       font-size: 1rem;
       font-weight: 600;
-      color: #1A2B4C;
+      color: var(--primary);
       outline: none;
 
       &::placeholder {
@@ -204,7 +204,7 @@
 
       .p-name {
         font-weight: 700;
-        color: #1A2B4C;
+        color: var(--primary);
         font-size: 0.95rem;
       }
 
@@ -234,7 +234,7 @@
     outline: none;
     font-size: 1rem;
     font-weight: 750;
-    color: #1A2B4C;
+    color: var(--primary);
     appearance: none;
     cursor: pointer;
     padding: 0.85rem 2.5rem 0.85rem 0;
@@ -289,7 +289,7 @@
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      background: #1A2B4C;
+      background: var(--primary);
       color: white;
       font-size: 0.7rem;
       font-weight: 800;
@@ -314,8 +314,8 @@
     }
 
     &.selected {
-      border-color: #1A2B4C;
-      background: #1A2B4C;
+      border-color: var(--primary);
+      background: var(--primary);
 
       .doc-name {
         color: white;
@@ -323,7 +323,7 @@
 
       .doc-avatar {
         background: white;
-        color: #1A2B4C;
+        color: var(--primary);
       }
     }
   }
@@ -366,7 +366,7 @@
     .symbol {
       font-size: 1.8rem;
       font-weight: 300;
-      color: #1A2B4C;
+      color: var(--primary);
       opacity: 0.4;
     }
 
@@ -375,7 +375,7 @@
       border: none;
       font-size: 2rem;
       font-weight: 900;
-      color: #1A2B4C;
+      color: var(--primary);
       outline: none;
       background: transparent;
       letter-spacing: -0.04em;
@@ -438,7 +438,7 @@
         outline: none;
         font-size: 1rem;
         font-weight: 700;
-        color: #1A2B4C;
+        color: var(--primary);
         flex: 1;
         background: transparent;
         cursor: pointer;
@@ -529,9 +529,9 @@
         }
 
         &.selected {
-          background: #1A2B4C;
+          background: var(--primary);
           color: #ffffff;
-          border-color: #1A2B4C;
+          border-color: var(--primary);
           box-shadow: 0 8px 20px rgba(26, 43, 76, 0.2);
           transform: scale(1.05);
         }
@@ -580,7 +580,7 @@
         p {
           font-size: 1.1rem;
           font-weight: 800;
-          color: #1A2B4C;
+          color: var(--primary);
           margin: 0;
           text-align: center;
           width: 100%;
@@ -607,7 +607,7 @@
     padding: 1.2rem;
     font-size: 0.95rem;
     font-weight: 600;
-    color: #1A2B4C;
+    color: var(--primary);
     background: white;
     resize: none;
     transition: all 0.3s;
@@ -618,7 +618,7 @@
     }
 
     &:focus {
-      border-color: #1A2B4C;
+      border-color: var(--primary);
       outline: none;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
     }
@@ -662,7 +662,7 @@
   h3 {
     font-size: 1.4rem;
     font-weight: 900;
-    color: #1A2B4C;
+    color: var(--primary);
     margin-bottom: 0.75rem;
   }
 
@@ -702,12 +702,12 @@
 
       &:hover {
         background: #f1f5f9;
-        color: #1A2B4C;
+        color: var(--primary);
       }
     }
 
     &.btn-save {
-      background: #1A2B4C;
+      background: var(--primary);
       color: white;
       border: none;
       box-shadow: 0 10px 25px rgba(26, 43, 76, 0.25);
@@ -818,7 +818,7 @@
       .name {
         font-size: 1.1rem;
         font-weight: 900;
-        color: #1A2B4C;
+        color: var(--primary);
         letter-spacing: -0.02em;
       }
 
@@ -853,7 +853,7 @@
 
     &:hover {
       background: #e2e8f0;
-      color: #1A2B4C;
+      color: var(--primary);
     }
   }
 }

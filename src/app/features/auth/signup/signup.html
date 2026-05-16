@@ -1,0 +1,340 @@
+<nav class="nav">
+  <div class="nav-inner">
+    <a routerLink="/" class="logo"><img src="/images/logo_erm.png" alt="Logo" class="logo-isotype" style="width: 24px; height: 24px; margin-right: 8px; object-fit: contain;">novatia</a>
+    <div class="nav-links">
+      <span class="nav-question">¿Ya tienes cuenta?</span>
+      <a routerLink="/login" class="nav-cta">Iniciar sesión</a>
+    </div>
+  </div>
+</nav>
+
+<section class="signup-shell">
+  <!-- Blobs animados -->
+  <div class="auth-blob blob-1"></div>
+  <div class="auth-blob blob-2"></div>
+  <div class="auth-blob blob-3"></div>
+
+  <!-- Partículas flotantes -->
+  <div class="auth-particles" aria-hidden="true">
+    <span class="auth-particle ap1">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.49-2.1-4.5-4.69-4.5-1.93 0-3.6 1.13-4.31 2.73-.71-1.6-2.38-2.73-4.31-2.73C5.1 3.75 3 5.76 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+    </span>
+    <span class="auth-particle ap2">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+    </span>
+    <span class="auth-particle ap3">
+      <svg width="26" height="20" fill="none" viewBox="0 0 32 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2 12h5l3-7 4 14 3-9 2 4h11"/></svg>
+    </span>
+    <span class="auth-particle ap4">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="4.5" y="9" width="15" height="6" rx="3" transform="rotate(-30 12 12)"/><path stroke-linecap="round" d="M9.2 14.8l5.6-5.6"/></svg>
+    </span>
+    <span class="auth-particle ap5">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.49-2.1-4.5-4.69-4.5-1.93 0-3.6 1.13-4.31 2.73-.71-1.6-2.38-2.73-4.31-2.73C5.1 3.75 3 5.76 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+    </span>
+    <span class="auth-particle ap6">
+      <svg width="26" height="20" fill="none" viewBox="0 0 32 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2 12h5l3-7 4 14 3-9 2 4h11"/></svg>
+    </span>
+    <span class="auth-particle ap7">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+    </span>
+  </div>
+
+  <div class="signup-card">
+
+    <div class="step-indicator">
+      <span class="step" [class.active]="step() === 'EMAIL'" [class.done]="step() !== 'EMAIL'">
+        <span class="step-num">1</span> Correo
+      </span>
+      <span class="step-line" [class.done]="step() !== 'EMAIL'"></span>
+      <span class="step" [class.active]="step() === 'BUSINESS'" [class.done]="step() === 'OWNER'">
+        <span class="step-num">2</span> Negocio
+      </span>
+      <span class="step-line" [class.done]="step() === 'OWNER'"></span>
+      <span class="step" [class.active]="step() === 'OWNER'">
+        <span class="step-num">3</span> Acceso
+      </span>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-alert">
+        <i class="ph ph-warning-circle"></i>
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <!-- ─── Paso 1: Email ────────────────────────────────────────────── -->
+    @if (step() === 'EMAIL') {
+      <header class="step-header">
+        <h1 class="step-title">Crea tu cuenta profesional</h1>
+        <p class="step-subtitle">Empieza con tu correo. Es como te vamos a identificar.</p>
+      </header>
+
+      <form class="signup-form" [formGroup]="emailForm" (ngSubmit)="onContinueFromEmail()">
+        <div class="form-group">
+          <label class="form-label" for="signup-email">Correo electrónico</label>
+          <div class="input-wrap">
+            <i class="ph ph-envelope input-icon"></i>
+            <input
+              id="signup-email"
+              type="email"
+              class="form-input"
+              formControlName="email"
+              placeholder="tu@correo.com"
+              autocomplete="email"
+              autofocus>
+            @if (emailStatus() === 'NOT_FOUND') {
+              <i class="ph ph-check-circle status-icon ok"></i>
+            }
+            @if (emailStatus() === 'STAFF_FOUND' || emailStatus() === 'PATIENT_FOUND') {
+              <i class="ph ph-warning-circle status-icon warn"></i>
+            }
+          </div>
+          @if (emailHint() && emailStatus() === 'NOT_FOUND') {
+            <p class="hint ok">{{ emailHint() }}</p>
+          }
+          @if (emailHint() && emailStatus() && emailStatus() !== 'NOT_FOUND') {
+            <p class="hint warn">{{ emailHint() }}</p>
+            @if (emailStatus() === 'STAFF_FOUND') {
+              <button type="button" class="link-btn" (click)="goToLogin()">Ir a iniciar sesión →</button>
+            }
+          }
+          @if (hasError(emailForm, 'email', 'email') && !emailStatus()) {
+            <p class="hint warn">Ingresa un correo válido.</p>
+          }
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="!canContinueEmail()">
+          Continuar
+          <i class="ph ph-arrow-right"></i>
+        </button>
+      </form>
+    }
+
+    <!-- ─── Paso 2: Datos del negocio ────────────────────────────────── -->
+    @if (step() === 'BUSINESS') {
+      <header class="step-header">
+        <h1 class="step-title">Cuéntanos de tu negocio</h1>
+        <p class="step-subtitle">Solo necesitamos lo esencial para crear tu espacio.</p>
+      </header>
+
+      <form class="signup-form" [formGroup]="businessForm" (ngSubmit)="onContinueFromBusiness()">
+
+        <div class="form-group">
+          <label class="form-label">Plan seleccionado</label>
+          <div class="account-types">
+            <div class="account-type selected">
+              <i class="ph ph-user-circle-gear"></i>
+              <div class="account-type-content">
+                <div class="account-type-header">
+                  <strong>Doctor independiente</strong>
+                  <span class="badge badge-trial">15 días de prueba gratis</span>
+                </div>
+                <span>Plan SOLO: Atención personal en consultorio propio.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="tenant-name">Nombre comercial</label>
+          <div class="input-wrap">
+            <i class="ph ph-storefront input-icon"></i>
+            <input
+              id="tenant-name"
+              type="text"
+              class="form-input"
+              formControlName="tenantName"
+              placeholder="Ej. Consultorio Dr. García">
+          </div>
+          @if (hasError(businessForm, 'tenantName', 'required')) {
+            <p class="hint warn">Este campo es obligatorio.</p>
+          }
+          @if (hasError(businessForm, 'tenantName', 'minlength')) {
+            <p class="hint warn">Mínimo 3 caracteres.</p>
+          }
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="giro">Especialidad / Giro</label>
+            <div class="input-wrap">
+              <i class="ph ph-stethoscope input-icon"></i>
+              <select id="giro" class="form-input form-select" formControlName="giro">
+                <option value="" disabled>Selecciona una opción</option>
+                @for (g of giros; track g.value) {
+                  <option [value]="g.value">{{ g.label }}</option>
+                }
+              </select>
+            </div>
+            @if (hasError(businessForm, 'giro', 'required')) {
+              <p class="hint warn">Selecciona una especialidad.</p>
+            }
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="estado">Estado</label>
+            <div class="input-wrap">
+              <i class="ph ph-map-pin input-icon"></i>
+              <select id="estado" class="form-input form-select" formControlName="estadoId">
+                <option value="" disabled>Selecciona un estado</option>
+                @for (s of states(); track s.id) {
+                  <option [value]="s.id">{{ s.nombre }}</option>
+                }
+              </select>
+            </div>
+            @if (hasError(businessForm, 'estadoId', 'required')) {
+              <p class="hint warn">Selecciona un estado.</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="municipio">Municipio</label>
+            <div class="input-wrap">
+              <i class="ph ph-map-trifold input-icon"></i>
+              <select id="municipio" class="form-input form-select" formControlName="municipioId" [disabled]="!businessForm.get('estadoId')?.value">
+                <option value="" disabled>{{ !businessForm.get('estadoId')?.value ? 'Primero elige un estado' : 'Selecciona un municipio' }}</option>
+                @for (m of municipalities(); track m.id) {
+                  <option [value]="m.id">{{ m.nombre }}</option>
+                }
+              </select>
+            </div>
+            @if (hasError(businessForm, 'municipioId', 'required')) {
+              <p class="hint warn">Selecciona un municipio.</p>
+            }
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="goBack()">
+            <i class="ph ph-arrow-left"></i> Atrás
+          </button>
+          <button type="submit" class="btn-primary">
+            Continuar <i class="ph ph-arrow-right"></i>
+          </button>
+        </div>
+      </form>
+    }
+
+    <!-- ─── Paso 3: Datos del titular y sucursal ─────────────────────── -->
+    @if (step() === 'OWNER') {
+      <header class="step-header">
+        <h1 class="step-title">Tu acceso y consultorio</h1>
+        <p class="step-subtitle">Tus credenciales para gestionar tu agenda y pacientes.</p>
+      </header>
+
+      <form class="signup-form" [formGroup]="ownerForm" (ngSubmit)="onSubmitRegister()">
+
+        <div class="form-group">
+          <label class="form-label" for="admin-name">Nombre completo</label>
+          <div class="input-wrap">
+            <i class="ph ph-user input-icon"></i>
+            <input
+              id="admin-name"
+              type="text"
+              class="form-input"
+              formControlName="adminFullName"
+              placeholder="Dr. Nombre Apellido">
+          </div>
+          @if (hasError(ownerForm, 'adminFullName', 'required')) {
+            <p class="hint warn">Este campo es obligatorio.</p>
+          }
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="admin-phone">Teléfono</label>
+            <div class="input-wrap">
+              <i class="ph ph-phone input-icon"></i>
+              <input
+                id="admin-phone"
+                type="tel"
+                class="form-input"
+                formControlName="adminPhone"
+                placeholder="10 dígitos"
+                maxlength="10"
+                (input)="onPhoneInput('adminPhone', $event)">
+            </div>
+            @if (hasError(ownerForm, 'adminPhone', 'pattern') || hasError(ownerForm, 'adminPhone', 'required')) {
+              <p class="hint warn">Ingresa 10 dígitos.</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admin-nip">NIP de acceso (6 dígitos)</label>
+            <div class="input-wrap">
+              <i class="ph ph-lock-key input-icon"></i>
+              <input
+                id="admin-nip"
+                type="password"
+                class="form-input"
+                formControlName="adminNip"
+                placeholder="••••••"
+                maxlength="6"
+                inputmode="numeric"
+                (input)="onNipInput($event)">
+            </div>
+            @if (hasError(ownerForm, 'adminNip', 'pattern') || hasError(ownerForm, 'adminNip', 'required')) {
+              <p class="hint warn">El NIP debe tener exactamente 6 dígitos.</p>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="suc-direccion">Dirección de la sucursal</label>
+          <div class="input-wrap">
+            <i class="ph ph-map-trifold input-icon"></i>
+            <input
+              id="suc-direccion"
+              type="text"
+              class="form-input"
+              formControlName="sucursalDireccion"
+              placeholder="Calle, número, colonia">
+          </div>
+          @if (hasError(ownerForm, 'sucursalDireccion', 'required')) {
+            <p class="hint warn">Este campo es obligatorio.</p>
+          }
+          @if (hasError(ownerForm, 'sucursalDireccion', 'minlength')) {
+            <p class="hint warn">Mínimo 5 caracteres.</p>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="suc-telefono">Teléfono de la sucursal <span class="optional">(opcional)</span></label>
+          <div class="input-wrap">
+            <i class="ph ph-phone input-icon"></i>
+            <input
+              id="suc-telefono"
+              type="tel"
+              class="form-input"
+              formControlName="sucursalTelefono"
+              placeholder="Ej. 5512345678"
+              maxlength="15"
+              (input)="onPhoneInput('sucursalTelefono', $event)">
+          </div>
+        </div>
+
+        <p class="terms">
+          Al crear tu cuenta aceptas los <a routerLink="/terminos" target="_blank">Términos</a> y el <a routerLink="/privacidad" target="_blank">Aviso de Privacidad</a>.
+        </p>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="goBack()" [disabled]="isLoading()">
+            <i class="ph ph-arrow-left"></i> Atrás
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="isLoading()">
+            @if (isLoading()) {
+              <i class="ph ph-circle-notch ph-spin"></i> Creando cuenta...
+            } @else {
+              Crear cuenta <i class="ph ph-check"></i>
+            }
+          </button>
+        </div>
+      </form>
+    }
+
+  </div>
+</section>
+
+<ngx-spinner type="ball-clip-rotate" size="medium" color="#0EA5E9"></ngx-spinner>

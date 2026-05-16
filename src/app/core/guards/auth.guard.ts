@@ -18,15 +18,28 @@ export const authGuard: CanActivateFn = (route, state) => {
     return true;
   }
 
-  // Si no hay sesión activa, redirigir al login
+  // Si no hay sesión activa, redirigir al login conservando la ruta destino
   if (!authService.isLoggedIn()) {
-    console.warn('Acceso denegado. Redirigiendo al login...');
-    router.navigate(['/login']);
+    router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }
 
   const isPatient = authService.isPatient();
+  const user = authService.currentUser();
   const targetUrl = state.url;
+
+  // ─── Onboarding: Si el staff no ha completado el onboarding, forzarlo ─────
+  if (!isPatient && user && !user.onboardingCompletado && targetUrl !== '/onboarding') {
+    console.warn('Onboarding pendiente. Redirigiendo...');
+    router.navigate(['/onboarding']);
+    return false;
+  }
+
+  // ─── Onboarding: Si ya se completó, no dejar entrar a /onboarding ──────────
+  if (user?.onboardingCompletado && targetUrl === '/onboarding') {
+    router.navigate(['/dashboard']);
+    return false;
+  }
 
   // ─── Seguridad: Un paciente NO puede acceder al dashboard del CRM ─────
   if (isPatient && targetUrl.startsWith('/dashboard')) {

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx ng *)",
+      "Bash(npx tsc *)",
+      "Read(//c/Users/bicos/OneDrive/Documentos/dental/**)",
+      "Bash(dir \"c:\\\\Users\\\\bicos\\\\OneDrive\\\\Documentos\\\\dental\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\bicos\\\\OneDrive\\\\Documentos\\\\dental\\\\dental.system\" -Directory)",
+      "Bash(Select-Object -First 20)",
+      "Bash(mvn compile *)",
+      "Bash(mvn -f \"c:/Users/bicos/OneDrive/Documentos/dental/dental.system/pom.xml\" compile -q)",
+      "Bash(mvn -f \"c:/Users/bicos/OneDrive/Documentos/dental/dental.system/pom.xml\" compile)",
+      "Bash(find \"c:/Users/bicos/OneDrive/Documentos\" -maxdepth 2 -type d 2>/dev/null | head -80)",
+      "Read(//c/Users/bicos/OneDrive/Documentos/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\bicos\\OneDrive\\Documentos\\dental\\dental.system\\src\\main\\java\\com\\meyisoft\\dental\\system\\service",
+      "c:\\Users\\bicos\\OneDrive\\Documentos\\dental\\dental.system\\src\\main\\java\\com\\meyisoft\\dental\\system\\controller"
+    ]
+  }
+}

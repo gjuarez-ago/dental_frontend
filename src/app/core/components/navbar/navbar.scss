@@ -64,6 +64,22 @@
   }
 }
 
+.navbar-brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+
+  .brand-iso {
+    height: 38px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    opacity: 0.92;
+    transition: opacity 0.2s;
+  }
+}
+
 .navbar-right {
   display: flex;
   align-items: center;
@@ -106,7 +122,7 @@
   }
 
   &.initials-avatar {
-    background: linear-gradient(135deg, #1A2B4C 0%, #2A3B5C 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, #2A3B5C 100%);
     color: white;
     font-size: 0.85rem;
     font-weight: 700;

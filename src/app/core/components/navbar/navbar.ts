@@ -25,4 +25,8 @@ export class NavbarComponent {
       .toUpperCase()
       .substring(0, 2);
   });
+
+  openProfile(): void {
+    this.layout.openProfileDrawer();
+  }
 }

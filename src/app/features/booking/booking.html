@@ -1,462 +1,356 @@
-<div class="booking-container" [class.confirm-view]="state().step === 4">
-    <!-- HEADER -->
-    <header class="booking-header" *ngIf="state().step < 4">
-        <button class="back-btn" (click)="goBack()">
-            <i class="ph ph-arrow-left"></i>
-        </button>
-        <div class="header-title">
-            <span>{{ state().step === 3 ? 'Confirmar Reserva' : 'Dental Sonrisana' }}</span>
-        </div>
-        <div class="header-actions">
-            <!-- Espacio para mantener el centro del título -->
-        </div>
-    </header>
+<header class="topbar">
+  <button class="back-btn" (click)="goHome()">
+    <i class="ph ph-caret-left"></i>
+    <img src="/images/logo_erm.png" alt="" class="topbar-iso">
+    <span class="logo-text">novatia</span>
+  </button>
 
-    <main class="booking-content animate-fade-in">
-        <!-- STEP 1: SELECTION -->
-        @if (state().step === 1) {
-        <div class="step-layout">
-            <div class="step-indicator">PASO 01 — SELECCIÓN</div>
-            <h1 class="page-title">Agenda tu próxima<br>consulta clínica.</h1>
-            <p class="page-desc">Selecciona una fecha y hora para la revisión con tu especialista. La disponibilidad se
-                confirma al completar el depósito.</p>
-            
-            <!-- SUMMARY SELECTION BOX -->
-            <div class="selection-summary-box animate-slide-up">
-                <div class="summary-item main">
-                    <div class="icon"><i class="ph-fill ph-first-aid-kit"></i></div>
-                    <div class="info">
-                        <span class="label">Servicio ({{ state().duracionMinutos }} min)</span>
-                        <p>{{ state().serviceName }}</p>
-                        @if (state().requiereValoracion) {
-                            <span class="badge warning" style="background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; display: inline-block; margin-top: 4px; border: 1px solid #fde68a;">
-                                <i class="ph-fill ph-warning" style="font-size: 0.7rem;"></i> Requiere Valoración
-                            </span>
-                        }
-                    </div>
-                </div>
-                <div class="summary-divider"></div>
-                <div class="summary-item" [class.empty]="!state().selectedDate">
-                    <div class="icon"><i class="ph-fill ph-calendar-blank"></i></div>
-                    <div class="info">
-                        <span class="label">Fecha</span>
-                        <p>{{ state().selectedDate ? (state().selectedDate | date:'dd MMM, yyyy') : 'Pendiente' }}</p>
-                    </div>
-                </div>
-                <div class="summary-divider"></div>
-                <div class="summary-item" [class.empty]="!state().selectedSlot">
-                    <div class="icon"><i class="ph-fill ph-clock"></i></div>
-                    <div class="info">
-                        <span class="label">Horario</span>
-                        <p>{{ state().selectedSlot?.horaInicio?.slice(0, 5) || 'Pendiente' }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CALENDAR CARD -->
-            <div class="card calendar-card" [class.loading-overlay]="isLoadingAvailability()">
-                <div class="calendar-header">
-                    <span class="month-label">{{ currentMonthName() }}</span>
-                    <div class="nav-arrows">
-                        <button (click)="changeMonth(-1)"><i class="ph ph-caret-left"></i></button>
-                        <button (click)="changeMonth(1)"><i class="ph ph-caret-right"></i></button>
-                    </div>
-                </div>
-                <div class="calendar-grid">
-                    <div class="day-label">LUN</div>
-                    <div class="day-label">MAR</div>
-                    <div class="day-label">MIÉ</div>
-                    <div class="day-label">JUE</div>
-                    <div class="day-label">VIE</div>
-                    <div class="day-label">SÁB</div>
-                    <div class="day-label">DOM</div>
-
-                    @for (empty of [].constructor(leadingEmptyDays()); track $index) {
-                    <div class="day dummy"></div>
-                    }
-
-                    @for (day of monthlyDays(); track day.fecha) {
-                    <button class="day" [class.selected]="state().selectedDate?.toISOString()?.startsWith(day.fecha)"
-                        [class.disabled]="!day.esLaboral || day.estaLlena || isInvalidDay(day.fecha)" (click)="onDateSelect(day)">
-                        {{ day.fecha.split('-')[2] }}
-                        @if (day.estaLlena) { <span class="dot-full"></span> }
-                    </button>
-                    }
-                </div>
-            </div>
-
-            <!-- SLOT SELECTOR -->
-            <div class="slots-section" [class.loading-overlay]="isLoadingSlots()">
-                <div class="section-title">
-                    <i class="ph ph-calendar-check"></i> Horarios Disponibles
-                </div>
-
-                <p class="section-subtitle">Disponibilidad para <strong>{{ state().selectedDate ?
-                        formatDate(state().selectedDate) : 'Selecciona un día' }}</strong></p>
-
-                <div class="slots-grid animate-fade-in">
-                    @for (slot of filteredSlots(); track slot.horaInicio) {
-                    <button class="slot-btn" 
-                        [class.selected]="state().selectedSlot?.horaInicio === slot.horaInicio"
-                        [disabled]="!slot.disponible" 
-                        (click)="onSlotSelect(slot)">
-                        {{ slot.horaInicio.slice(0, 5) }}
-                    </button>
-                    }
-                    @empty {
-                        <div class="no-slots-alert">
-                            No hay horarios disponibles para esta fecha.
-                        </div>
-                    }
-                </div>
-            </div>
-
-            <!-- CTA SECTION -->
-            <div id="cta-booking" class="cta-section card">
-                <div class="cta-content">
-                    <h3>Progreso: 33%</h3>
-                    <p>Horario: {{ state().selectedSlot?.horaInicio?.slice(0, 5) || '--:--' }}</p>
-                </div>
-                <button class="btn-primary-pill" [disabled]="!state().selectedDate || !state().selectedSlot"
-                    (click)="nextStep()">
-                    Continuar <i class="ph ph-arrow-right"></i>
-                </button>
-            </div>
-
-            <!-- DOCTOR PROFILE (Compact) -->
-            <div class="doctor-card card">
-                <div class="doctor-profile">
-                    <div class="doctor-initials-avatar">
-                        {{ doctor.name.substring(0,1) }}{{ doctor.name.split(' ').length > 1 ? doctor.name.split(' ')[1].substring(0,1) : '' }}
-                    </div>
-                    <div class="doctor-info">
-                        <h3>{{ doctor.name }}</h3>
-                        <span class="doctor-tag">{{ doctor.title }}</span>
-                    </div>
-                </div>
-                <div class="doctor-stats">
-                    <div class="stat"><i class="ph-fill ph-star"></i> {{ doctor.rating }} ({{ doctor.reviews }}+
-                        reseñas)</div>
-                </div>
-            </div>
-        </div>
+  <div class="search-bar">
+    <div class="search-field">
+      <i class="ph ph-map-pin field-icon"></i>
+      <select class="field-select"
+              [ngModel]="selectedEstadoId()"
+              (ngModelChange)="selectedEstadoId.set($event)">
+        <option value="">Estado...</option>
+        @for (e of estados(); track e.id) {
+          <option [value]="e.id">{{ e.nombre }}</option>
         }
+      </select>
+    </div>
 
-        <!-- STEP 2: IDENTIFICATION (Lead Capture) -->
-        @if (state().step === 2) {
-        <div class="step-layout">
-            <div class="step-indicator">PASO 02 — IDENTIFICACIÓN</div>
-            <h1 class="page-title">¿Quién realiza<br>la consulta?</h1>
-            <p class="page-desc">Necesitamos tus datos básicos para registrar la pre-reserva en nuestro sistema y
-                contactarte si es necesario.</p>
+    @if (municipios().length) {
+      <div class="search-field">
+        <i class="ph ph-buildings field-icon"></i>
+        <select class="field-select"
+                [ngModel]="selectedMunicipioId()"
+                (ngModelChange)="selectedMunicipioId.set($event)">
+          <option value="">Municipio (todos)</option>
+          @for (m of municipios(); track m.id) {
+            <option [value]="m.id">{{ m.nombre }}</option>
+          }
+        </select>
+      </div>
+    }
 
-            <div class="card form-card">
-                <div class="form-group" [class.error]="bookingName.length > 0 && !isNameValid()">
-                    <label for="pName">Nombre Completo *</label>
-                    <div class="input-wrapper no-icon">
-                        <input type="text" id="pName" [(ngModel)]="bookingName" placeholder="Tu nombre completo" maxlength="150" required>
-                    </div>
-                    <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 150 caracteres</div>
-                    <p class="error-msg" *ngIf="bookingName.length > 0 && !isNameValid()">El nombre debe tener al menos 3 caracteres.</p>
-                </div>
+    <div class="search-field giro-wrap">
+      <i class="ph ph-stethoscope field-icon"></i>
+      <input class="field-input"
+             type="text"
+             [value]="giroInputText()"
+             (input)="onGiroInput($any($event.target).value)"
+             (focus)="giroDropdownOpen.set(true)"
+             (blur)="blurGiro()"
+             placeholder="Especialidad o giro...">
+      @if (giroInputText()) {
+        <button class="field-clear" (click)="clearGiro()"><i class="ph ph-x"></i></button>
+      }
+      @if (giroDropdownOpen() && filteredGiros().length) {
+        <ul class="giro-dropdown">
+          @for (opt of filteredGiros(); track opt.valor) {
+            <li class="giro-opt" (mousedown)="selectGiro(opt)">
+              <span>{{ opt.nombre }}</span>
+              <span class="giro-count">{{ opt.totalEspecialistas }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
 
-                <div class="form-group" [class.error]="bookingPhone.length > 0 && !isPhoneValid()">
-                    <label for="pPhone">WhatsApp de contacto *</label>
-                    <div class="input-wrapper no-icon">
-                        <input type="tel" id="pPhone" [ngModel]="bookingPhone" (input)="onPhoneInput($event)"
-                            placeholder="Número de WhatsApp (10 dígitos)" maxlength="15" required>
-                    </div>
-                    <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Hasta 15 dígitos</div>
-                    <p class="error-msg" *ngIf="bookingPhone.length > 0 && !isPhoneValid()">Deben ser exactamente 10 números.</p>
-                </div>
+    <div class="search-field search-q">
+      <i class="ph ph-magnifying-glass field-icon"></i>
+      <input class="field-input"
+             type="search"
+             [ngModel]="searchQ()"
+             (ngModelChange)="searchQ.set($event)"
+             placeholder="Nombre o palabra clave">
+    </div>
+  </div>
+</header>
 
-                <div class="form-group">
-                    <label for="pNotes">¿Cuál es el motivo de tu visita?</label>
-                    <div class="input-wrapper no-icon">
-                        <textarea id="pNotes" [(ngModel)]="bookingNotes" placeholder="Algún detalle que debamos saber..."
-                            rows="4" maxlength="500"></textarea>
-                    </div>
-                    <div class="char-counter" style="font-size: 0.7rem; color: #64748b; text-align: right; margin-top: 4px; font-weight: 600;">{{ bookingNotes.length || 0 }} / 500</div>
-                </div>
-            </div>
+<main class="body" [class.panel-open]="panelEsp()">
 
-            <div class="info-box intent-box">
-                <i class="ph ph-shield-check"></i>
-                <p>Tus datos están protegidos y solo se usarán para la gestión de tu cita clínica.</p>
-            </div>
-
-            <button class="btn-primary-pill full-width" [disabled]="!isNameValid() || !isPhoneValid()"
-                (click)="nextStep()">
-                Continuar a Detalles de Pago <i class="ph ph-arrow-right"></i>
-            </button>
-
-            <button class="btn-ghost" (click)="prevStep()">
-                <i class="ph ph-caret-left"></i> Volver a Selección
-            </button>
-        </div>
+  <!-- ════════════ COLUMNA RESULTADOS ════════════ -->
+  <section class="results-col">
+    <div class="filter-bar">
+      <div class="mod-pills">
+        @for (opt of modalityOpts; track opt.value) {
+          <button class="mod-pill"
+                  [class.active]="modalityFilter() === opt.value"
+                  (click)="modalityFilter.set(opt.value)">
+            {{ opt.label }}
+          </button>
         }
+      </div>
+      <select class="sort-select"
+              [ngModel]="sortBy()"
+              (ngModelChange)="sortBy.set($event)">
+        <option value="CALIFICACION">Mejor calificados</option>
+        <option value="PRECIO_ASC">Menor precio</option>
+        <option value="PRECIO_DESC">Mayor precio</option>
+      </select>
+    </div>
 
-        <!-- STEP 3: CONFIRMATION & UPLOAD -->
-        @if (state().step === 3) {
-        <div class="step-layout">
-            <div class="step-indicator">PASO 03 — PAGO</div>
-            <h1 class="page-title" style="margin-top: 1rem;">Casi listo, {{ bookingName.split(' ')[0] }}</h1>
-            <p class="page-desc">Para asegurar tu cita para <strong>{{ state().serviceName }}</strong>, se requiere un
-                depósito del 30%.</p>
-
-            <!-- SUMMARY CARD -->
-            <div class="card summary-card">
-                <div class="summary-header">
-                    <div class="summary-title">
-                        <span class="label">RESUMEN DE CITA</span>
-                        <h3>{{ state().serviceName }}</h3>
-                    </div>
-                    <span class="status-badge"><i class="ph-fill ph-shield-check"></i> POR CONFIRMAR</span>
-                </div>
-
-                <div class="summary-details">
-                    <div class="detail-item">
-                        <div class="icon"><i class="ph ph-calendar"></i></div>
-                        <div class="text">
-                            <span class="label">Fecha y Hora</span>
-                            <p>{{ formatDate(state().selectedDate) }} - {{ state().selectedSlot?.horaInicio?.slice(0, 5) }}</p>
-                        </div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="icon"><i class="ph ph-user"></i></div>
-                        <div class="text">
-                            <span class="label">Paciente</span>
-                            <p>{{ bookingName }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="price-breakdown">
-                    <div class="price-row">
-                        <span>Costo de Consulta</span>
-                        <span>{{ state().price }}</span>
-                    </div>
-                    <div class="price-row highlight">
-                        <span>Depósito Requerido (30%)</span>
-                        <span class="final-price">${{ getDepositAmount() | number:'1.2-2' }} MXN</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TRANSFER DETAILS -->
-            <div class="card transfer-card">
-                <div class="card-header">
-                    <h3>Detalles de Transferencia {{ bankDetails().bank }}</h3>
-                </div>
-                <div class="transfer-grid">
-                    <div class="transfer-item">
-                        <span class="label">BANCO</span>
-                        <p>{{ bankDetails().bank }}</p>
-                    </div>
-                    <div class="transfer-item">
-                        <span class="label">BENEFICIARIO</span>
-                        <p>{{ bankDetails().holder }}</p>
-                    </div>
-                    <div class="transfer-item full-width">
-                        <span class="label">CLABE INTERBANCARIA</span>
-                        <div class="clabe-copy">
-                            <p>{{ bankDetails().clabe }}</p>
-                            <i class="ph ph-copy"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CONSENTIMIENTO (NUEVOS CAMPOS) -->
-            @if (state().requiereValoracion) {
-            <div class="consent-box animate-fade-in" style="background: #fffbeb; border: 1px solid #fde68a; padding: 1.25rem; border-radius: 16px; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: flex-start; cursor: pointer;" (click)="agreedToTerms = !agreedToTerms">
-                <div class="checkbox-wrapper" style="margin-top: 0.2rem;">
-                    <div class="custom-checkbox" [class.checked]="agreedToTerms" 
-                         [style.backgroundColor]="agreedToTerms ? '#f59e0b' : 'white'"
-                         style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid #f59e0b; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
-                        @if (agreedToTerms) { <i class="ph-bold ph-check" style="color: white; font-size: 0.9rem;"></i> }
-                    </div>
-                </div>
-                <div class="consent-text" style="font-size: 0.85rem; color: #92400e; font-weight: 500; line-height: 1.5; flex: 1;">
-                    <strong>Importante:</strong> He leído y acepto que esta cita es estrictamente de <strong>valoración inicial</strong>. El procedimiento definitivo dependerá del diagnóstico clínico del especialista.
-                </div>
-            </div>
-            }
-
-            <!-- CONSENTIMIENTO QUIRÚRGICO -->
-            @if (state().procedimientoQuirurgico) {
-            <div class="consent-box animate-fade-in" style="background: #fef2f2; border: 1px solid #fecaca; padding: 1.25rem; border-radius: 16px; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: flex-start; cursor: pointer;" (click)="agreedToSurgery = !agreedToSurgery">
-                <div class="checkbox-wrapper" style="margin-top: 0.2rem;">
-                    <div class="custom-checkbox" [class.checked]="agreedToSurgery" 
-                         [style.backgroundColor]="agreedToSurgery ? '#ef4444' : 'white'"
-                         style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid #ef4444; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
-                        @if (agreedToSurgery) { <i class="ph-bold ph-check" style="color: white; font-size: 0.9rem;"></i> }
-                    </div>
-                </div>
-                <div class="consent-text" style="font-size: 0.85rem; color: #991b1b; font-weight: 500; line-height: 1.5; flex: 1;">
-                    <strong>Procedimiento Quirúrgico:</strong> Entiendo que este es un procedimiento quirúrgico/invasivo y acepto firmar el consentimiento informado clínico el día de la cita.
-                </div>
-            </div>
-            }
-
-            <!-- UPLOAD INTERACTION -->
-            <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none"
-                accept="image/*,application/pdf">
-
-            <button class="upload-btn" [class.loading]="isSubmitting()" 
-                    [disabled]="(state().requiereValoracion && !agreedToTerms) || (state().procedimientoQuirurgico && !agreedToSurgery)"
-                    [style.opacity]="((state().requiereValoracion && !agreedToTerms) || (state().procedimientoQuirurgico && !agreedToSurgery)) ? '0.5' : '1'"
-                    (click)="triggerFileInput(fileInput)">
-                <ng-container *ngIf="!isSubmitting()">
-                    <i class="ph ph-cloud-arrow-up"></i>
-                    <span>Subir Comprobante y Agendar</span>
-                </ng-container>
-                <ng-container *ngIf="isSubmitting()">
-                    <i class="ph ph-circle-notch animate-spin"></i>
-                    <span>Procesando cita...</span>
-                </ng-container>
-            </button>
-            <p class="upload-hint">Formatos: PDF, JPG, PNG. Máx: 5MB.</p>
-
-            <div class="card assistance-card" style="cursor: pointer;">
-                <div class="assistance-content">
-                    <div class="assistance-icon"><i class="ph-fill ph-headset"></i></div>
-                    <div class="assistance-text">
-                        <h4>¿Dudas con el pago?</h4>
-                        <p>Chatea con nuestro equipo soporte.</p>
-                    </div>
-                    <i class="ph ph-caret-right"></i>
-                </div>
-            </div>
-        </div>
-        }
-
-        <!-- STEP 4: FINAL SUCCESS -->
-        @if (state().step === 4) {
-        <div class="success-screen step-layout">
-            <div class="success-header">
-                <div class="check-circle animate-pop">
-                    <i class="ph ph-check"></i>
-                </div>
-                <h1 class="success-title">¡Cita Agendada!</h1>
-                <p class="success-subtitle">Hemos recibido tu comprobante. Tu espacio ha sido reservado con éxito.</p>
-            </div>
-
-            <!-- Acceso a Portal Premium Card -->
-            <div class="portal-access-card" style="background: linear-gradient(145deg, #ffffff, #f8fafc); border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px -3px rgba(0,0,0,0.05); text-align: left;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                    <div style="width: 40px; height: 40px; border-radius: 10px; background: #e0f2fe; display: flex; align-items: center; justify-content: center; color: #0284c7;">
-                        <i class="ph-fill ph-identification-card" style="font-size: 1.5rem;"></i>
-                    </div>
-                    <h4 style="margin: 0; color: #0f172a; font-size: 1.1rem; font-weight: 600;">Acceso a tu Portal</h4>
-                </div>
-                <p style="margin: 0 0 1.25rem 0; font-size: 0.9rem; color: #475569; line-height: 1.4;">
-                    Ingresa tu correo para generar tu NIP de acceso. Con él podrás ver tus citas y descargar tus comprobantes al instante.
-                </p>
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <div class="input-wrapper" style="position: relative;">
-                        <i class="ph ph-envelope-simple" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 1.2rem;"></i>
-                        <input type="email" [(ngModel)]="bookingEmail" placeholder="tu@correo.com" maxlength="100" style="width: 100%; padding: 0.85rem 1rem 0.85rem 2.75rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 1rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#0284c7'" onblur="this.style.borderColor='#cbd5e1'">
-                        <div class="field-hint" style="font-size: 0.7rem; color: #94a3b8; text-align: right; margin-top: 2px;">Máx. 100 caracteres</div>
-                    </div>
-                </div>
-                <button class="btn-primary-pill full-width" [disabled]="!isEmailValid()" (click)="setupAccount()" style="margin-bottom: 0; padding: 0.85rem; border-radius: 12px; font-weight: 600; font-size: 1rem; display: flex; justify-content: center; align-items: center; gap: 0.5rem; background: #0f172a;">
-                    Recibir NIP y Entrar <i class="ph ph-arrow-right" style="font-size: 1.2rem;"></i>
-                </button>
-            </div>
-
-            <div class="success-card card">
-                <div class="dr-profile">
-                    <div class="doctor-initials-avatar">
-                        {{ doctor.name.substring(0,1) }}{{ doctor.name.split(' ').length > 1 ? doctor.name.split(' ')[1].substring(0,1) : '' }}
-                    </div>
-                    <div class="dr-text">
-                        <h3>{{ doctor.name }}</h3>
-                        <p>{{ doctor.title }}</p>
-                    </div>
-                </div>
-
-                <div class="appointment-details">
-                    <div class="info-row">
-                        <span class="label">FECHA</span>
-                        <p>{{ formatDate(state().selectedDate) }}</p>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">HORA</span>
-                        <p>{{ state().selectedSlot?.horaInicio?.slice(0, 5) }}</p>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">SERVICIO</span>
-                        <p>{{ state().serviceName }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <button class="btn-ghost full-width" (click)="finish()" style="margin-top: 1rem; color: #64748b; font-size: 0.95rem;">
-                Omitir por ahora
-            </button>
-        </div>
-        }
-    </main>
-
-    <!-- BOTTOM TAB BAR -->
-    <nav class="booking-nav" *ngIf="state().step < 4">
-        <a class="nav-item" [class.active]="state().step === 1" (click)="fb.setStep(1)">
-            <i class="ph ph-calendar"></i>
-            <span>CUÁNDO</span>
-        </a>
-        <a class="nav-item" [class.active]="state().step === 2" (click)="state().selectedSlot && fb.setStep(2)">
-            <i class="ph ph-user"></i>
-            <span>QUIÉN</span>
-        </a>
-        <a class="nav-item" [class.active]="state().step === 3" (click)="bookingName && bookingPhone && fb.setStep(3)">
-            <i class="ph ph-credit-card"></i>
-            <span>PAGO</span>
-        </a>
-    </nav>
-    <ngx-spinner bdColor="rgba(26, 43, 76, 0.4)" size="medium" color="#BEE7DF" type="ball-scale-multiple" [fullScreen]="true">
-        <p style="color: white; font-family: 'Manrope', sans-serif; font-weight: 600; margin-top: 1rem;">
-            Procesando...
+    <div class="results-header">
+      <h2 class="results-title">{{ headingLabel() }}</h2>
+      @if (hasSearched() && !isSearching()) {
+        <p class="results-count">
+          {{ totalElements() }} especialista{{ totalElements() !== 1 ? 's' : '' }} disponibles · agenda en menos de 2 minutos.
         </p>
-    </ngx-spinner>
+      }
+    </div>
 
-    <!-- Nueva Sección: Ubicación -->
-    <section class="location-section card animate-slide-up" style="margin: 2rem 1.5rem; border-radius: 20px; overflow: hidden; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
-      <div style="padding: 1.5rem;">
-        <div class="section-title" style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;">
-          <i class="ph-fill ph-map-pin" style="color: #1A2B4C; font-size: 1.5rem;"></i>
-          <h2 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #1A2B4C;">Donde estamos</h2>
+    @if (isSearching()) {
+      <div class="state-box">
+        <span class="spinner"></span>
+        <p>Buscando especialistas...</p>
+      </div>
+    }
+
+    @if (!hasSearched() && !isSearching()) {
+      <div class="state-box state-idle">
+        <i class="ph ph-map-pin"></i>
+        <p>Selecciona un estado para encontrar especialistas cerca de ti.</p>
+      </div>
+    }
+
+    @if (hasSearched() && !isSearching() && results().length === 0) {
+      <div class="state-box state-idle">
+        <i class="ph ph-magnifying-glass"></i>
+        <p>Sin resultados para estos filtros. Intenta con otro estado o giro.</p>
+      </div>
+    }
+
+    <div class="results-list">
+      @for (esp of results(); track esp.tenantId) {
+        <article class="esp-card"
+                 [class.is-selected]="panelEsp()?.tenantId === esp.tenantId"
+                 (click)="openPanel(esp)">
+
+          <img class="esp-photo"
+               [src]="esp.fotografiaUrl || 'assets/avatar-default.svg'"
+               [alt]="esp.nombreComercial"
+               loading="lazy">
+
+          <div class="esp-info">
+            <div class="esp-row">
+              <div class="esp-titles">
+                <h3 class="esp-name">{{ esp.nombreComercial }}</h3>
+                <p class="esp-sub">{{ esp.giroNombre }} · {{ esp.municipioNombre }}, {{ esp.estadoNombre }}</p>
+              </div>
+              <div class="esp-rating">
+                <i class="ph-fill ph-star"></i>
+                <strong>{{ esp.calificacion | number:'1.1-2' }}</strong>
+                <span>({{ esp.totalResenas }})</span>
+              </div>
+            </div>
+
+            @if (esp.biografia) {
+              <p class="esp-bio">{{ esp.biografia }}</p>
+            }
+
+            <div class="esp-badges">
+              @if (esp.proximoSlot) {
+                <span class="badge badge-slot">
+                  <i class="ph ph-clock"></i> {{ formatSlot(esp.proximoSlot) }}
+                </span>
+              }
+              <span class="badge badge-mod">{{ esp.modalidad | titlecase }}</span>
+            </div>
+          </div>
+
+          <div class="esp-cta">
+            <div class="price-block">
+              <span class="price-from">DESDE</span>
+              <div class="price-amount">${{ esp.precioDesde | number:'1.0-0' }} <span>MXN</span></div>
+            </div>
+            <button class="btn-agendar" (click)="openPanel(esp); $event.stopPropagation()">
+              Agendar <i class="ph ph-arrow-right"></i>
+            </button>
+          </div>
+
+        </article>
+      }
+    </div>
+  </section>
+
+  <!-- ════════════ PANEL DE AGENDA ════════════ -->
+  @if (panelEsp()) {
+    <aside class="booking-panel">
+
+      <div class="panel-head">
+        <img class="panel-photo"
+             [src]="panelEsp()!.fotografiaUrl || 'assets/avatar-default.svg'"
+             [alt]="panelEsp()!.nombreComercial">
+        <div class="panel-esp-meta">
+          <h3>{{ panelEsp()!.nombreComercial }}</h3>
+          <p>{{ panelEsp()!.giroNombre }}</p>
+          <div class="panel-rating">
+            <i class="ph-fill ph-star"></i>
+            {{ panelEsp()!.calificacion | number:'1.1-2' }}
+            <span>({{ panelEsp()!.totalResenas }})</span>
+          </div>
         </div>
-        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;"><strong>Dental Sonrisana</strong>. Ubicación exacta para tu llegada.</p>
-      </div>
-      
-      <div class="map-wrapper" style="width: 100%; height: 250px;">
-        <iframe 
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3783.743!2d-101.3479732!3d17.5648433!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x84347d5c31b62b4f%3A0xf8c46ccd5cf0993a!2sDental%20Sonrisana!5e0!3m2!1ses!2smx!4v1715024000000!5m2!1ses!2smx" 
-          width="100%" 
-          height="100%" 
-          style="border:0;" 
-          allowfullscreen="" 
-          loading="lazy">
-        </iframe>
+        <button class="panel-close" (click)="closePanel()"><i class="ph ph-x"></i></button>
       </div>
 
-      <div style="padding: 1rem; background: #fcfcfd; display: flex; justify-content: flex-end;">
-        <a href="https://www.google.com/maps/dir//Dental+Sonrisana/@17.5648433,-101.3453983,17z/" target="_blank" style="font-size: 0.85rem; font-weight: 700; color: #1A2B4C; text-decoration: none; display: flex; align-items: center; gap: 6px;">
-          CÓMO LLEGAR <i class="ph ph-navigation-arrow"></i>
-        </a>
-      </div>
-    </section>
+      @if (panelLoading()) {
+        <div class="panel-placeholder">
+          <span class="spinner dark"></span>
+          <p>Cargando disponibilidad...</p>
+        </div>
+      } @else if (!panelAgenda()) {
+        <div class="panel-placeholder">
+          <i class="ph ph-warning-circle"></i>
+          <p>No se pudo cargar la agenda.</p>
+        </div>
+      } @else {
 
-    <!-- Modal de Alerta Informativa -->
-    <app-confirm-modal
-      [show]="showModal()"
-      [title]="modalConfig().title"
-      [message]="modalConfig().message"
-      [type]="modalConfig().type"
-      [icon]="modalConfig().icon"
-      [showCancel]="false"
-      confirmText="Entendido"
-      (confirm)="onModalConfirm()"
-    ></app-confirm-modal>
-</div>
+        <!-- PASO 1: Selección de horario -->
+        @if (panelStep() === 'slots') {
+          <div class="panel-body">
+
+            @if (panelAgenda()!.servicios.length > 1) {
+              <div class="panel-section">
+                <h4 class="section-label">Selecciona el servicio</h4>
+                @for (svc of panelAgenda()!.servicios; track svc.id) {
+                  <div class="svc-row"
+                       [class.is-selected]="selServicio()?.id === svc.id"
+                       (click)="selServicio.set(svc)">
+                    <div class="svc-info">
+                      <strong>{{ svc.nombre }}</strong>
+                      <span>{{ svc.duracionMinutos }} min · ${{ svc.precioBase | number:'1.0-0' }} MXN</span>
+                    </div>
+                    <i class="ph"
+                       [class.ph-check-circle-fill]="selServicio()?.id === svc.id"
+                       [class.ph-circle]="selServicio()?.id !== svc.id"></i>
+                  </div>
+                }
+              </div>
+            }
+
+            <div class="panel-section">
+              <div class="cal-nav">
+                <button class="cal-nav-btn" (click)="changeMonth(-1)"><i class="ph ph-caret-left"></i></button>
+                <span class="cal-month">{{ currentMonthLabel() }}</span>
+                <button class="cal-nav-btn" (click)="changeMonth(1)"><i class="ph ph-caret-right"></i></button>
+              </div>
+              <div class="cal-grid">
+                @for (d of ['L','M','M','J','V','S','D']; track $index) {
+                  <div class="cal-wd">{{ d }}</div>
+                }
+                @for (day of daysGrid(); track $index) {
+                  @if (day) {
+                    <button class="cal-day"
+                      [class.is-selected]="selDia()?.fecha === day.fecha"
+                      [class.is-full]="day.estaLlena"
+                      [class.is-closed]="!day.esDiaLaboral"
+                      [class.is-past]="isPastDay(day.fecha)"
+                      [disabled]="!day.esDiaLaboral || day.estaLlena || isPastDay(day.fecha)"
+                      (click)="selectDia(day)">
+                      {{ dayNum(day.fecha) }}
+                    </button>
+                  } @else {
+                    <div></div>
+                  }
+                }
+              </div>
+            </div>
+
+            @if (selDia()) {
+              <div class="panel-section">
+                <h4 class="section-label">{{ formatDia(selDia()) }}</h4>
+                <div class="slots-grid">
+                  @for (slot of daySlots(); track slot.horaInicio) {
+                    <button class="slot-btn"
+                            [class.is-selected]="selSlot()?.horaInicio === slot.horaInicio"
+                            (click)="selSlot.set(slot)">
+                      {{ slot.horaInicio }}
+                    </button>
+                  }
+                  @if (daySlots().length === 0) {
+                    <p class="no-slots">Sin horarios disponibles para este día.</p>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="panel-footer">
+              <button class="btn-continue" [disabled]="!canProceed()" (click)="goToForm()">
+                Continuar <i class="ph ph-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- PASO 2: Confirmación (usuario ya autenticado) -->
+        @if (panelStep() === 'form') {
+          <div class="panel-body">
+            <div class="summary-box">
+              <div class="summary-row"><i class="ph ph-stethoscope"></i> {{ selServicio()?.nombre }}</div>
+              <div class="summary-row"><i class="ph ph-calendar-blank"></i> {{ formatDia(selDia()) }}</div>
+              <div class="summary-row"><i class="ph ph-clock"></i> {{ selSlot()?.horaInicio }} – {{ selSlot()?.horaFin }}</div>
+            </div>
+
+            @if (authedUser(); as u) {
+              <div class="form-greeting">
+                <i class="ph ph-user-check"></i>
+                <div>
+                  <strong>{{ u.nombreCompleto }}</strong>
+                  <span>{{ u.telefono }}</span>
+                </div>
+              </div>
+            }
+
+            <div class="form-group">
+              <label>Motivo de consulta</label>
+              <textarea [(ngModel)]="bookingNotes" rows="3" maxlength="500"
+                        placeholder="¿Qué te trae hoy? (opcional)"></textarea>
+            </div>
+
+            @if (bookingError()) {
+              <div class="booking-error">
+                <i class="ph ph-warning-circle"></i> {{ bookingError() }}
+              </div>
+            }
+
+            <div class="panel-footer two-col">
+              <button class="btn-back" (click)="goBackToSlots()">
+                <i class="ph ph-arrow-left"></i> Cambiar
+              </button>
+              <button class="btn-confirm"
+                      [disabled]="isBooking()"
+                      (click)="submitBooking()">
+                @if (isBooking()) {
+                  <i class="ph ph-circle-notch anim-spin"></i> Procesando...
+                } @else {
+                  Confirmar cita
+                }
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- PASO 3: Éxito -->
+        @if (panelStep() === 'success') {
+          <div class="panel-body panel-success">
+            <div class="success-icon"><i class="ph-fill ph-check-circle"></i></div>
+            <h3>¡Solicitud enviada!</h3>
+            <p>El especialista se pondrá en contacto por WhatsApp para confirmar tu cita.</p>
+            <button class="btn-continue" (click)="closePanel()">Ver más especialistas</button>
+          </div>
+        }
+
+      }
+    </aside>
+  }
+
+</main>
+
+<!-- Auth Drawer: solo se abre si el usuario intenta confirmar sin sesión -->
+<app-auth-drawer
+  [isOpen]="authDrawerOpen()"
+  [title]="'Inicia sesión para agendar'"
+  [subtitle]="'Solo necesitamos identificarte para confirmar tu cita.'"
+  (closed)="closeAuthDrawer()"
+  (authenticated)="onAuthenticated($event)">
+</app-auth-drawer>

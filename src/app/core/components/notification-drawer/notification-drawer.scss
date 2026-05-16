@@ -53,8 +53,8 @@
       gap: 0.75rem;
       margin-bottom: 0.5rem;
 
-      i { font-size: 1.5rem; color: #1A2B4C; }
-      h2 { font-size: 1.25rem; font-weight: 850; color: #1A2B4C; letter-spacing: -0.01em; margin: 0; }
+      i { font-size: 1.5rem; color: var(--primary); }
+      h2 { font-size: 1.25rem; font-weight: 850; color: var(--primary); letter-spacing: -0.01em; margin: 0; }
     }
     p { font-size: 0.8125rem; color: #64748b; font-weight: 500; margin: 0; }
   }
@@ -69,7 +69,7 @@
     cursor: pointer;
     transition: all 0.2s;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    &:hover { color: #1A2B4C; background: #f1f5f9; transform: rotate(90deg); }
+    &:hover { color: var(--primary); background: #f1f5f9; transform: rotate(90deg); }
   }
 }
 
@@ -135,7 +135,7 @@
       align-items: center;
       margin-bottom: 0.25rem;
 
-      .item-title { font-weight: 750; color: #1A2B4C; font-size: 0.9375rem; }
+      .item-title { font-weight: 750; color: var(--primary); font-size: 0.9375rem; }
       .item-time { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
     }
     .item-message {
@@ -172,10 +172,10 @@
     border-radius: 1rem;
     font-size: 0.875rem;
     font-weight: 750;
-    color: #1A2B4C;
+    color: var(--primary);
     cursor: pointer;
     transition: all 0.2s;
-    &:hover { background: #f8fafc; border-color: #1A2B4C; }
+    &:hover { background: #f8fafc; border-color: var(--primary); }
   }
 }
 

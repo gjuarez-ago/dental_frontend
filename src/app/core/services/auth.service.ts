@@ -18,8 +18,19 @@ export interface User {
   telefonoContacto?: string; // Para usuarios CRM
   pinCambiado?: boolean;
   emailVerificado?: boolean;
+  onboardingCompletado?: boolean;
+  tenantType?: string;
   giro?: string;
   planSuscripcion?: string;
+  nombreComercial?: string | null;
+  sucursalTelefono?: string | null;
+  estadoId?: string;
+  municipioId?: string;
+  fotografiaUrl?: string | null;
+  biografia?: string | null;
+  fechaNacimiento?: string;
+  genero?: string | null;
+  cedulaProfesional?: string | null;
 }
 
 export interface AuthResponse {
@@ -34,6 +45,28 @@ export interface AuthResponse {
 export interface PatientCheckResponse {
   status: 'EXISTS_VERIFIED' | 'EXISTS_UNVERIFIED' | 'NOT_FOUND' | 'STAFF_FOUND';
   message: string;
+}
+
+export interface EmailCheckResponse {
+  status: 'STAFF_FOUND' | 'PATIENT_FOUND' | 'NOT_FOUND';
+  message: string;
+}
+
+export type TenantType = 'CONSULTORIO' | 'EMPRESA' | 'DOCTOR_INDEPENDIENTE';
+
+export interface RegisterTenantPayload {
+  tenantName: string;
+  tenantType: TenantType;
+  giro: string;
+  ciudad?: string;
+  adminEmail: string;
+  adminPhone: string;
+  adminFullName: string;
+  adminNip: string;
+  sucursalDireccion: string;
+  sucursalTelefono?: string;
+  estadoId?: string;
+  municipioId?: string;
 }
 
 @Injectable({
@@ -66,8 +99,23 @@ export class AuthService {
   }
 
   // ─── Login CRM (Personal Clínico) ─────────────────────────────────────────
+  // El campo `user` acepta correo o teléfono. Email tiene prioridad.
   login(credentials: { user: string; nip: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/login`, credentials).pipe(
+      tap(response => {
+        if (!response.token) throw response;
+        this.saveSession(response);
+      })
+    );
+  }
+
+  // ─── Registro público de Tenant (SaaS) ────────────────────────────────────
+  checkEmailAvailability(email: string): Observable<EmailCheckResponse> {
+    return this.http.post<EmailCheckResponse>(`${this.API_URL}/check-email`, { email });
+  }
+
+  registerTenant(payload: RegisterTenantPayload): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.API_URL}/register`, payload).pipe(
       tap(response => {
         if (!response.token) throw response;
         this.saveSession(response);
@@ -98,7 +146,7 @@ export class AuthService {
     );
   }
 
-  registerPatient(data: { nombreCompleto: string; telefono: string; email: string; nip: string; genero: string }): Observable<AuthResponse> {
+  registerPatient(data: { nombreCompleto: string; telefono: string; email: string; nip: string; genero: string; fechaNacimiento?: string; estadoId?: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.PATIENT_API}/register`, data).pipe(
       tap(response => {
         if (!response.token) throw response;
@@ -210,6 +258,21 @@ export class AuthService {
       localStorage.setItem('user', JSON.stringify(user));
     }
     this.currentUser.set(user);
+  }
+
+  /**
+   * Actualiza el estado del usuario actual tanto en el Signal como en localStorage.
+   */
+  updateUserState(partial: Partial<User>): void {
+    const current = this.currentUser();
+    if (current) {
+      const updated = { ...current, ...partial };
+      this.currentUser.set(updated);
+      
+      if (isPlatformBrowser(this.platformId)) {
+        localStorage.setItem('user', JSON.stringify(updated));
+      }
+    }
   }
 
   /**

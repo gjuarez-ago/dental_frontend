@@ -26,10 +26,9 @@ export class ConfigDrawerComponent implements OnInit, OnChanges {
     this.configForm = this.fb.group({
       professionalName: ['', [Validators.required]],
       professionalCedula: ['', [Validators.required]],
-      cancellationWindow: [24, [Validators.required, Validators.min(1)]],
       banco: [''],
       cuentaBancaria: ['', [Validators.minLength(10), Validators.maxLength(20)]],
-      clabeInterbancaria: ['', [Validators.minLength(18), Validators.maxLength(18)]],
+      clabeInterbancaria: ['', [Validators.minLength(18), Validators.maxLength(18), Validators.pattern(/^\d+$/)]],
       // Nuevos campos globales
       telefonoWhatsApp: ['', [Validators.pattern(/^\d+$/), Validators.minLength(10)]],
       horasAnticipacionCancelacion: [24, [Validators.required, Validators.min(0)]],
@@ -68,7 +67,6 @@ export class ConfigDrawerComponent implements OnInit, OnChanges {
     this.configForm.patchValue({
       professionalName: cfg.professionalName,
       professionalCedula: cfg.professionalCedula,
-      cancellationWindow: cfg.cancellationWindow,
       banco: cfg.banco,
       cuentaBancaria: cfg.cuentaBancaria,
       clabeInterbancaria: cfg.clabeInterbancaria,

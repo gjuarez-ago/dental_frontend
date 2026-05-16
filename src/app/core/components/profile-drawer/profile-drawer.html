@@ -1,0 +1,81 @@
+<div class="drawer-overlay" [class.open]="layout.isProfileOpen()" (click)="closeDrawer()"></div>
+
+<div class="profile-drawer" [class.open]="layout.isProfileOpen()">
+  <div class="drawer-header">
+    <div class="header-content">
+      <h2>Mi Perfil</h2>
+      <p>Personaliza tu información profesional</p>
+    </div>
+    <button class="close-btn" (click)="closeDrawer()">
+      <i class="ph ph-x"></i>
+    </button>
+  </div>
+
+  <div class="drawer-body">
+    @if (isLoading()) {
+      <div class="loading-overlay">
+        <span class="spinner dark"></span>
+        <p>Sincronizando información...</p>
+      </div>
+    }
+
+    <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+      <!-- Avatar Section -->
+      <div class="avatar-upload-section">
+        <div class="avatar-container">
+          @if (imagePreview()) {
+            <img [src]="imagePreview()" alt="Profile Picture" class="avatar-img">
+          } @else {
+            <div class="avatar-initials">
+              {{ userInitials }}
+            </div>
+          }
+          <label for="avatar-input" class="upload-badge">
+            <i class="ph ph-camera"></i>
+          </label>
+          <input type="file" id="avatar-input" hidden (change)="onFileSelected($event)" accept="image/*">
+        </div>
+        <p class="upload-hint">Haz clic en la cámara para cambiar tu foto</p>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Biografía Profesional</label>
+          <textarea 
+            formControlName="biografia" 
+            placeholder="Cuéntanos un poco sobre tu trayectoria..."
+            rows="4"></textarea>
+          <div class="char-counter">
+            {{ profileForm.get('biografia')?.value?.length || 0 }}/500
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Género</label>
+          <select formControlName="genero">
+            <option value="">Seleccionar...</option>
+            <option value="MASCULINO">Masculino</option>
+            <option value="FEMENINO">Femenino</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Fecha de Nacimiento</label>
+          <input type="date" formControlName="fechaNacimiento">
+        </div>
+      </div>
+
+      <div class="drawer-actions">
+        <button type="button" class="btn-secondary" (click)="closeDrawer()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="isSaving() || profileForm.invalid">
+          @if (isSaving()) {
+            <span class="spinner"></span> Guardando...
+          } @else {
+            Actualizar Perfil
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

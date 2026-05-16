@@ -4,10 +4,10 @@
   flex-direction: column;
   gap: 2rem;
 
-  --navy: #1A2B4C;
-  --mint: #BEE7DF;
-  --slate: #64748b;
-  --bg-card: #ffffff;
+  --navy:    var(--primary);
+  --mint:    var(--secondary-soft);
+  --slate:   var(--text-muted);
+  --bg-card: var(--bg-card);
 }
 
 .page-header {
@@ -470,12 +470,12 @@
 
     i {
       font-size: 3rem;
-      color: #1A2B4C;
+      color: var(--primary);
     }
 
     p {
       font-weight: 800;
-      color: #1A2B4C;
+      color: var(--primary);
       font-size: 1rem;
       letter-spacing: -0.01em;
     }

@@ -10,6 +10,8 @@
     </button>
   </div>
 
+
+
   <div class="navbar-right">
     <!-- Settings -->
     <button class="icon-btn" (click)="layout.toggleConfigDrawer()" aria-label="Settings" title="Configuración">
@@ -24,9 +26,15 @@
     <div class="divider"></div>
 
     <!-- User Profile -->
-    <div class="user-profile" role="button" aria-haspopup="true" [title]="auth.currentUser()?.nombreCompleto || 'Usuario'">
-      <div class="avatar initials-avatar">
-        {{ userInitials() }}
+    <div class="user-profile" role="button" aria-haspopup="true" 
+         (click)="openProfile()"
+         [title]="auth.currentUser()?.nombreCompleto || 'Usuario'">
+      <div class="avatar" [class.initials-avatar]="!auth.currentUser()?.fotografiaUrl">
+        @if (auth.currentUser()?.fotografiaUrl) {
+          <img [src]="auth.currentUser()?.fotografiaUrl" alt="Avatar" class="avatar-img">
+        } @else {
+          {{ userInitials() }}
+        }
       </div>
     </div>
   </div>

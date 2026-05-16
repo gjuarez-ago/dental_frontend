@@ -1,538 +1,337 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal, computed } from '@angular/core';
+import {
+  Component, ChangeDetectionStrategy, inject, signal, computed, OnInit
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
-import { BookingService } from '../../core/services/booking.service';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, switchMap, catchError, finalize, filter } from 'rxjs/operators';
+import { combineLatest, of } from 'rxjs';
+
+import { CatalogService, Estado, Municipio } from '../../core/services/catalog.service';
+import { SearchService } from '../../core/services/search.service';
+import { AgendaPublicaService } from '../../core/services/agenda-publica.service';
 import { AuthService } from '../../core/services/auth.service';
-import { SlotDisponibilidad, DisponibilidadDia } from '../../core/models/appointment.model';
-import { NgxSpinnerModule, NgxSpinnerService } from 'ngx-spinner';
-import { ToastrService } from 'ngx-toastr';
-import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
+import { AuthDrawerComponent, AuthRole } from '../../core/components/auth-drawer/auth-drawer';
+import { EspecialistaCard, GiroOption, Modalidad, SortOption } from '../../core/models/search.model';
+import { AgendaPublica, DiaAgenda, SlotPublico, ServicioPublico } from '../../core/models/agenda-publica.model';
 
 @Component({
   selector: 'app-booking',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, NgxSpinnerModule, ConfirmModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AuthDrawerComponent],
   templateUrl: './booking.html',
   styleUrl: './booking.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BookingComponent implements OnInit {
-  protected readonly fb = inject(BookingService);
+  private readonly route     = inject(ActivatedRoute);
+  private readonly router    = inject(Router);
+  private readonly catalogSvc = inject(CatalogService);
+  private readonly searchSvc  = inject(SearchService);
+  private readonly agendaSvc  = inject(AgendaPublicaService);
   private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly spinner = inject(NgxSpinnerService);
-  private readonly toastr = inject(ToastrService);
 
-  // Modal State
-  readonly showModal = signal(false);
-  readonly modalConfig = signal({
-    title: 'Aviso',
-    message: '',
-    type: 'info' as 'info' | 'danger' | 'warning' | 'success',
-    icon: 'ph ph-info'
-  });
+  // ─── Auth state ──────────────────────────────────────────────────────────
+  readonly authDrawerOpen  = signal(false);
+  readonly bookingError    = signal<string | null>(null);
+  readonly isLoggedInPatient = computed(() => this.authService.isLoggedIn() && this.authService.isPatient());
+  readonly authedUser = computed(() => this.authService.currentUser());
 
-  showAlert(message: string, type: 'info' | 'danger' | 'warning' | 'success' = 'info', title = 'Aviso') {
-    this.modalConfig.set({
-      title,
-      message,
-      type,
-      icon: type === 'danger' ? 'ph ph-warning-circle' : (type === 'warning' ? 'ph ph-warning' : 'ph ph-info')
-    });
-    this.showModal.set(true);
-  }
+  // ─── Catalogs ────────────────────────────────────────────────────────────
+  readonly estados     = signal<Estado[]>([]);
+  readonly municipios  = signal<Municipio[]>([]);
+  readonly giroOptions = signal<GiroOption[]>([]);
 
-  // Tenant y Sucursal Fijos
-  private readonly tenantId = '550e8400-e29b-41d4-a716-446655440000';
-  private readonly sucursalId = '550e8400-e29b-41d4-a716-446655440001';
+  // ─── Search filters ──────────────────────────────────────────────────────
+  readonly selectedEstadoId    = signal('');
+  readonly selectedMunicipioId = signal('');
+  readonly selectedGiroValor   = signal('');
+  readonly giroInputText       = signal('');
+  readonly giroDropdownOpen    = signal(false);
+  readonly searchQ             = signal('');
+  readonly modalityFilter      = signal<'TODAS' | Modalidad>('TODAS');
+  readonly sortBy              = signal<SortOption>('CALIFICACION');
 
-  // Exponer el estado al template
-  readonly state = this.fb.state;
-  readonly bankDetails = this.fb.bankDetails;
+  readonly modalityOpts: { value: 'TODAS' | Modalidad; label: string }[] = [
+    { value: 'TODAS',      label: 'Todas'      },
+    { value: 'PRESENCIAL', label: 'Presencial' },
+    { value: 'ONLINE',     label: 'Online'     },
+  ];
 
-  // Reactividad para disponibilidad
-  readonly monthlyDays = signal<DisponibilidadDia[]>([]);
-  readonly availableSlots = signal<SlotDisponibilidad[]>([]);
-  readonly currentMonthDate = signal<Date>(new Date());
+  // ─── Results ─────────────────────────────────────────────────────────────
+  readonly results       = signal<EspecialistaCard[]>([]);
+  readonly totalElements = signal(0);
+  readonly isSearching   = signal(false);
+  readonly hasSearched   = signal(false);
 
-  // Nueva señal computada para filtrar slots pasados
-  readonly filteredSlots = computed(() => {
-    const slots = this.availableSlots();
-    const selectedDate = this.fb.state().selectedDate;
-    if (!selectedDate) return slots;
+  // ─── Panel ───────────────────────────────────────────────────────────────
+  readonly panelEsp     = signal<EspecialistaCard | null>(null);
+  readonly panelAgenda  = signal<AgendaPublica | null>(null);
+  readonly panelLoading = signal(false);
+  readonly panelStep    = signal<'slots' | 'form' | 'success'>('slots');
 
-    const now = new Date();
-    const isToday = selectedDate.getDate() === now.getDate() &&
-                    selectedDate.getMonth() === now.getMonth() &&
-                    selectedDate.getFullYear() === now.getFullYear();
+  // ─── Slot selection ──────────────────────────────────────────────────────
+  readonly selServicio = signal<ServicioPublico | null>(null);
+  readonly selDia      = signal<DiaAgenda | null>(null);
+  readonly selSlot     = signal<SlotPublico | null>(null);
+  readonly panelMonth  = signal(new Date());
+  readonly isBooking   = signal(false);
 
-    if (!isToday) return slots;
-
-    // Filtrar slots cuya hora de inicio sea posterior a la actual
-    const currentHour = now.getHours();
-    const currentMin = now.getMinutes();
-
-    return slots.filter(slot => {
-      const [h, m] = slot.horaInicio.split(':').map(Number);
-      if (h > currentHour) return true;
-      if (h === currentHour && m > currentMin) return true;
-      return false;
-    });
-  });
-
-  readonly currentMonthName = computed(() => {
-    const name = this.currentMonthDate().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-    return name.charAt(0).toUpperCase() + name.slice(1);
-  });
-
-  // Cálculo de espacios vacíos al inicio del calendario (lunes a domingo)
-  readonly leadingEmptyDays = computed(() => {
-    const firstDay = new Date(this.currentMonthDate().getFullYear(), this.currentMonthDate().getMonth(), 1);
-    let dayOfWeek = firstDay.getDay(); // 0 = Dom, 1 = Lun...
-    // Ajustar a 0 = Lun, 6 = Dom
-    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  });
-
-  // Doctor Profile
-  readonly doctor = {
-    name: 'Dra. Sarai Rios',
-    title: 'CIRUJANO DENTISTA',
-    description: 'Especialista en odontología estética y restauradora, dedicada a transformar sonrisas con tecnología de vanguardia.',
-    rating: 4.9,
-    reviews: 120,
-    img: 'https://images.unsplash.com/photo-1629470948467-313620719067?auto=format&fit=crop&q=80&w=400'
-  };
-
-  bookingName = '';
-  bookingPhone = '';
+  // ─── Form (plain props: ngModel triggers CD in OnPush via event) ─────────
   bookingNotes = '';
-  bookingEmail = '';
-  lastSetupPin = '';
-  agreedToTerms = false;
-  agreedToSurgery = false;
 
-  // Estados de carga
-  isLoadingAvailability = signal(false);
-  isLoadingSlots = signal(false);
-  isSubmitting = signal(false);
+  // ─── Computed ─────────────────────────────────────────────────────────────
+  readonly headingLabel = computed(() => {
+    const giro   = this.giroInputText();
+    const estado = this.estados().find(e => e.id === this.selectedEstadoId());
+    if (giro && estado) return `${giro} en ${estado.nombre}`;
+    if (estado)         return `Especialistas en ${estado.nombre}`;
+    return 'Especialistas disponibles';
+  });
+
+  readonly filteredGiros = computed(() => {
+    const q = this.giroInputText().toLowerCase();
+    return q
+      ? this.giroOptions().filter(g => g.nombre.toLowerCase().includes(q))
+      : this.giroOptions();
+  });
+
+  readonly currentMonthLabel = computed(() =>
+    this.panelMonth().toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })
+  );
+
+  readonly daysGrid = computed((): (DiaAgenda | null)[] => {
+    const agenda = this.panelAgenda();
+    if (!agenda) return [];
+    const m      = this.panelMonth();
+    const year   = m.getFullYear();
+    const month  = m.getMonth();
+    const dow    = new Date(year, month, 1).getDay();
+    const offset = dow === 0 ? 6 : dow - 1;   // Monday-indexed
+    const days   = new Date(year, month + 1, 0).getDate();
+    const grid: (DiaAgenda | null)[] = Array(offset).fill(null);
+    for (let d = 1; d <= days; d++) {
+      const fecha = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      grid.push(
+        agenda.diasDisponibles.find(dia => dia.fecha === fecha)
+        ?? { fecha, esDiaLaboral: false, estaLlena: true, slots: [] }
+      );
+    }
+    return grid;
+  });
+
+  readonly daySlots = computed(() =>
+    (this.selDia()?.slots ?? []).filter(s => s.disponible)
+  );
+
+  readonly canProceed = computed(() =>
+    !!this.selServicio() && !!this.selDia() && !!this.selSlot()
+  );
+
+  constructor() {
+    // Municipios reactivos al estado
+    toObservable(this.selectedEstadoId).pipe(takeUntilDestroyed()).subscribe(id => {
+      this.selectedMunicipioId.set('');
+      this.municipios.set([]);
+      if (id) {
+        this.catalogSvc.getMunicipalitiesByState(id).subscribe(m => this.municipios.set(m));
+      }
+    });
+
+    // Stream de búsqueda reactivo con debounce
+    combineLatest([
+      toObservable(this.selectedEstadoId),
+      toObservable(this.selectedMunicipioId),
+      toObservable(this.selectedGiroValor),
+      toObservable(this.modalityFilter),
+      toObservable(this.sortBy),
+      toObservable(this.searchQ),
+    ]).pipe(
+      filter(([estadoId]) => !!estadoId),
+      debounceTime(300),
+      distinctUntilChanged((a, b) => a.join('|') === b.join('|')),
+      switchMap(([estadoId, municipioId, giro, modality, sort, q]) => {
+        this.isSearching.set(true);
+        this.hasSearched.set(true);
+        return this.searchSvc.searchEspecialistas({
+          estadoId,
+          municipioId: municipioId || undefined,
+          giro:        giro || undefined,
+          q:           q || undefined,
+          modalidad:   modality === 'TODAS' ? undefined : modality as Modalidad,
+          sort:        sort as SortOption,
+          page: 0, size: 20,
+        }).pipe(
+          catchError(() => of(null)),
+          finalize(() => this.isSearching.set(false))
+        );
+      }),
+      takeUntilDestroyed()
+    ).subscribe(result => {
+      if (result) {
+        this.results.set(result.content);
+        this.totalElements.set(result.totalElements);
+      }
+    });
+  }
 
   ngOnInit(): void {
-    // 1. Validar que haya un servicio seleccionado
-    if (!this.state().serviceName) {
-      this.router.navigate(['/']);
-      return;
-    }
-    
-    // 2. Limpiar selecciones previas para una nueva experiencia fresca
-    this.fb.clearSelection();
-    this.bookingName = '';
-    this.bookingPhone = '';
-    this.bookingEmail = '';
-    this.bookingNotes = '';
-    this.availableSlots.set([]);
-    
-    // 3. Cargar información inicial
-    this.loadMonthlyAvailability();
-    this.fb.getClinicInfo(this.tenantId, this.sucursalId);
-    this.scrollToTop();
+    this.catalogSvc.getStates().subscribe(e => this.estados.set(e));
+    this.searchSvc.getGiros().subscribe(g => this.giroOptions.set(g));
+
+    const p = this.route.snapshot.queryParamMap;
+    if (p.get('estadoId'))   this.selectedEstadoId.set(p.get('estadoId')!);
+    if (p.get('giro'))       this.selectedGiroValor.set(p.get('giro')!);
+    if (p.get('giroNombre')) this.giroInputText.set(p.get('giroNombre')!);
+    if (p.get('q'))          this.searchQ.set(p.get('q')!);
   }
 
-  loadMonthlyAvailability(): void {
-    this.isLoadingAvailability.set(true);
-    this.spinner.show();
-    const date = this.currentMonthDate();
-    this.fb.getMonthlyAvailability(
-      this.tenantId, 
-      this.sucursalId, 
-      date.getMonth() + 1, 
-      date.getFullYear(),
-      this.state().serviceId
-    ).subscribe({
-      next: (days) => {
-        this.monthlyDays.set(days);
-        this.isLoadingAvailability.set(false);
-        this.spinner.hide();
-      },
-      error: () => {
-        this.isLoadingAvailability.set(false);
-        this.spinner.hide();
-      }
+  // ─── Giro autocomplete ───────────────────────────────────────────────────
+  onGiroInput(value: string): void {
+    this.giroInputText.set(value);
+    this.selectedGiroValor.set('');
+    this.giroDropdownOpen.set(true);
+  }
+
+  selectGiro(opt: GiroOption): void {
+    this.giroInputText.set(opt.nombre);
+    this.selectedGiroValor.set(opt.valor);
+    this.giroDropdownOpen.set(false);
+  }
+
+  clearGiro(): void {
+    this.giroInputText.set('');
+    this.selectedGiroValor.set('');
+    this.giroDropdownOpen.set(false);
+  }
+
+  blurGiro(): void {
+    setTimeout(() => this.giroDropdownOpen.set(false), 150);
+  }
+
+  // ─── Panel de agenda ─────────────────────────────────────────────────────
+  openPanel(esp: EspecialistaCard): void {
+    if (this.panelEsp()?.tenantId === esp.tenantId) { this.closePanel(); return; }
+    this.panelEsp.set(esp);
+    this.resetPanel();
+    const today = new Date().toISOString().split('T')[0];
+    this.panelLoading.set(true);
+    this.agendaSvc.getAgenda(esp.tenantId, today, 14).pipe(
+      catchError(() => of(null)),
+      finalize(() => this.panelLoading.set(false))
+    ).subscribe(agenda => {
+      if (!agenda) return;
+      this.panelAgenda.set(agenda);
+      if (agenda.servicios.length === 1) this.selServicio.set(agenda.servicios[0]);
     });
   }
+
+  closePanel(): void { this.panelEsp.set(null); this.resetPanel(); }
+
+  private resetPanel(): void {
+    this.panelAgenda.set(null);
+    this.selServicio.set(null);
+    this.selDia.set(null);
+    this.selSlot.set(null);
+    this.panelStep.set('slots');
+    this.panelMonth.set(new Date());
+    this.bookingNotes = '';
+    this.bookingError.set(null);
+  }
+
+  selectDia(dia: DiaAgenda): void { this.selDia.set(dia); this.selSlot.set(null); }
 
   changeMonth(delta: number): void {
-    const next = new Date(this.currentMonthDate());
-    next.setMonth(next.getMonth() + delta);
-    this.currentMonthDate.set(next);
-    this.fb.setDate(null as any); // Limpiar fecha seleccionada
-    this.availableSlots.set([]);
-    this.loadMonthlyAvailability();
+    const m = new Date(this.panelMonth());
+    m.setMonth(m.getMonth() + delta);
+    this.panelMonth.set(m);
   }
 
-  isInvalidDay(dateStr: string): boolean {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const dayDate = new Date(y, m - 1, d);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const minDays = this.bankDetails().leadDays || 1;
-    const minSelectableDate = new Date(today);
-    minSelectableDate.setDate(today.getDate() + minDays);
-
-    return dayDate < minSelectableDate;
-  }
-
-  onDateSelect(day: DisponibilidadDia): void {
-    if (!day.esLaboral || day.estaLlena) return;
-    
-    const dateStr = day.fecha; // El backend devuelve "YYYY-MM-DD"
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const dateObj = new Date(y, m - 1, d);
-    
-    this.fb.setDate(dateObj);
-    this.availableSlots.set([]); // Limpiar inmediatamente para evitar clics en slots viejos
-    this.loadSlots(dateStr);
-  }
-
-  loadSlots(dateStr: string): void {
-    this.isLoadingSlots.set(true);
-    this.spinner.show();
-    this.fb.getAvailableSlots(
-      this.tenantId,
-      this.sucursalId,
-      dateStr,
-      this.state().serviceId
-    ).subscribe({
-      next: (slots) => {
-        this.spinner.hide(); // Ocultar primero para liberar la interfaz
-        this.availableSlots.set(slots);
-        this.isLoadingSlots.set(false);
-      },
-      error: () => {
-        this.isLoadingSlots.set(false);
-        this.spinner.hide();
-      }
-    });
-  }
-
-  onSlotSelect(slot: SlotDisponibilidad): void {
-    if (!slot.disponible) return;
-    this.fb.setSlot(slot);
-    // Solo desplazamos si es necesario para mostrar el botón de continuar
-    this.scrollToBottom();
-  }
-
-  private scrollToBottom(): void {
-    setTimeout(() => {
-      const ctaElement = document.getElementById('cta-booking');
-      if (ctaElement) {
-        ctaElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else {
-        // Fallback al comportamiento anterior si el ID no existe por alguna razón
-        const scrollOptions: ScrollToOptions = { 
-          top: document.documentElement.scrollHeight, 
-          behavior: 'smooth' 
-        };
-        window.scrollTo(scrollOptions);
-      }
-    }, 150);
-  }
-
-  private scrollToTop(): void {
-    setTimeout(() => {
-      const scrollOptions: ScrollToOptions = { top: 0, left: 0, behavior: 'smooth' };
-      window.scrollTo(scrollOptions);
-      document.body.scrollTo(scrollOptions);
-      document.documentElement.scrollTo(scrollOptions);
-      
-      const container = document.querySelector('.booking-container');
-      if (container) {
-        container.scrollTo(scrollOptions);
-      }
-    }, 10);
-  }
-
-  nextStep(): void {
-    const currentStep = this.state().step;
-    
-    if (currentStep === 1) {
-      if (this.state().selectedDate && this.state().selectedSlot) {
-        this.fb.setStep(2);
-      }
-    } else if (currentStep === 2) {
-      if (this.bookingName && this.bookingPhone) {
-        this.fb.setCustomerInfo(this.bookingName, this.bookingPhone);
-        this.fb.setStep(3);
-      }
-    }
-    this.scrollToTop();
-  }
-
-  async onFileSelected(event: any): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    
-    if (file) {
-      // 1. Validar que sea solo imagen
-      if (!file.type.startsWith('image/')) {
-        this.showAlert('Por favor selecciona solo archivos de imagen (JPG, PNG). Los PDF no están permitidos.', 'warning', 'Archivo no permitido');
-        input.value = '';
-        return;
-      }
-
-      try {
-        this.spinner.show();
-        // 2. Comprimir imagen (Máximo 500KB)
-        const compressedFile = await this.compressImage(file, 0.7, 1200);
-        
-        if (compressedFile.size > 500 * 1024) {
-          // Si aún es pesada, re-comprimir con menor calidad
-          const highCompression = await this.compressImage(compressedFile, 0.5, 1000);
-          this.confirmBooking(highCompression);
-        } else {
-          this.confirmBooking(compressedFile);
-        }
-      } catch (error) {
-        console.error('Error al procesar la imagen:', error);
-        this.showAlert('No se pudo procesar la imagen. Intenta con otra.', 'danger', 'Error de Procesamiento');
-        this.spinner.hide(); // Solo ocultamos si hay error en la compresión
-      } finally {
-        // 3. Reset del input para permitir seleccionar el mismo archivo
-        input.value = '';
-      }
-    }
-  }
-
-  private compressImage(file: File, quality: number, maxWidth: number): Promise<File> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-
-          // Redimensionar si es muy grande
-          if (width > maxWidth) {
-            height = (height * maxWidth) / width;
-            width = maxWidth;
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                const compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
-                  lastModified: Date.now(),
-                });
-                resolve(compressedFile);
-              } else {
-                reject(new Error('Error al comprimir imagen'));
-              }
-            },
-            'image/jpeg',
-            quality
-          );
-        };
-        img.onerror = (err) => reject(err);
-      };
-      reader.onerror = (err) => reject(err);
-    });
-  }
-
-  onPhoneInput(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    // Solo permitir números
-    input.value = input.value.replace(/[^0-9]/g, '');
-    this.bookingPhone = input.value;
-    
-    // Auto-limitado a 10 dígitos (opcional si maxlength está en html)
-    if (this.bookingPhone.length > 10) {
-      this.bookingPhone = this.bookingPhone.substring(0, 10);
-    }
-  }
-
-  isPhoneValid(): boolean {
-    return /^[0-9]{10}$/.test(this.bookingPhone);
-  }
-
-  isNameValid(): boolean {
-    return this.bookingName.trim().length >= 3;
-  }
-
-  confirmBooking(file: File): void {
-    this.isSubmitting.set(true);
-    this.spinner.show();
-    
-    const slot = this.state().selectedSlot;
-    const date = this.state().selectedDate;
-    
-    if (!slot || !date) return;
-
-    // Construir DTO para el backend asegurando que no haya desfase de zona horaria (UTC)
-    const timeParts = slot.horaInicio.split(':');
-    const pad = (n: number) => n < 10 ? '0' + n : n;
-    
-    // Obtener desplazamiento local (ej. -06:00 para México)
-    const offset = -date.getTimezoneOffset();
-    const absOffset = Math.abs(offset);
-    const offsetStr = (offset >= 0 ? '+' : '-') + pad(Math.floor(absOffset / 60)) + ':' + pad(absOffset % 60);
-    
-    // Formato completo esperado por OffsetDateTime: YYYY-MM-DDTHH:mm:ss-06:00
-    const fechaLocalConOffset = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(parseInt(timeParts[0]))}:${pad(parseInt(timeParts[1]))}:00${offsetStr}`;
-
-    const totalPriceStr = this.state().price || '0';
-    const numericTotal = parseFloat(totalPriceStr.replace(/[^0-9.]/g, '')) || 0;
-    const numericDeposit = this.fb.calculateDeposit(totalPriceStr);
-    
-    console.log('Booking Debug:', { totalPriceStr, numericTotal, numericDeposit });
-
-    const citaDto = {
-      sucursalId: this.sucursalId,
-      servicioId: this.state().serviceId,
-      fechaHora: fechaLocalConOffset,
-      duracionMinutos: this.state().duracionMinutos,
-      pacienteNombre: this.bookingName,
-      pacienteTelefono: this.bookingPhone,
-      motivoConsulta: this.bookingNotes || this.state().serviceName,
-      notasRecepcion: `Servicio solicitado: ${this.state().serviceName}`,
-      montoTotal: numericTotal,
-      montoPagado: numericDeposit
-    };
-    
-    console.log('--- ENVIANDO CITA AL BACKEND ---');
-    console.log('CitaDTO:', citaDto);
-    console.log('--------------------------------');
-
-    this.fb.confirmBooking(citaDto, file).subscribe({
-      next: (res) => {
-        this.isSubmitting.set(false);
-        this.spinner.hide();
-        if (res.ok) {
-          this.fb.setReceiptUploaded(true);
-          this.fb.setStep(4);
-          this.scrollToTop();
-        } else {
-          this.toastr.error(res.userMessage || 'Error al agendar cita', 'Error');
-        }
-      },
-      error: () => {
-        this.isSubmitting.set(false);
-        this.spinner.hide();
-        // El ErrorInterceptor se encarga del toast automático para errores HTTP
-      }
-    });
-  }
-
-  finish(): void {
-    this.fb.resetBooking();
-    this.router.navigate(['/']);
-  }
-
-  redirectOnModalClose = false;
-
-  onModalConfirm(): void {
-    this.showModal.set(false);
-    if (this.redirectOnModalClose) {
-      this.redirectOnModalClose = false;
-      this.fb.resetBooking();
-      
-      if (this.lastSetupPin === 'YA_TIENES_CUENTA') {
-        this.authService.clearSession();
-        this.router.navigate(['/login']);
-      } else {
-        // Es nuevo, dejarlo pasar directo
-        this.router.navigate(['/mis-citas']);
-      }
-    }
-  }
-
-  isEmailValid(): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.bookingEmail);
-  }
-
-  setupAccount(): void {
-    if (!this.isEmailValid() || !this.bookingPhone) {
-      this.toastr.warning('Ingresa un correo electrónico válido.', 'Correo Inválido');
+  goToForm(): void {
+    if (!this.canProceed()) return;
+    this.bookingError.set(null);
+    if (!this.isLoggedInPatient()) {
+      this.authDrawerOpen.set(true);
       return;
     }
+    this.panelStep.set('form');
+  }
 
-    this.isSubmitting.set(true);
-    this.spinner.show();
+  goBackToSlots(): void {
+    this.bookingError.set(null);
+    this.panelStep.set('slots');
+  }
 
-    this.authService.setupAccess({ telefono: this.bookingPhone, email: this.bookingEmail }).subscribe({
-      next: (res) => {
-        this.isSubmitting.set(false);
-        this.spinner.hide();
-        this.lastSetupPin = res.temporaryPin || '';
-        if (res.token) {
-          if (res.temporaryPin === 'YA_TIENES_CUENTA') {
-            this.modalConfig.set({
-              title: '¡Ya tienes cuenta!',
-              message: 'Identificamos que ya habías generado tu acceso antes. Te redirigiremos a tu portal para que ingreses con tu número y NIP de siempre.',
-              type: 'info',
-              icon: 'ph ph-user-check'
-            });
-          } else {
-            const pinMsg = res.temporaryPin ? `<br><br><b>Tu NIP de acceso es: <span style="font-size:1.5rem; color:#0d9488">${res.temporaryPin}</span></b><br><br>Úsalo para iniciar sesión.` : '';
-            this.modalConfig.set({
-              title: '¡Acceso Creado!',
-              message: `Hemos vinculado tu correo exitosamente.${pinMsg}`,
-              type: 'success',
-              icon: 'ph ph-check-circle'
-            });
-          }
-          this.redirectOnModalClose = true;
-          this.showModal.set(true);
-        }
-      },
-      error: () => {
-        this.isSubmitting.set(false);
-        this.spinner.hide();
-        // El ErrorInterceptor se encarga del toast automático
-      }
+  closeAuthDrawer(): void { this.authDrawerOpen.set(false); }
+
+  onAuthenticated(role: AuthRole): void {
+    this.authDrawerOpen.set(false);
+    if (role === 'PACIENTE' && this.canProceed()) {
+      this.panelStep.set('form');
+    }
+  }
+
+  submitBooking(): void {
+    const esp  = this.panelEsp();
+    const svc  = this.selServicio();
+    const dia  = this.selDia();
+    const slot = this.selSlot();
+    const user = this.authService.currentUser();
+    if (!esp || !svc || !dia || !slot || !user) return;
+
+    this.bookingError.set(null);
+    this.isBooking.set(true);
+    this.agendaSvc.requestBooking({
+      tenantId:         esp.tenantId,
+      servicioId:       svc.id,
+      fecha:            dia.fecha,
+      horaInicio:       slot.horaInicio,
+      nombrePaciente:   user.nombreCompleto,
+      telefonoPaciente: user.telefono,
+      emailPaciente:    user.email ?? undefined,
+      notas:            this.bookingNotes.trim() || undefined,
+    }).pipe(
+      catchError((err) => {
+        const msg = err?.error?.userMessage ?? err?.error?.message ?? 'No fue posible procesar tu solicitud.';
+        this.bookingError.set(msg);
+        return of(null);
+      }),
+      finalize(() => this.isBooking.set(false))
+    ).subscribe(res => { if (res) this.panelStep.set('success'); });
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────
+  dayNum(fecha: string): number { return +fecha.split('-')[2]; }
+
+  formatDia(dia: DiaAgenda | null): string {
+    if (!dia) return '';
+    return new Date(dia.fecha + 'T12:00:00').toLocaleDateString('es-MX', {
+      weekday: 'long', day: 'numeric', month: 'long',
     });
   }
 
-  prevStep(): void {
-    const currentStep = this.state().step;
-    if (currentStep > 1 && currentStep < 4) {
-      this.fb.setStep(currentStep - 1);
-    }
-    this.scrollToTop();
+  formatSlot(iso: string | undefined): string {
+    if (!iso) return '';
+    const d    = new Date(iso);
+    const now  = new Date();
+    now.setHours(0, 0, 0, 0);
+    const diff = Math.floor((d.getTime() - now.getTime()) / 86_400_000);
+    const t    = d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    if (diff === 0) return `Hoy, ${t}`;
+    if (diff === 1) return `Mañana, ${t}`;
+    return d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' }) + ', ' + t;
   }
 
-  getDepositAmount(): number {
-    return this.fb.calculateDeposit(this.state().price);
+  isPastDay(fecha: string): boolean {
+    const dias = this.panelAgenda()?.diasAnticipacionReserva ?? 1;
+    const min = new Date();
+    min.setDate(min.getDate() + dias);
+    const y = min.getFullYear();
+    const m = String(min.getMonth() + 1).padStart(2, '0');
+    const d = String(min.getDate()).padStart(2, '0');
+    return fecha < `${y}-${m}-${d}`;
   }
 
-  formatDate(date: Date | null): string {
-    if (!date) return '';
-    return date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  }
-
-  goBack(): void {
-    if (this.state().step === 1) {
-      this.router.navigate(['/']);
-    } else if (this.state().step === 4) {
-      this.finish();
-    } else {
-      this.prevStep();
-    }
-  }
-
-  triggerFileInput(input: HTMLInputElement): void {
-    if (!this.isSubmitting()) {
-      input.click();
-    }
-  }
+  goHome(): void { this.router.navigate(['/']); }
 }

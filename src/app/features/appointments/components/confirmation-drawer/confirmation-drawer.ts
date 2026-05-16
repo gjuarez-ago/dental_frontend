@@ -72,7 +72,7 @@ import { Cita } from '../../../../core/models/appointment.model';
 
           <div class="cost-section">
             <div class="input-field primary-field">
-              <label for="remainingPayment">Monto a Liquidar Hoy (MXN)</label>
+              <label for="remainingPayment">Monto Pendiente (MXN)</label>
               <div class="input-wrapper">
                 <span class="currency-prefix">$</span>
                 <input 

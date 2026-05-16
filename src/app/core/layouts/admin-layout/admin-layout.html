@@ -37,9 +37,20 @@
   <app-audit-drawer [isOpen]="layout.isAuditOpen()" (close)="layout.closeAuditDrawer()">
   </app-audit-drawer>
 
-  <ngx-spinner bdColor="rgba(255,255,255,0.7)" size="medium" color="#1A2B4C" type="ball-scale-multiple"
-    [fullScreen]="true">
-    <p style="color: #1A2B4C; font-weight: 700; margin-top: 20px; font-family: 'Outfit', sans-serif;">Cargando
-      clínica...</p>
-  </ngx-spinner>
+  <app-profile-drawer></app-profile-drawer>
+
+  @if (loading.isLoading()) {
+  <div class="global-loader" role="status" aria-label="Cargando">
+    <div class="loader-backdrop"></div>
+    <div class="loader-body">
+      <div class="loader-rings">
+        <span class="ring r1"></span>
+        <span class="ring r2"></span>
+        <span class="ring r3"></span>
+      </div>
+      <img src="/images/logo_erm.png" class="loader-iso" alt="">
+      <span class="loader-label">Cargando...</span>
+    </div>
+  </div>
+  }
 </div>

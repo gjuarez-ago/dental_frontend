@@ -32,6 +32,83 @@ $color-bg-card: rgba(255, 255, 255, 0.9); // Glassmorphism light card
   }
 }
 
+// ─── Blobs ───────────────────────────────────────────────────────────────────
+.auth-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  will-change: transform;
+  z-index: 0;
+
+  &.blob-1 {
+    width: 420px; height: 420px;
+    background: rgba(77, 208, 225, 0.18);
+    top: -10%; left: -8%;
+    animation: auth-blob1 22s ease-in-out infinite;
+  }
+  &.blob-2 {
+    width: 360px; height: 360px;
+    background: rgba(14, 165, 233, 0.15);
+    bottom: -12%; right: -6%;
+    animation: auth-blob2 26s ease-in-out infinite;
+  }
+  &.blob-3 {
+    width: 260px; height: 260px;
+    background: rgba(255, 255, 255, 0.07);
+    top: 40%; right: 28%;
+    animation: auth-blob3 18s ease-in-out infinite;
+  }
+}
+
+// ─── Partículas flotantes ─────────────────────────────────────────────────────
+.auth-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.auth-particle {
+  position: absolute;
+  top: 100%;
+  color: rgba(255, 255, 255, var(--alpha, 0.25));
+  animation: auth-float-up linear infinite;
+  will-change: transform, opacity;
+
+  svg { display: block; }
+
+  &.ap1 { left: 7%;  --dx: 30px;  --rot: 180deg;  --alpha: 0.28; animation-duration: 19s; animation-delay: 0s; }
+  &.ap2 { left: 20%; --dx: -22px; --rot: -120deg; --alpha: 0.22; animation-duration: 25s; animation-delay: 5s; }
+  &.ap3 { left: 38%; --dx: 38px;  --rot: 200deg;  --alpha: 0.32; animation-duration: 21s; animation-delay: 8s; }
+  &.ap4 { left: 54%; --dx: -28px; --rot: -180deg; --alpha: 0.26; animation-duration: 17s; animation-delay: 2s; }
+  &.ap5 { left: 68%; --dx: 24px;  --rot: 90deg;   --alpha: 0.24; animation-duration: 23s; animation-delay: 11s; }
+  &.ap6 { left: 84%; --dx: -36px; --rot: -90deg;  --alpha: 0.3;  animation-duration: 20s; animation-delay: 4s; }
+}
+
+@keyframes auth-float-up {
+  0%   { transform: translateY(0)    translateX(0)          rotate(0deg);        opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(-110vh) translateX(var(--dx)) rotate(var(--rot)); opacity: 0; }
+}
+
+@keyframes auth-blob1 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%     { transform: translate(50px,35px) scale(1.1); }
+  66%     { transform: translate(-25px,70px) scale(0.95); }
+}
+@keyframes auth-blob2 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  50%     { transform: translate(-45px,-55px) scale(1.15); }
+}
+@keyframes auth-blob3 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  40%     { transform: translate(35px,-25px) scale(0.9); }
+  70%     { transform: translate(-45px,18px) scale(1.05); }
+}
+
 // ─── Card ────────────────────────────────────────────────────────────────────
 .login-card {
   position: relative;
@@ -142,7 +219,7 @@ $color-bg-card: rgba(255, 255, 255, 0.9); // Glassmorphism light card
 
   .header-text {
     p {
-      font-family: var(--font-heading, 'Outfit', sans-serif);
+      font-family: var(--font-heading);
       font-size: 1.5rem;
       font-weight: 700;
       color: $color-primary;
@@ -325,7 +402,7 @@ $color-bg-card: rgba(255, 255, 255, 0.9); // Glassmorphism light card
   padding-top: 1rem;
   border-top: 1px solid rgba(29, 53, 87, 0.1);
   text-align: center;
-  font-family: var(--font-body, 'Inter', sans-serif);
+  font-family: var(--font-body);
   font-size: 0.8rem;
   color: $color-muted;
   font-weight: 500;
@@ -381,7 +458,7 @@ $color-bg-card: rgba(255, 255, 255, 0.9); // Glassmorphism light card
   }
 
   .step-title {
-    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-family: var(--font-heading);
     font-size: 1.15rem;
     font-weight: 700;
     color: $color-primary;
@@ -503,5 +580,72 @@ $color-bg-card: rgba(255, 255, 255, 0.9); // Glassmorphism light card
     color: $color-primary;
     border-color: $color-primary;
     background: rgba(29, 53, 87, 0.03);
+  }
+}
+
+// ─── Signup prompt al final del paso de teléfono/correo ───────────
+.signup-prompt {
+  text-align: center;
+  font-size: 0.85rem;
+  color: $color-muted;
+  margin: 1.25rem 0 0;
+
+  a {
+    color: $color-secondary;
+    font-weight: 600;
+    text-decoration: none;
+    margin-left: 0.25rem;
+    transition: color 0.15s;
+
+    &:hover { color: $color-primary; }
+  }
+}
+
+
+// ─── CTA principal cuando no hay cuenta → agendar cita ───────────
+.login-btn.primary-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0.75rem;
+  text-decoration: none;
+  background: $color-primary;
+  color: #fff;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(29, 53, 87, 0.25);
+    background: $color-secondary;
+  }
+
+  i { font-size: 1.15rem; }
+}
+
+.redirect-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+
+  .staff-hint {
+    font-size: 0.8rem;
+    color: $color-muted;
+    margin: 0;
+    text-align: center;
+
+    a {
+      color: $color-secondary;
+      font-weight: 600;
+      text-decoration: none;
+      &:hover { color: $color-primary; }
+    }
   }
 }

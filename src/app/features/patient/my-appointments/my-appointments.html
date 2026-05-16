@@ -1,3 +1,24 @@
+<nav class="portal-topbar">
+  <div class="topbar-inner">
+    <a routerLink="/" class="topbar-logo">
+      <img src="/images/logo_erm.png" alt="" class="topbar-iso">
+      <span class="topbar-brand-name">novatia</span>
+    </a>
+    <div class="topbar-actions">
+      <a routerLink="/booking" class="topbar-book-btn">
+        <i class="ph ph-calendar-plus"></i>
+        <span>Agendar cita</span>
+      </a>
+      <div class="topbar-user-pill">
+        <span class="topbar-avatar">{{ userInitials() }}</span>
+        <button class="topbar-logout" (click)="logout()" title="Cerrar sesión">
+          <i class="ph ph-sign-out"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
 <div class="patient-portal">
   <!-- BLOQUEO DE CONFIGURACIÓN INICIAL -->
   <app-profile-setup *ngIf="showSetup()" (completed)="onSetupComplete()"></app-profile-setup>
@@ -7,14 +28,6 @@
       <div class="user-info">
         <h1>¡Hola, {{ (authService.currentUser()?.nombreCompleto?.split(' ') || [])[0] }}! 👋</h1>
         <p>Qué bueno verte de nuevo. ¿En qué podemos ayudarte hoy?</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn-book" (click)="openBooking()" *ngIf="bookingStep() === 'CLOSED'">
-          <i class="ph ph-plus"></i> Agendar Cita
-        </button>
-        <button class="logout-btn" (click)="logout()">
-          <i class="ph ph-sign-out"></i><span>Salir</span>
-        </button>
       </div>
     </div>
     

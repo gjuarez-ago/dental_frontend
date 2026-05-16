@@ -14,6 +14,9 @@ import { UserRole } from './core/models/user-role.enum';
 import { UsuariosComponent } from './features/usuarios/usuarios';
 import { MyAppointmentsComponent } from './features/patient/my-appointments/my-appointments';
 import { MedicalHistoryComponent } from './features/patient/medical-history/medical-history';
+import { ContactComponent } from './features/contact/contact';
+import { PrivacyComponent } from './features/privacy/privacy';
+import { TermsComponent } from './features/terms/terms';
 
 export const routes: Routes = [
   {
@@ -22,9 +25,24 @@ export const routes: Routes = [
     title: 'Dental Sonrisana'
   },
   {
+    path: 'contacto',
+    component: ContactComponent,
+    title: 'Contacto | Novatia'
+  },
+  {
+    path: 'privacidad',
+    component: PrivacyComponent,
+    title: 'Aviso de Privacidad | Novatia'
+  },
+  {
+    path: 'terminos',
+    component: TermsComponent,
+    title: 'Términos y Condiciones | Novatia'
+  },
+  {
     path: 'booking',
     component: BookingComponent,
-    title: 'Agendar Cita | Dental Sonrisana'
+    title: 'Agendar Cita | Novatia'
   },
   {
     path: 'agendar/:tenantId',
@@ -34,7 +52,13 @@ export const routes: Routes = [
   {
     path: 'login',
     component: LoginComponent,
-    title: 'Login - Dental Sonrisana',
+    title: 'Iniciar sesión | Novatia',
+    canActivate: [publicGuard]
+  },
+  {
+    path: 'signup',
+    loadComponent: () => import('./features/auth/signup/signup').then(m => m.SignupComponent),
+    title: 'Crear cuenta | Novatia',
     canActivate: [publicGuard]
   },
   {
@@ -82,6 +106,12 @@ export const routes: Routes = [
         data: { roles: [UserRole.OWNER, UserRole.SUPER_ADMIN] }
       }
     ]
+  },
+  {
+    path: 'onboarding',
+    loadComponent: () => import('./features/onboarding/onboarding').then(m => m.OnboardingComponent),
+    title: 'Configura tu Consultorio | Novatia',
+    canActivate: [authGuard]
   },
   { path: '**', redirectTo: '' }
 ];

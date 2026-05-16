@@ -33,6 +33,7 @@
               <i class="ph ph-identification-card ph-bold"></i>
               <input type="text" formControlName="professionalName" placeholder="Ej: Dra. Elena Ruiz">
             </div>
+            <div style="color: #ef4444; font-size: 0.8rem; margin-top: 4px;" *ngIf="configForm.get('professionalName')?.invalid && configForm.get('professionalName')?.touched">El nombre es obligatorio.</div>
           </div>
           <div class="form-group">
             <label>Cédula Profesional</label>
@@ -40,6 +41,7 @@
               <i class="ph ph-briefcase-metal ph-bold"></i>
               <input type="text" formControlName="professionalCedula" placeholder="Ej: 12345678">
             </div>
+            <div style="color: #ef4444; font-size: 0.8rem; margin-top: 4px;" *ngIf="configForm.get('professionalCedula')?.invalid && configForm.get('professionalCedula')?.touched">La cédula es obligatoria.</div>
           </div>
           <div class="form-group full-width">
             <label>Dirección de la Sucursal</label>
@@ -68,6 +70,7 @@
               <i class="ph ph-hash ph-bold"></i>
               <input type="text" formControlName="cuentaBancaria" placeholder="10-11 dígitos" maxlength="11">
             </div>
+            <div style="color: #ef4444; font-size: 0.8rem; margin-top: 4px;" *ngIf="configForm.get('cuentaBancaria')?.invalid && configForm.get('cuentaBancaria')?.touched">La cuenta debe tener entre 10 y 20 dígitos.</div>
           </div>
           <div class="form-group">
             <label>CLABE Interbancaria</label>
@@ -75,6 +78,7 @@
               <i class="ph ph-credit-card ph-bold"></i>
               <input type="text" formControlName="clabeInterbancaria" placeholder="18 dígitos" maxlength="18">
             </div>
+            <div style="color: #ef4444; font-size: 0.8rem; margin-top: 4px;" *ngIf="configForm.get('clabeInterbancaria')?.invalid && configForm.get('clabeInterbancaria')?.touched">La CLABE debe tener exactamente 18 dígitos numéricos.</div>
           </div>
         </div>
       </section>
@@ -89,6 +93,7 @@
               <i class="ph ph-whatsapp-logo ph-bold" style="color: #25D366;"></i>
               <input type="text" formControlName="telefonoWhatsApp" placeholder="Ej: 5512345678">
             </div>
+            <div style="color: #ef4444; font-size: 0.8rem; margin-top: 4px;" *ngIf="configForm.get('telefonoWhatsApp')?.invalid && configForm.get('telefonoWhatsApp')?.touched">El teléfono debe tener al menos 10 números.</div>
           </div>
           <div class="form-group full-width">
             <label>Límite para Cancelar Citas (Horas de anticipación)</label>
@@ -97,6 +102,7 @@
               <input type="number" formControlName="horasAnticipacionCancelacion" placeholder="24">
             </div>
             <p class="field-hint">Aplica para cancelaciones desde el portal del paciente.</p>
+            <div style="color: #ef4444; font-size: 0.8rem; margin-top: 4px;" *ngIf="configForm.get('horasAnticipacionCancelacion')?.invalid && configForm.get('horasAnticipacionCancelacion')?.touched">El límite no puede ser negativo.</div>
           </div>
           <div class="form-group full-width">
             <label>Anticipación Mínima para Agendar (Días)</label>
@@ -105,6 +111,7 @@
               <input type="number" formControlName="diasAnticipacionReserva" placeholder="1" min="1">
             </div>
             <p class="field-hint">Días mínimos que debe esperar el paciente antes de su cita (mínimo 1).</p>
+            <div style="color: #ef4444; font-size: 0.8rem; margin-top: 4px;" *ngIf="configForm.get('diasAnticipacionReserva')?.invalid && configForm.get('diasAnticipacionReserva')?.touched">Debe ser al menos 1 día.</div>
           </div>
         </div>
       </section>
@@ -145,7 +152,7 @@
 
   <footer class="drawer-footer">
     <button class="btn-secondary" (click)="close()" [disabled]="isSaving()">Cancelar</button>
-    <button class="btn-primary" (click)="save()" [disabled]="configForm.invalid || isSaving() || isLoading()">
+    <button class="btn-primary" (click)="save()" [disabled]="isSaving() || isLoading()">
       <i class="ph" [class.ph-floppy-disk]="!isSaving()" [class.ph-circle-notch]="isSaving()" [class.animate-spin]="isSaving()"></i>
       {{ isSaving() ? 'Guardando...' : 'Guardar Ajustes' }}
     </button>

@@ -11,25 +11,25 @@ import { RejectionDrawerComponent } from '../../../features/appointments/compone
 import { AppointmentService } from '../../services/appointment.service';
 import { ConfigDrawerComponent } from '../../components/config-drawer/config-drawer';
 import { AuditDrawerComponent } from '../../components/audit-drawer/audit-drawer';
-import { NgxSpinnerModule } from 'ngx-spinner';
-
+import { ProfileDrawerComponent } from '../../components/profile-drawer/profile-drawer';
 import { Router } from '@angular/router';
+import { LoadingService } from '../../services/loading.service';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
   imports: [
-    CommonModule, 
-    RouterOutlet, 
-    NavbarComponent, 
-    SidebarComponent, 
-    AppointmentDrawerComponent, 
+    CommonModule,
+    RouterOutlet,
+    NavbarComponent,
+    SidebarComponent,
+    AppointmentDrawerComponent,
     ConfirmationDrawerComponent,
     CancellationDrawerComponent,
     RejectionDrawerComponent,
     ConfigDrawerComponent,
     AuditDrawerComponent,
-    NgxSpinnerModule
+    ProfileDrawerComponent,
   ],
   templateUrl: './admin-layout.html',
   styleUrl: './admin-layout.scss',
@@ -37,6 +37,7 @@ import { Router } from '@angular/router';
 })
 export class AdminLayoutComponent {
   protected readonly layout = inject(LayoutService);
+  protected readonly loading = inject(LoadingService);
   protected readonly appointmentService = inject(AppointmentService);
   private readonly router = inject(Router);
 

@@ -1,56 +1,74 @@
-/* --- DESIGN SYSTEM TOKENS --- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+/* ─── DESIGN SYSTEM TOKENS ─────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  /* Colors - Curator Health Palette */
-  --primary: #1D3557;   /* Navy Blue */
-  --primary-hover: #2a4b7a;
-  --secondary: #457B9D; /* Steel Blue */
-  --accent: #A8DADC;    /* Mint / Turquoise */
-  --danger: #E63946;    /* Red for Reject */
-  --danger-soft: #ffb3b8;
-  --success: #A8DADC;   /* Mint for Approve (matching user's accent) */
-  --success-soft: #d8f3ec;
-  
-  --bg-main: #F8F9FA;   /* Off-White */
-  --bg-secondary: #FFFFFF; /* Pure White for cards */
-  --bg-dark: #121212;   /* Graphite for dark sections */
-  --bg-sidebar: #FFFFFF;
-  
-  --text-main: #1D3557;  /* Navy for text too */
-  --text-muted: #6c757d;
-  --text-inverse: #FFFFFF;
+  /* ── Brand ── */
+  --primary:         #0F2A47;   /* deep navy  */
+  --primary-hover:   #1a3d66;
+  --primary-soft:    #e8f0f7;
 
-  /* Glassmorphism / Overlays */
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(29, 53, 87, 0.1);
-  --glass-blur: 8px;
+  --secondary:       #0EA5E9;   /* sky blue — main action color */
+  --secondary-hover: #0284C7;
+  --secondary-soft:  #BAE6FD;
 
-  /* Spacing */
-  --gap-xs: 0.25rem;
-  --gap-sm: 0.5rem;
-  --gap-md: 1rem;
-  --gap-lg: 1.5rem;
-  --gap-xl: 2rem;
+  --accent:          #38BDF8;   /* sky light  */
 
-  /* Elevations - Softer shadows for light theme */
-  --shadow-sm: 0 1px 3px rgba(29, 53, 87, 0.05);
-  --shadow-md: 0 4px 12px rgba(29, 53, 87, 0.08);
-  --shadow-lg: 0 12px 24px rgba(29, 53, 87, 0.12);
-  --shadow-glow: 0 0 15px rgba(168, 218, 220, 0.4);
+  /* ── Status ── */
+  --success:         #22C55E;
+  --success-soft:    #dcfce7;
+  --danger:          #E63946;
+  --danger-soft:     #ffb3b8;
+  --warning:         #F59E0B;
+  --warning-soft:    #fef3c7;
 
-  /* Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
-  --radius-full: 9999px;
+  /* ── Surface / Layout ── */
+  --bg-main:         #F5F9FC;
+  --bg-card:         #FFFFFF;
+  --bg-sidebar:      #FFFFFF;
+  --line:            #E8EDF3;
 
-  /* Fonts */
+  /* ── Text ── */
+  --text-main:       #0F2A47;
+  --text-soft:       #4A5C75;
+  --text-muted:      #8A98AB;
+  --text-inverse:    #FFFFFF;
+
+  /* ── Backward-compat aliases (CRM legacy tokens) ── */
+  --primary-hover:   #1a3d66;
+  --bg-secondary:    #FFFFFF;
+  --bg-dark:         #0F2A47;
+  --text-muted:      #8A98AB;
+  --glass-bg:        rgba(255, 255, 255, 0.85);
+  --glass-border:    rgba(15, 42, 71, 0.08);
+  --glass-blur:      8px;
+  --success-soft:    #dcfce7;
+  --shadow-glow:     0 0 15px rgba(56, 189, 248, 0.35);
+
+  /* ── Shadows ── */
+  --shadow-sm:       0 1px 3px  rgba(15, 42, 71, 0.05);
+  --shadow-md:       0 4px 12px rgba(15, 42, 71, 0.08);
+  --shadow-lg:       0 12px 24px rgba(15, 42, 71, 0.12);
+
+  /* ── Radius ── */
+  --radius-sm:       4px;
+  --radius-md:       8px;
+  --radius-lg:       16px;
+  --radius-xl:       24px;
+  --radius-full:     9999px;
+
+  /* ── Spacing ── */
+  --gap-xs:  0.25rem;
+  --gap-sm:  0.5rem;
+  --gap-md:  1rem;
+  --gap-lg:  1.5rem;
+  --gap-xl:  3rem;
+
+  /* ── Typography ── */
   --font-heading: 'Outfit', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-body:    'Inter', sans-serif;
 }
 
-/* --- GLOBAL RESET --- */
+/* ─── GLOBAL RESET ──────────────────────────────────────────────────────────── */
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -65,8 +83,6 @@ html, body {
   font-family: var(--font-body);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  
-  /* Evita que el contenido "salte" al abrir modales/drawers */
   scrollbar-gutter: stable;
   overflow-x: hidden;
 }
@@ -82,27 +98,21 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.2;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-main);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--bg-accent);
-  border-radius: var(--radius-full);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
+/* ─── CUSTOM SCROLLBAR ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 8px; }
+::-webkit-scrollbar-track  { background: var(--bg-main); }
+::-webkit-scrollbar-thumb  { background: var(--line); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--secondary); }
+
+/* ─── UTILITY ───────────────────────────────────────────────────────────────── */
+.logo-isotype {
+  display: inline-block;
+  vertical-align: middle;
+  object-fit: contain;
 }
 
-/* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease forwards;
-}
+.animate-fade-in { animation: fadeIn 0.5s ease forwards; }

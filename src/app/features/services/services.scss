@@ -3,9 +3,9 @@
   max-width: 1400px;
   margin: 0 auto;
 
-  --navy: #1A2B4C;
-  --mint: #BEE7DF;
-  --slate: #64748b;
+  --navy:  var(--primary);
+  --mint:  var(--secondary-soft);
+  --slate: var(--text-muted);
 }
 
 .page-header {

@@ -1,4 +1,4 @@
-import { UserRole } from './user-role.enum'; // I'll create this too
+import { UserRole } from './user-role.enum';
 
 export interface UsuarioRequest {
   nombreCompleto: string;
@@ -25,6 +25,7 @@ export interface UsuarioResponse {
   esPersonalClinico?: boolean;
   sucursalIdPrincipal: string;
   requiereCambioNip: boolean;
+  onboardingCompletado: boolean;
   activo: boolean;
   especialidades?: string[];
   genero?: string;

@@ -1,0 +1,13 @@
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+
+@Component({
+  selector: 'app-privacy',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  templateUrl: './privacy.html',
+  styleUrl: './privacy.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class PrivacyComponent {}

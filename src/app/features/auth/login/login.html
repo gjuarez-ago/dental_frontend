@@ -1,10 +1,41 @@
 <div class="login-container">
+  <!-- Blobs animados -->
+  <div class="auth-blob blob-1"></div>
+  <div class="auth-blob blob-2"></div>
+  <div class="auth-blob blob-3"></div>
+
+  <!-- Partículas flotantes -->
+  <div class="auth-particles" aria-hidden="true">
+    <span class="auth-particle ap1">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.49-2.1-4.5-4.69-4.5-1.93 0-3.6 1.13-4.31 2.73-.71-1.6-2.38-2.73-4.31-2.73C5.1 3.75 3 5.76 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+    </span>
+    <span class="auth-particle ap2">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+    </span>
+    <span class="auth-particle ap3">
+      <svg width="26" height="20" fill="none" viewBox="0 0 32 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2 12h5l3-7 4 14 3-9 2 4h11"/></svg>
+    </span>
+    <span class="auth-particle ap4">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="4.5" y="9" width="15" height="6" rx="3" transform="rotate(-30 12 12)"/><path stroke-linecap="round" d="M9.2 14.8l5.6-5.6"/></svg>
+    </span>
+    <span class="auth-particle ap5">
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.49-2.1-4.5-4.69-4.5-1.93 0-3.6 1.13-4.31 2.73-.71-1.6-2.38-2.73-4.31-2.73C5.1 3.75 3 5.76 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+    </span>
+    <span class="auth-particle ap6">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+    </span>
+  </div>
+
   <button type="button" class="back-nav-btn" (click)="goBack()" title="Volver">
     <i class="ph ph-arrow-left"></i>
     <span>Volver</span>
   </button>
 
   <div class="login-card">
+    <!-- <div class="login-logo" style="text-align: center; margin-bottom: 2rem;">
+      <img src="/images/logo_erm.png" alt="Novatia Logo" class="logo-isotype" style="width: 56px; height: 56px;">
+      <h1 style="font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-top: 0.5rem; color: #0D1B2A; font-weight: 600;">novatia</h1>
+    </div> -->
     <!-- ─── Error Alert ──────────────────────────────────────────── -->
     <div *ngIf="errorMessage()" class="error-alert">
       <i class="ph ph-warning-circle"></i>
@@ -22,18 +53,18 @@
           <i class="ph ph-user-circle"></i>
           <div>
             <p class="step-title">Acceso al Sistema</p>
-            <p class="step-subtitle">Ingresa tu número o usuario para continuar</p>
+            <p class="step-subtitle">Ingresa tu correo o teléfono para continuar</p>
           </div>
         </div>
 
         <form class="login-form" [formGroup]="phoneForm" (ngSubmit)="onCheckPhone()" autocomplete="off">
           <div class="form-group">
-            <label for="patient-phone">Teléfono o Usuario</label>
+            <label for="patient-phone">Correo electrónico o teléfono</label>
             <div class="input-wrapper"
               [class.error]="phoneForm.get('telefono')?.invalid && phoneForm.get('telefono')?.touched">
-              <i class="ph ph-identification-badge"></i>
-              <input type="text" id="patient-phone" formControlName="telefono" placeholder="Ej. 7581082962"
-                autocomplete="off">
+              <i class="ph ph-at"></i>
+              <input type="text" id="patient-phone" formControlName="telefono" placeholder="tu@correo.com o 10 dígitos"
+                autocomplete="username" inputmode="email">
             </div>
           </div>
 
@@ -51,6 +82,11 @@
               <i class="ph ph-circle-notch animate-spin"></i> Verificando...
             </ng-container>
           </button>
+
+          <p class="signup-prompt">
+            ¿Eres profesional y no tienes cuenta?
+            <a routerLink="/signup">Crea tu cuenta</a>
+          </p>
         </form>
       </ng-container>
 
@@ -78,8 +114,8 @@
             <div class="input-wrapper"
               [class.error]="patientLoginForm.get('nip')?.invalid && patientLoginForm.get('nip')?.touched">
               <i class="ph ph-key"></i>
-              <input type="password" id="patient-nip" formControlName="nip" placeholder="••••••" [maxlength]="loginMode() === 'STAFF' ? 10 : 6"
-                autocomplete="off">
+              <input type="password" id="patient-nip" formControlName="nip" placeholder="••••••"
+                [maxlength]="loginMode() === 'STAFF' ? 10 : 6" autocomplete="off">
             </div>
           </div>
 
@@ -98,13 +134,13 @@
         </form>
       </ng-container>
 
-      <!-- ── Paso 2B: Completar perfil (Paciente no verificado) ──── -->
-      <ng-container *ngIf="patientStep() === 'COMPLETE_PROFILE'">
+      <!-- ── Paso 2B: Paciente nuevo → Registro ──────────────────────── -->
+      <ng-container *ngIf="patientStep() === 'REGISTER'">
         <div class="step-header">
-          <i class="ph ph-user-gear"></i>
+          <i class="ph ph-user-plus"></i>
           <div>
-            <p class="step-title">Activa tu cuenta</p>
-            <p class="step-subtitle">Detectamos que ya eres paciente, completa estos datos para entrar</p>
+            <p class="step-title">Crea tu cuenta</p>
+            <p class="step-subtitle">Solo toma un momento. Ya tenemos tu número.</p>
           </div>
         </div>
 
@@ -114,136 +150,108 @@
           <button type="button" class="change-link" (click)="goBackToPhone()">Cambiar</button>
         </div>
 
-        <form class="login-form" [formGroup]="completeForm" (ngSubmit)="onCompleteProfile()" autocomplete="off">
+        <form class="login-form" [formGroup]="registerForm" (ngSubmit)="onRegister()" autocomplete="off">
           <div class="form-group">
-            <label for="complete-email">Correo electrónico</label>
-            <div class="input-wrapper"
-              [class.error]="completeForm.get('email')?.invalid && completeForm.get('email')?.touched">
+            <label>Nombre completo</label>
+            <div class="input-wrapper">
+              <i class="ph ph-user"></i>
+              <input type="text" formControlName="nombreCompleto" placeholder="Dr. Nombre Apellido" autocomplete="name">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Correo electrónico</label>
+            <div class="input-wrapper">
               <i class="ph ph-envelope"></i>
-              <input type="email" id="complete-email" formControlName="email" placeholder="correo@ejemplo.com"
-                autocomplete="off">
+              <input type="email" formControlName="email" placeholder="tu@correo.com" autocomplete="email">
             </div>
           </div>
-
           <div class="form-group">
-            <label for="complete-nip">Crear NIP (6 dígitos)</label>
-            <div class="input-wrapper"
-              [class.error]="completeForm.get('nip')?.invalid && completeForm.get('nip')?.touched">
+            <label>Elige tu NIP de acceso (6 dígitos)</label>
+            <div class="input-wrapper">
               <i class="ph ph-key"></i>
-              <input type="password" id="complete-nip" formControlName="nip" placeholder="••••••" maxlength="6" autocomplete="off">
+              <input type="password" formControlName="nip" placeholder="••••••" maxlength="6" inputmode="numeric">
             </div>
           </div>
-
           <div class="form-group">
-            <label>Género</label>
+            <label>Sexo</label>
             <div class="gender-selector">
-              <button type="button" class="gender-btn"
-                [class.active]="completeForm.get('genero')?.value === 'MASCULINO'"
-                (click)="completeForm.patchValue({ genero: 'MASCULINO' })">
+              <button type="button" class="gender-btn" [class.active]="registerForm.get('genero')?.value === 'M'" (click)="registerForm.patchValue({genero: 'M'})">
                 <i class="ph ph-gender-male"></i> Masculino
               </button>
-              <button type="button" class="gender-btn" [class.active]="completeForm.get('genero')?.value === 'FEMENINO'"
-                (click)="completeForm.patchValue({ genero: 'FEMENINO' })">
+              <button type="button" class="gender-btn" [class.active]="registerForm.get('genero')?.value === 'F'" (click)="registerForm.patchValue({genero: 'F'})">
                 <i class="ph ph-gender-female"></i> Femenino
               </button>
-              <button type="button" class="gender-btn" [class.active]="completeForm.get('genero')?.value === 'OTRO'"
-                (click)="completeForm.patchValue({ genero: 'OTRO' })">
-                <i class="ph ph-gender-nonbinary"></i> Otro
+              <button type="button" class="gender-btn" [class.active]="registerForm.get('genero')?.value === 'OTRO'" (click)="registerForm.patchValue({genero: 'OTRO'})">
+                Otro
               </button>
             </div>
           </div>
-
-          <button type="submit" class="login-btn" [disabled]="completeForm.invalid || isLoading()">
+          <button type="submit" class="login-btn" [disabled]="registerForm.invalid || isLoading()">
             <ng-container *ngIf="!isLoading()">
-              <i class="ph ph-check"></i> Activar Cuenta
+              Crear mi cuenta <i class="ph ph-arrow-right"></i>
             </ng-container>
             <ng-container *ngIf="isLoading()">
-              <i class="ph ph-circle-notch animate-spin"></i> Guardando...
+              <i class="ph ph-circle-notch animate-spin"></i> Creando cuenta...
             </ng-container>
           </button>
+          <p class="signup-prompt">
+            ¿Eres profesional? <a routerLink="/signup">Registra tu consultorio</a>
+          </p>
         </form>
       </ng-container>
 
-      <!-- ── Paso 2C: Registro completo (Paciente nuevo) ──────────── -->
-      <ng-container *ngIf="patientStep() === 'REGISTER'">
+      <!-- ── Paso 2C: Cuenta sin activar → Activar ─────────────────────── -->
+      <ng-container *ngIf="patientStep() === 'ACTIVATE_ACCOUNT'">
         <div class="step-header">
-          <i class="ph ph-user-plus"></i>
+          <i class="ph ph-lock-key-open"></i>
           <div>
-            <p class="step-title">Nueva Cuenta</p>
-            <p class="step-subtitle">No encontramos tu número, regístrate como paciente</p>
+            <p class="step-title">Activa tu cuenta</p>
+            <p class="step-subtitle">Ya tienes historial con nosotros. Configura tu acceso ahora.</p>
           </div>
         </div>
 
-        <form class="login-form" [formGroup]="registerForm" (ngSubmit)="onRegisterPatient()" autocomplete="off">
-          <div class="form-group">
-            <label for="reg-name">Nombre completo</label>
-            <div class="input-wrapper"
-              [class.error]="registerForm.get('nombreCompleto')?.invalid && registerForm.get('nombreCompleto')?.touched">
-              <i class="ph ph-user"></i>
-              <input type="text" id="reg-name" formControlName="nombreCompleto" placeholder="Juan Pérez García"
-                autocomplete="off">
-            </div>
-          </div>
+        <div class="phone-badge">
+          <i class="ph ph-check-circle"></i>
+          <span>{{ patientPhone() }}</span>
+          <button type="button" class="change-link" (click)="goBackToPhone()">Cambiar</button>
+        </div>
 
+        <form class="login-form" [formGroup]="activateForm" (ngSubmit)="onActivateAccount()" autocomplete="off">
           <div class="form-group">
-            <label for="reg-phone">Teléfono (10 dígitos)</label>
-            <div class="input-wrapper"
-              [class.error]="registerForm.get('telefono')?.invalid && registerForm.get('telefono')?.touched">
-              <i class="ph ph-phone"></i>
-              <input type="tel" id="reg-phone" formControlName="telefono" placeholder="9991234567" maxlength="10"
-                autocomplete="off">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="reg-email">Correo electrónico</label>
-            <div class="input-wrapper"
-              [class.error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+            <label>Correo electrónico</label>
+            <div class="input-wrapper">
               <i class="ph ph-envelope"></i>
-              <input type="email" id="reg-email" formControlName="email" placeholder="correo@ejemplo.com"
-                autocomplete="off">
+              <input type="email" formControlName="email" placeholder="tu@correo.com" autocomplete="email">
             </div>
           </div>
-
           <div class="form-group">
-            <label for="reg-nip">Crear NIP (6 dígitos)</label>
-            <div class="input-wrapper"
-              [class.error]="registerForm.get('nip')?.invalid && registerForm.get('nip')?.touched">
+            <label>Elige tu NIP de acceso (6 dígitos)</label>
+            <div class="input-wrapper">
               <i class="ph ph-key"></i>
-              <input type="password" id="reg-nip" formControlName="nip" placeholder="••••••" maxlength="6" autocomplete="off">
+              <input type="password" formControlName="nip" placeholder="••••••" maxlength="6" inputmode="numeric">
             </div>
           </div>
-
           <div class="form-group">
-            <label>Género</label>
+            <label>Sexo</label>
             <div class="gender-selector">
-              <button type="button" class="gender-btn"
-                [class.active]="registerForm.get('genero')?.value === 'MASCULINO'"
-                (click)="registerForm.patchValue({ genero: 'MASCULINO' })">
+              <button type="button" class="gender-btn" [class.active]="activateForm.get('genero')?.value === 'M'" (click)="activateForm.patchValue({genero: 'M'})">
                 <i class="ph ph-gender-male"></i> Masculino
               </button>
-              <button type="button" class="gender-btn" [class.active]="registerForm.get('genero')?.value === 'FEMENINO'"
-                (click)="registerForm.patchValue({ genero: 'FEMENINO' })">
+              <button type="button" class="gender-btn" [class.active]="activateForm.get('genero')?.value === 'F'" (click)="activateForm.patchValue({genero: 'F'})">
                 <i class="ph ph-gender-female"></i> Femenino
               </button>
-              <button type="button" class="gender-btn" [class.active]="registerForm.get('genero')?.value === 'OTRO'"
-                (click)="registerForm.patchValue({ genero: 'OTRO' })">
-                <i class="ph ph-gender-nonbinary"></i> Otro
+              <button type="button" class="gender-btn" [class.active]="activateForm.get('genero')?.value === 'OTRO'" (click)="activateForm.patchValue({genero: 'OTRO'})">
+                Otro
               </button>
             </div>
           </div>
-
-          <button type="submit" class="login-btn" [disabled]="registerForm.invalid || isLoading()">
+          <button type="submit" class="login-btn" [disabled]="activateForm.invalid || isLoading()">
             <ng-container *ngIf="!isLoading()">
-              <i class="ph ph-user-plus"></i> Crear Cuenta
+              Activar mi cuenta <i class="ph ph-arrow-right"></i>
             </ng-container>
             <ng-container *ngIf="isLoading()">
-              <i class="ph ph-circle-notch animate-spin"></i> Registrando...
+              <i class="ph ph-circle-notch animate-spin"></i> Activando...
             </ng-container>
-          </button>
-
-          <button type="button" class="back-link" (click)="goBackToPhone()">
-            <i class="ph ph-arrow-left"></i> Usar otro número
           </button>
         </form>
       </ng-container>
@@ -251,7 +259,11 @@
     </div>
 
     <footer class="login-footer">
-      © 2026 Dental Sonrisana. Todos los derechos reservados.
+      © 2026 Novatia. Todos los derechos reservados.
+      <div class="legal-links" style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.8;">
+        <a routerLink="/privacidad">Aviso de Privacidad</a> ·
+        <a routerLink="/terminos">Términos y Condiciones</a>
+      </div>
     </footer>
   </div>
 
