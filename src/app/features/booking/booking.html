@@ -65,7 +65,47 @@
              placeholder="Nombre o palabra clave">
     </div>
   </div>
+
+  <!-- Auth actions -->
+  <div class="topbar-auth">
+    @if (isLoggedInStaff()) {
+      <button class="topbar-staff-pill" (click)="router.navigate(['/dashboard'])">
+        <i class="ph ph-buildings"></i>
+        <span>Ir al CRM</span>
+      </button>
+      <button class="topbar-logout-btn" (click)="authService.logout()" title="Cerrar sesión">
+        <i class="ph ph-sign-out"></i>
+      </button>
+    } @else if (!isLoggedInPatient()) {
+      <button class="topbar-login-btn" (click)="authDrawerOpen.set(true)">
+        <i class="ph ph-user"></i>
+        <span>Iniciar sesión</span>
+      </button>
+    } @else {
+      <button class="topbar-user-pill" (click)="goToMyCitas()">
+        <span class="topbar-avatar">{{ userInitials() }}</span>
+        <span>Mis citas</span>
+      </button>
+      <button class="topbar-logout-btn" (click)="authService.logout()" title="Cerrar sesión">
+        <i class="ph ph-sign-out"></i>
+      </button>
+    }
+  </div>
 </header>
+
+<!-- Aviso: usuario con cuenta de consultorio (ocupa todo el ancho) -->
+@if (staffBlockVisible()) {
+  <div class="staff-block-banner">
+    <i class="ph ph-warning-circle"></i>
+    <div>
+      <strong>Cuenta de consultorio activa</strong>
+      <span>Para agendar citas como paciente necesitas una cuenta separada. Regístrate con un número o correo diferente.</span>
+    </div>
+    <button class="staff-block-close" (click)="staffBlockVisible.set(false)">
+      <i class="ph ph-x"></i>
+    </button>
+  </div>
+}
 
 <main class="body" [class.panel-open]="panelEsp()">
 
@@ -351,6 +391,7 @@
   [isOpen]="authDrawerOpen()"
   [title]="'Inicia sesión para agendar'"
   [subtitle]="'Solo necesitamos identificarte para confirmar tu cita.'"
+  [prefilledEstadoId]="selectedEstadoId() || null"
   (closed)="closeAuthDrawer()"
   (authenticated)="onAuthenticated($event)">
 </app-auth-drawer>

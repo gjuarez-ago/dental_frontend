@@ -29,4 +29,8 @@ export class NavbarComponent {
   openProfile(): void {
     this.layout.openProfileDrawer();
   }
+
+  logout(): void {
+    this.auth.logout();
+  }
 }

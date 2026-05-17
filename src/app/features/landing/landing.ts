@@ -3,6 +3,18 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
+const GIRO_ICONS: Record<string, string> = {
+  'odontologia': 'ph-tooth', 'cardiologia': 'ph-heart', 'pediatria': 'ph-baby',
+  'nutricion': 'ph-apple', 'nutriologia': 'ph-apple', 'dermatologia': 'ph-sun',
+  'psicologia': 'ph-brain', 'oftalmologia': 'ph-eye', 'ortopedia': 'ph-bone',
+  'traumatologia': 'ph-bone', 'ginecologia': 'ph-gender-female',
+  'neurologia': 'ph-activity', 'medicina-general': 'ph-stethoscope',
+  'medicina-interna': 'ph-stethoscope', 'endocrinologia': 'ph-drop',
+  'gastroenterologia': 'ph-stomach', 'oncologia': 'ph-cell-signal-full',
+  'otorrinolaringologia': 'ph-ear', 'neumologia': 'ph-lungs',
+  'cirugia-general': 'ph-first-aid-kit', 'infectologia': 'ph-virus',
+};
+
 import { CatalogService, Estado } from '../../core/services/catalog.service';
 import { SearchService } from '../../core/services/search.service';
 import { GiroOption } from '../../core/models/search.model';
@@ -46,15 +58,25 @@ export class LandingComponent implements OnInit {
   readonly giroOptions = signal<GiroOption[]>([]);
 
   // ─── Search state ──────────────────────────────────────────────────────
-  readonly selectedEstadoId  = signal('');
-  readonly giroInputText     = signal('');
-  readonly selectedGiroValor = signal('');
-  readonly giroDropdownOpen  = signal(false);
-  readonly searchSpec        = signal('');
-  readonly proMenuOpen       = signal(false);
+  readonly selectedEstadoId    = signal('');
+  readonly estadoDropdownOpen  = signal(false);
+  readonly giroInputText       = signal('');
+  readonly selectedGiroValor   = signal('');
+  readonly giroDropdownOpen    = signal(false);
+  readonly searchSpec          = signal('');
+  readonly proMenuOpen         = signal(false);
+
+  readonly selectedEstadoLabel = computed(() =>
+    this.estados().find(e => e.id === this.selectedEstadoId())?.nombre ?? ''
+  );
 
   // ─── Computed dropdown ────────────────────────────────────────────────
   readonly filteredGiros = signal<GiroOption[]>([]);
+
+  // Top 8 giros para la sección del landing (ordenados por totalEspecialistas)
+  readonly topGiros = computed(() =>
+    [...this.giroOptions()].sort((a, b) => b.totalEspecialistas - a.totalEspecialistas).slice(0, 8)
+  );
 
   readonly popularSpecs: Specialty[] = [
     { slug: 'ginecologia',  name: 'Ginecología',  emoji: '👩‍⚕️', count: 42 },
@@ -81,6 +103,21 @@ export class LandingComponent implements OnInit {
       this.giroOptions.set(g);
       this.filteredGiros.set(g);
     });
+  }
+
+  // ─── Estado dropdown ──────────────────────────────────────────────────
+  selectEstado(e: Estado): void {
+    this.selectedEstadoId.set(e.id);
+    this.estadoDropdownOpen.set(false);
+  }
+
+  clearEstado(): void {
+    this.selectedEstadoId.set('');
+    this.estadoDropdownOpen.set(false);
+  }
+
+  blurEstado(): void {
+    setTimeout(() => this.estadoDropdownOpen.set(false), 150);
   }
 
   // ─── Giro autocomplete ────────────────────────────────────────────────
@@ -112,6 +149,13 @@ export class LandingComponent implements OnInit {
   }
 
   // ─── Navigation ───────────────────────────────────────────────────────
+  goToBooking(): void {
+    const estadoId = this.authService.currentUser()?.estadoId
+      || localStorage.getItem('novatia_last_estado')
+      || null;
+    this.router.navigate(['/booking'], estadoId ? { queryParams: { estadoId } } : {});
+  }
+
   handleSearch(): void {
     const estadoId = this.selectedEstadoId();
     if (!estadoId) return;
@@ -130,6 +174,22 @@ export class LandingComponent implements OnInit {
     const params: Record<string, string> = { giro: slug };
     if (estadoId) params['estadoId'] = estadoId;
     this.router.navigate(['/booking'], { queryParams: params });
+  }
+
+  goToGiro(g: GiroOption): void {
+    const estadoId = this.selectedEstadoId()
+      || localStorage.getItem('novatia_last_estado')
+      || null;
+    const params: Record<string, string> = { giro: g.valor, giroNombre: g.nombre };
+    if (estadoId) params['estadoId'] = estadoId;
+    this.router.navigate(['/booking'], { queryParams: params });
+  }
+
+  getGiroIcon(g: GiroOption): string {
+    const key = (g.valor || g.nombre).toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/\s+/g, '-');
+    return GIRO_ICONS[key] ?? 'ph-stethoscope';
   }
 
   scrollTo(id: string): void {
@@ -154,6 +214,7 @@ export class LandingComponent implements OnInit {
 
   @HostListener('document:click')
   onDocumentClick(): void {
-    if (this.proMenuOpen()) this.proMenuOpen.set(false);
+    if (this.proMenuOpen())     this.proMenuOpen.set(false);
+    if (this.estadoDropdownOpen()) this.estadoDropdownOpen.set(false);
   }
 }

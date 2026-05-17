@@ -40,6 +40,60 @@ button { font-family: inherit; cursor: pointer; }
   .logo-text { font-family: var(--font-serif); font-size: 18px; }
 }
 
+.topbar-auth {
+  display: flex; align-items: center; flex-shrink: 0;
+}
+
+.topbar-login-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  background: var(--sky-deep, #457B9D);
+  color: #fff;
+  border: none; border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  white-space: nowrap;
+  transition: background .15s, transform .15s;
+  i { font-size: 15px; }
+  &:hover { background: var(--primary, #1D3557); transform: translateY(-1px); }
+}
+
+.topbar-staff-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 10px; font-size: 13px; font-weight: 600; color: #475569;
+  transition: all .15s;
+  i { font-size: 15px; color: #64748b; }
+  &:hover { background: #f1f5f9; border-color: #cbd5e1; color: #0f172a; }
+}
+
+.topbar-logout-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  background: transparent; border: 1.5px solid #e2e8f0;
+  border-radius: 50%; color: #94a3b8; cursor: pointer;
+  transition: all .15s;
+  i { font-size: 16px; }
+  &:hover { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
+}
+
+.topbar-user-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px 6px 8px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 50px; font-size: 13px; font-weight: 600; color: var(--ink);
+  transition: border-color .15s;
+  &:hover { border-color: var(--sky-deep); }
+}
+
+.topbar-avatar {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--sky-deep, #457B9D);
+  color: #fff; border-radius: 50%;
+  font-size: 11px; font-weight: 700;
+}
+
 .search-bar {
   display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
 }
@@ -90,6 +144,27 @@ button { font-family: inherit; cursor: pointer; }
 .giro-count {
   font-size: 12px; color: var(--muted); font-weight: 500;
   background: var(--surface); padding: 2px 7px; border-radius: 999px;
+}
+
+/* ── Staff block banner ─────────────────────────────────────────────────── */
+.staff-block-banner {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 18px;
+  background: #fffbeb; border-bottom: 1px solid #fde68a;
+
+  > i { font-size: 1.25rem; color: #d97706; flex-shrink: 0; margin-top: 2px; }
+
+  > div {
+    flex: 1; display: flex; flex-direction: column; gap: 2px;
+    strong { font-size: 0.875rem; color: #92400e; font-weight: 800; }
+    span   { font-size: 0.8125rem; color: #b45309; }
+  }
+
+  .staff-block-close {
+    flex-shrink: 0; background: transparent; border: none;
+    color: #d97706; font-size: 1.1rem; cursor: pointer; padding: 2px;
+    &:hover { color: #92400e; }
+  }
 }
 
 /* ── BODY: split layout ─────────────────────────────────────────────────── */

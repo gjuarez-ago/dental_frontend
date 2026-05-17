@@ -333,7 +333,7 @@ export class ClinicalDrawerComponent implements OnChanges {
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Receta MÃ©dica â€” ${this.cita?.pacienteNombre || 'Paciente'}</title>
+  <title>Receta Médica” ${this.cita?.pacienteNombre || 'Paciente'}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 

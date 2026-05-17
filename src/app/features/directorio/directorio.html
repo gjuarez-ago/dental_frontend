@@ -1,0 +1,96 @@
+<div class="dir-page">
+
+  <!-- Header -->
+  <div class="dir-header">
+    <a routerLink="/" class="dir-back">
+      <i class="ph ph-caret-left"></i> Inicio
+    </a>
+    <h1 class="dir-title">{{ pageTitle }}</h1>
+    <p class="dir-sub">Encuentra el especialista que necesitas. Selecciona una especialidad y filtra por estado.</p>
+  </div>
+
+  <!-- Buscador de especialidad -->
+  <div class="dir-search">
+    <div class="dir-search-wrap">
+      <i class="ph ph-magnifying-glass"></i>
+      <input
+        type="search"
+        class="dir-search-input"
+        placeholder="Buscar especialidad..."
+        [ngModel]="searchQ()"
+        (ngModelChange)="searchQ.set($event)">
+      @if (searchQ()) {
+        <button class="dir-search-clear" (click)="searchQ.set('')">
+          <i class="ph ph-x"></i>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Chips de estados -->
+  @if (estados().length) {
+    <div class="dir-states">
+      <div class="dir-states-scroll">
+        <button class="state-chip" [class.active]="selectedEstadoId() === ''" (click)="selectEstado('')">
+          <i class="ph ph-globe-hemisphere-west"></i> Todos los estados
+        </button>
+        @for (e of estados(); track e.id) {
+          <button class="state-chip" [class.active]="selectedEstadoId() === e.id" (click)="selectEstado(e.id)">
+            {{ e.nombre }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Contexto de filtro activo -->
+  @if (selectedEstado()) {
+    <div class="dir-filter-ctx">
+      <i class="ph ph-map-pin"></i>
+      <span>Mostrando especialistas en <strong>{{ selectedEstado()!.nombre }}</strong></span>
+      <button class="ctx-clear" (click)="selectEstado('')">
+        <i class="ph ph-x"></i> Quitar filtro
+      </button>
+    </div>
+  }
+
+  <!-- Conteo -->
+  <div class="dir-count">
+    <span>{{ filteredGiros().length }} especialidad{{ filteredGiros().length !== 1 ? 'es' : '' }}</span>
+    @if (searchQ()) {
+      <span> · búsqueda: "{{ searchQ() }}"</span>
+    }
+  </div>
+
+  <!-- Grid de especialidades -->
+  @if (filteredGiros().length > 0) {
+    <div class="dir-grid">
+      @for (g of filteredGiros(); track g.valor) {
+        <button class="dir-card" (click)="goToSearch(g)">
+          <div class="dir-card-icon">
+            <i class="ph {{ getIcon(g) }}"></i>
+          </div>
+          <div class="dir-card-body">
+            <span class="dir-card-name">{{ g.nombre }}</span>
+            @if (selectedEstado()) {
+              <span class="dir-card-loc">
+                <i class="ph ph-map-pin"></i> {{ selectedEstado()!.nombre }}
+              </span>
+            }
+            <span class="dir-card-count">
+              {{ g.totalEspecialistas }} especialista{{ g.totalEspecialistas !== 1 ? 's' : '' }}
+            </span>
+          </div>
+          <i class="ph ph-arrow-right dir-card-arrow"></i>
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="dir-empty">
+      <i class="ph ph-magnifying-glass"></i>
+      <p>Sin resultados para "<strong>{{ searchQ() }}</strong>"</p>
+      <button (click)="searchQ.set('')">Limpiar búsqueda</button>
+    </div>
+  }
+
+</div>

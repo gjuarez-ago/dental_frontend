@@ -154,6 +154,27 @@ a {
   }
 }
 
+.nav-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(15, 42, 71, 0.15);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all .18s;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #dc2626;
+  }
+}
+
 .nav-avatar {
   display: inline-flex;
   align-items: center;
@@ -730,6 +751,39 @@ section {
   max-width: 540px;
   margin: 0 auto 56px;
   text-align: center;
+
+  // Variante con botón "Ver directorio"
+  &:has(.dir-link-btn) {
+    max-width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    text-align: left;
+    flex-wrap: wrap;
+  }
+}
+
+.dir-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: all .15s;
+  flex-shrink: 0;
+  i { font-size: 14px; transition: transform .15s; }
+  &:hover {
+    border-color: var(--sky-deep);
+    color: var(--sky-deep);
+    i { transform: translateX(3px); }
+  }
 }
 
 .section-title {
@@ -765,15 +819,23 @@ section {
   text-align: center;
   transition: background .15s;
   cursor: pointer;
+  border: none;
 
-  &:hover {
-    background: var(--surface);
-  }
+  &:hover { background: var(--surface); }
 }
 
-.spec-emoji {
-  font-size: 24px;
-  margin-bottom: 10px;
+.spec-emoji { font-size: 24px; margin-bottom: 10px; }
+
+.spec-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 10px;
+  background: #eff6ff;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  i { font-size: 22px; color: #1d4ed8; }
 }
 
 .spec-name {
@@ -1022,78 +1084,116 @@ section {
 
 
 
-// 1. Contenedor del campo (Asegúrate de que tenga position relative)
-.search-field {
+/* ── Estado custom dropdown ───────────────────────────────────── */
+.estado-wrap {
   position: relative;
+  flex: 1;
+}
+
+.estado-trigger {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 16px;
-  flex: 1;
-  transition: all 0.2s ease;
-
-  // Pequeña línea divisoria a la derecha si no es el último
-  &:not(:last-child) {
-    border-right: 1px solid rgba(0, 0, 0, 0.05);
-  }
-
-  // Icono de ubicación
-  .search-icon {
-    color: var(--celeste-deep);
-    flex-shrink: 0;
-    opacity: 0.8;
-  }
-}
-
-// 2. Estilo del SELECT mejorado
-.search-select {
-  appearance: none; // ELIMINA la flecha fea nativa de Windows/Chrome
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
-  border: none;
   background: transparent;
-  font-family: 'Outfit', sans-serif;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 0;
+  font-family: inherit;
   font-size: 15px;
   font-weight: 500;
-  color: var(--navy);
-  cursor: pointer;
-  padding: 14px 25px 14px 0; // Espacio a la derecha para la nueva flecha
-  outline: none;
-  
-  // Estilo cuando el select está vacío o tiene el placeholder
-  &:invalid, & option[value=""] {
-    color: #94a3b8;
+  color: var(--muted);
+  text-align: left;
+  min-width: 0;
+
+  &.has-value {
+    color: var(--ink);
   }
 }
 
-// 3. Crear una FLECHA personalizada (sustituye a la nativa)
-.search-field::after {
-  content: "";
+.estado-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.estado-chevron {
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform .2s;
+
+  &.open {
+    transform: rotate(180deg);
+  }
+}
+
+.estado-clear {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+
+  &:hover {
+    background: var(--surface);
+    color: var(--ink);
+  }
+}
+
+.estado-dd {
   position: absolute;
-  right: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 10px;
-  height: 10px;
-  // Dibujamos una flecha minimalista con bordes
-  border-right: 2px solid #94a3b8;
-  border-bottom: 2px solid #94a3b8;
-  transform: translateY(-70%) rotate(45deg);
-  pointer-events: none; // Importante para que no bloquee el click del select
-  transition: all 0.3s ease;
+  top: calc(100% + 6px);
+  left: -52px; /* compensa el padding + ícono del search-field */
+  right: -8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(15, 42, 71, .14);
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  z-index: 300;
+  max-height: 260px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  animation: dd-in .12s ease-out;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background .1s;
+    gap: 8px;
+
+    svg { flex-shrink: 0; color: var(--sky-deep); }
+
+    &:hover { background: var(--surface); }
+
+    &.active {
+      background: rgba(15, 42, 71, .06);
+      font-weight: 600;
+      color: var(--sky-deep);
+    }
+  }
 }
 
-// Cambiar color de la flecha al enfocar
-.search-field:focus-within::after {
-  border-color: var(--celeste-deep);
-}
-
-// 4. Estilo sutil para las opciones (Limitado por el navegador)
-.search-select option {
-  background-color: white;
-  color: var(--navy);
-  font-family: sans-serif;
-  padding: 10px;
+@keyframes dd-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

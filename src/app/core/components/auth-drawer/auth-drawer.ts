@@ -23,6 +23,7 @@ export class AuthDrawerComponent implements OnChanges, OnInit {
   @Input() isOpen = false;
   @Input() title: string | null = null;
   @Input() subtitle: string | null = null;
+  @Input() prefilledEstadoId: string | null = null;
   @Output() closed = new EventEmitter<void>();
   @Output() authenticated = new EventEmitter<AuthRole>();
 
@@ -46,6 +47,7 @@ export class AuthDrawerComponent implements OnChanges, OnInit {
   });
 
   readonly registerForm = this.fb.nonNullable.group({
+    telefono:         ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
     nombreCompleto:   ['', [Validators.required, Validators.minLength(2)]],
     email:            ['', [Validators.required, Validators.email]],
     nip:              ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
@@ -89,6 +91,22 @@ export class AuthDrawerComponent implements OnChanges, OnInit {
     this.error.set(null);
   }
 
+  goToRegister(): void {
+    if (this.loading()) return;
+    const identifier = this.phoneForm.getRawValue().telefono.trim();
+    if (identifier.includes('@')) {
+      this.registerForm.patchValue({ telefono: '', email: identifier });
+    } else if (identifier) {
+      this.phone.set(identifier);
+      this.registerForm.patchValue({ telefono: identifier, email: '' });
+    }
+    if (this.prefilledEstadoId) {
+      this.registerForm.patchValue({ estadoId: this.prefilledEstadoId });
+    }
+    this.error.set(null);
+    this.step.set('REGISTER');
+  }
+
   onCheckPhone(): void {
     if (this.phoneForm.invalid || this.loading()) return;
     const telefono = this.phoneForm.getRawValue().telefono.trim();
@@ -103,7 +121,13 @@ export class AuthDrawerComponent implements OnChanges, OnInit {
           case 'STAFF_FOUND':      this.loginMode.set('STAFF');    this.step.set('LOGIN');    break;
           case 'EXISTS_VERIFIED':  this.loginMode.set('PACIENTE'); this.step.set('LOGIN');    break;
           case 'EXISTS_UNVERIFIED':                                this.step.set('ACTIVATE'); break;
-          case 'NOT_FOUND':                                        this.step.set('REGISTER'); break;
+          case 'NOT_FOUND':
+            this.registerForm.patchValue({ telefono });
+            if (this.prefilledEstadoId) {
+              this.registerForm.patchValue({ estadoId: this.prefilledEstadoId });
+            }
+            this.step.set('REGISTER');
+            break;
         }
       },
       error: (err) => {
@@ -136,10 +160,10 @@ export class AuthDrawerComponent implements OnChanges, OnInit {
     if (this.registerForm.invalid || this.loading()) return;
     this.loading.set(true);
     this.error.set(null);
-    const { nombreCompleto, email, nip, genero, fechaNacimiento, estadoId } = this.registerForm.getRawValue();
+    const { telefono, nombreCompleto, email, nip, genero, fechaNacimiento, estadoId } = this.registerForm.getRawValue();
     this.authService.registerPatient({
       nombreCompleto,
-      telefono: this.phone(),
+      telefono,
       email,
       nip,
       genero,

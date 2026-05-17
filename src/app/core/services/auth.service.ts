@@ -178,6 +178,10 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
+    // Leer currentUser() establece dependencia reactiva: cuando logout()
+    // hace currentUser.set(null), los computed() que llaman isLoggedIn()
+    // recalculan automáticamente.
+    if (!this.currentUser()) return false;
     const token = this.getToken();
     return !!token && !this.isTokenExpired(token);
   }

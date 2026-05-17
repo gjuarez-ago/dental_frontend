@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './features/home/home';
 import { AdminLayoutComponent } from './core/layouts/admin-layout/admin-layout';
+import { PatientLayoutComponent } from './core/layouts/patient-layout/patient-layout';
 import { AppointmentsComponent } from './features/appointments/appointments';
 import { PatientsComponent } from './features/patients/patients';
 import { LoginComponent } from './features/auth/login/login';
@@ -45,6 +46,11 @@ export const routes: Routes = [
     title: 'Agendar Cita | Novatia'
   },
   {
+    path: 'directorio',
+    loadComponent: () => import('./features/directorio/directorio').then(m => m.DirectorioComponent),
+    title: 'Directorio de Especialistas | Novatia'
+  },
+  {
     path: 'agendar/:tenantId',
     loadComponent: () => import('./features/booking/quick-booking/quick-booking').then(m => m.QuickBookingComponent),
     title: 'Agendar Cita Rápida'
@@ -62,16 +68,21 @@ export const routes: Routes = [
     canActivate: [publicGuard]
   },
   {
-    path: 'mis-citas',
-    component: MyAppointmentsComponent,
+    path: '',
+    component: PatientLayoutComponent,
     canActivate: [authGuard],
-    title: 'Mis Citas | Portal del Paciente'
-  },
-  {
-    path: 'mi-expediente',
-    component: MedicalHistoryComponent,
-    canActivate: [authGuard],
-    title: 'Mi Expediente | Portal del Paciente'
+    children: [
+      {
+        path: 'mis-citas',
+        component: MyAppointmentsComponent,
+        title: 'Mis Citas | Portal del Paciente'
+      },
+      {
+        path: 'mi-expediente',
+        component: MedicalHistoryComponent,
+        title: 'Mi Expediente | Portal del Paciente'
+      }
+    ]
   },
   {
     path: 'dashboard',

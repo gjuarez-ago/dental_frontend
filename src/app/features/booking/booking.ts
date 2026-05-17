@@ -25,18 +25,24 @@ import { AgendaPublica, DiaAgenda, SlotPublico, ServicioPublico } from '../../co
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BookingComponent implements OnInit {
-  private readonly route     = inject(ActivatedRoute);
-  private readonly router    = inject(Router);
+  private readonly route      = inject(ActivatedRoute);
+  protected readonly router   = inject(Router);
   private readonly catalogSvc = inject(CatalogService);
   private readonly searchSvc  = inject(SearchService);
   private readonly agendaSvc  = inject(AgendaPublicaService);
-  private readonly authService = inject(AuthService);
+  protected readonly authService = inject(AuthService);
 
   // ─── Auth state ──────────────────────────────────────────────────────────
-  readonly authDrawerOpen  = signal(false);
-  readonly bookingError    = signal<string | null>(null);
+  readonly authDrawerOpen    = signal(false);
+  readonly bookingError      = signal<string | null>(null);
+  readonly staffBlockVisible = signal(false);
   readonly isLoggedInPatient = computed(() => this.authService.isLoggedIn() && this.authService.isPatient());
+  readonly isLoggedInStaff   = computed(() => this.authService.isLoggedIn() && !this.authService.isPatient());
   readonly authedUser = computed(() => this.authService.currentUser());
+  readonly userInitials = computed(() => {
+    const name = this.authService.currentUser()?.nombreCompleto ?? '';
+    return name.split(' ').map((w: string) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'U';
+  });
 
   // ─── Catalogs ────────────────────────────────────────────────────────────
   readonly estados     = signal<Estado[]>([]);
@@ -130,12 +136,13 @@ export class BookingComponent implements OnInit {
   );
 
   constructor() {
-    // Municipios reactivos al estado
+    // Municipios reactivos al estado + guardar último estado usado
     toObservable(this.selectedEstadoId).pipe(takeUntilDestroyed()).subscribe(id => {
       this.selectedMunicipioId.set('');
       this.municipios.set([]);
       if (id) {
         this.catalogSvc.getMunicipalitiesByState(id).subscribe(m => this.municipios.set(m));
+        localStorage.setItem('novatia_last_estado', id);
       }
     });
 
@@ -211,7 +218,18 @@ export class BookingComponent implements OnInit {
   }
 
   // ─── Panel de agenda ─────────────────────────────────────────────────────
+  private _pendingEsp: EspecialistaCard | null = null;
+
   openPanel(esp: EspecialistaCard): void {
+    if (this.isLoggedInStaff()) {
+      this.staffBlockVisible.set(true);
+      return;
+    }
+    if (!this.isLoggedInPatient()) {
+      this._pendingEsp = esp;
+      this.authDrawerOpen.set(true);
+      return;
+    }
     if (this.panelEsp()?.tenantId === esp.tenantId) { this.closePanel(); return; }
     this.panelEsp.set(esp);
     this.resetPanel();
@@ -251,6 +269,10 @@ export class BookingComponent implements OnInit {
   goToForm(): void {
     if (!this.canProceed()) return;
     this.bookingError.set(null);
+    if (this.isLoggedInStaff()) {
+      this.staffBlockVisible.set(true);
+      return;
+    }
     if (!this.isLoggedInPatient()) {
       this.authDrawerOpen.set(true);
       return;
@@ -263,11 +285,18 @@ export class BookingComponent implements OnInit {
     this.panelStep.set('slots');
   }
 
+  goToMyCitas(): void { this.router.navigate(['/mis-citas']); }
+
   closeAuthDrawer(): void { this.authDrawerOpen.set(false); }
 
   onAuthenticated(role: AuthRole): void {
     this.authDrawerOpen.set(false);
-    if (role === 'PACIENTE' && this.canProceed()) {
+    if (role !== 'PACIENTE') return;
+    if (this._pendingEsp) {
+      const esp = this._pendingEsp;
+      this._pendingEsp = null;
+      this.openPanel(esp);
+    } else if (this.canProceed()) {
       this.panelStep.set('form');
     }
   }

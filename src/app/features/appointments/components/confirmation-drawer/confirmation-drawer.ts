@@ -13,22 +13,31 @@ import { Cita } from '../../../../core/models/appointment.model';
     <div class="drawer-overlay" [class.open]="layout.isConfirmationOpen()" (click)="close()">
       <div class="drawer-content" (click)="$event.stopPropagation()">
         <div class="drawer-header">
-          <h3>Confirmar Pago y Cita</h3>
+          <h3>{{ hasAnticipo() ? 'Confirmar Pago y Cita' : 'Confirmar Cita' }}</h3>
           <button class="close-btn" (click)="close()">×</button>
         </div>
 
         <div class="drawer-body">
-          <p class="instruction">Asigna al profesional médico para confirmar la cita y liquidar saldos pendientes.</p>
-          <div class="financial-summary">
-            <div class="summary-item">
-              <span class="summary-label">Anticipo Recibido</span>
-              <span class="summary-value positive">+ \${{ paidAmount() | number:'1.2-2' }}</span>
+          <p class="instruction">{{ hasAnticipo() ? 'Asigna al profesional médico para confirmar la cita y liquidar saldos pendientes.' : 'Asigna al profesional médico para confirmar la cita.' }}</p>
+          @if (hasAnticipo()) {
+            <div class="financial-summary">
+              <div class="summary-item">
+                <span class="summary-label">Anticipo Recibido</span>
+                <span class="summary-value positive">+ \${{ paidAmount() | number:'1.2-2' }}</span>
+              </div>
+              <div class="summary-item highlight">
+                <span class="summary-label">Saldo Pendiente</span>
+                <span class="summary-value danger">\${{ pendingBalance() | number:'1.2-2' }}</span>
+              </div>
             </div>
-            <div class="summary-item highlight">
-              <span class="summary-label">Saldo Pendiente</span>
-              <span class="summary-value danger">\${{ pendingBalance() | number:'1.2-2' }}</span>
+          } @else {
+            <div class="financial-summary simple">
+              <div class="summary-item">
+                <span class="summary-label">Costo de la consulta</span>
+                <span class="summary-value">\${{ remainingPayment() | number:'1.2-2' }}</span>
+              </div>
             </div>
-          </div>
+          }
 
           <!-- VISUALIZACIÓN DE COMPROBANTE -->
           @if (layout.selectedCitaForConfirmation()?.comprobanteUrl) {
@@ -72,7 +81,7 @@ import { Cita } from '../../../../core/models/appointment.model';
 
           <div class="cost-section">
             <div class="input-field primary-field">
-              <label for="remainingPayment">Monto Pendiente (MXN)</label>
+              <label for="remainingPayment">{{ hasAnticipo() ? 'Monto Pendiente (MXN)' : 'Costo de la consulta (MXN)' }}</label>
               <div class="input-wrapper">
                 <span class="currency-prefix">$</span>
                 <input 
@@ -91,16 +100,18 @@ import { Cita } from '../../../../core/models/appointment.model';
               }
             </div>
 
-            <div class="financial-breakdown">
-              <div class="breakdown-row">
-                <span>Anticipo recibido:</span>
-                <span>\${{ paidAmount() | number:'1.2-2' }}</span>
+            @if (hasAnticipo()) {
+              <div class="financial-breakdown">
+                <div class="breakdown-row">
+                  <span>Anticipo recibido:</span>
+                  <span>\${{ paidAmount() | number:'1.2-2' }}</span>
+                </div>
+                <div class="breakdown-row total">
+                  <span>Costo final de la cita:</span>
+                  <span>\${{ totalFinal() | number:'1.2-2' }}</span>
+                </div>
               </div>
-              <div class="breakdown-row total">
-                <span>Costo final de la cita:</span>
-                <span>\${{ totalFinal() | number:'1.2-2' }}</span>
-              </div>
-            </div>
+            }
           </div>
         </div>
 
@@ -112,7 +123,7 @@ import { Cita } from '../../../../core/models/appointment.model';
             [disabled]="!selectedDoctorId() || submitting() || isCostInvalid()"
             (click)="confirmar()"
           >
-            {{ submitting() ? 'Procesando...' : 'Confirmar y Aplicar Pago' }}
+            {{ submitting() ? 'Procesando...' : (hasAnticipo() ? 'Confirmar y Aplicar Pago' : 'Confirmar Cita') }}
           </button>
         </div>
       </div>
@@ -406,6 +417,7 @@ import { Cita } from '../../../../core/models/appointment.model';
       border-radius: 1.25rem;
       padding: 1.5rem;
       margin-top: 2rem;
+      margin-bottom: 1.75rem;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1.5rem;
@@ -440,6 +452,14 @@ import { Cita } from '../../../../core/models/appointment.model';
       padding-left: 1.5rem;
     }
 
+    .financial-summary.simple {
+      grid-template-columns: 1fr;
+    }
+
+    .financial-summary.simple .summary-value {
+      font-size: 1.375rem;
+    }
+
       .cost-section {
         margin-top: 24px;
         padding-top: 24px;
@@ -455,6 +475,7 @@ import { Cita } from '../../../../core/models/appointment.model';
           }
 
           label {
+            display: block;
             font-size: 0.85rem;
             font-weight: 800;
             color: #64748b;
@@ -548,6 +569,8 @@ export class ConfirmationDrawerComponent implements OnInit {
   pendingBalance = computed(() => {
     return Math.max(0, this.remainingPayment());
   });
+
+  hasAnticipo = computed(() => this.paidAmount() > 0);
 
   ngOnInit(): void {
     // Ya no cargamos en OnInit, sino en el effect basado en la cita seleccionada

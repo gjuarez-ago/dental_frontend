@@ -1,0 +1,46 @@
+<nav class="portal-topbar">
+  <div class="topbar-inner">
+    <a routerLink="/" class="topbar-logo">
+      <img src="/images/logo_erm.png" alt="" class="topbar-iso">
+      <span class="topbar-brand-name">novatia</span>
+    </a>
+    <div class="topbar-actions">
+      <button type="button" class="topbar-book-btn" (click)="goToBooking()">
+        <i class="ph ph-calendar-plus"></i>
+        <span>Agendar cita</span>
+      </button>
+      <div class="topbar-user-pill">
+        <span class="topbar-avatar">{{ userInitials() }}</span>
+        <button class="topbar-logout" (click)="logout()" title="Cerrar sesión">
+          <i class="ph ph-sign-out"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="patient-portal">
+  <header class="portal-header">
+    <div class="header-content">
+      <div class="user-info">
+        <h1>¡Hola, {{ firstName() }}! 👋</h1>
+        <p>Qué bueno verte de nuevo. ¿En qué podemos ayudarte hoy?</p>
+      </div>
+    </div>
+
+    <nav class="portal-nav">
+      <a routerLink="/mis-citas" routerLinkActive="active" class="nav-link">
+        <i class="ph ph-calendar-check"></i>
+        <span>Mis Citas</span>
+      </a>
+      <a routerLink="/mi-expediente" routerLinkActive="active" class="nav-link">
+        <i class="ph ph-file-medical"></i>
+        <span>Mi Expediente</span>
+      </a>
+    </nav>
+  </header>
+
+  <main class="portal-main">
+    <router-outlet></router-outlet>
+  </main>
+</div>
